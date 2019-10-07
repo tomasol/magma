@@ -5,6 +5,9 @@ ARG PKG_BUILD_DIR=/cache/%%PKG%%/build
 ARG PKG_INSTALL_DIR=/cache/%%PKG%%/install
 
 RUN %%INSTALL%% git cmake ninja-build %%DEPS%%
+RUN usermod --password $(echo root | openssl passwd -1 -stdin) root
+RUN apt-get update && apt-get install openssh-server -y
+RUN echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config
 
 # TODO need to build this manually for some reason
 WORKDIR /usr/src/gtest
