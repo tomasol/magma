@@ -104,6 +104,13 @@ target_link_libraries(devman_channel_snmp
   ${NETSNMPMIBS}
   ${NETSNMP})
 
+add_library(devman_channel_cli
+  ${PROJECT_SOURCE_DIR}/src/devmand/channels/cli/Command.cpp
+        ${PROJECT_SOURCE_DIR}/src/devmand/channels/cli/Channel.cpp)
+
+target_link_libraries(devman_channel_cli
+  devman)
+
 add_library(devman_service_magma
   ${PROJECT_SOURCE_DIR}/src/devmand/magma/DevConf.cpp
   ${PROJECT_SOURCE_DIR}/src/devmand/magma/Service.cpp
@@ -144,9 +151,11 @@ add_executable(devmand
 target_link_libraries(devmand
   devman
   devman_channel_snmp
+  devman_channel_cli
   devman_service_magma)
 
 add_executable(devmantest
+  ${PROJECT_SOURCE_DIR}/src/devmand/test/CliTest.cpp
   ${PROJECT_SOURCE_DIR}/src/devmand/test/MikrotikChannelTest.cpp
   ${PROJECT_SOURCE_DIR}/src/devmand/test/PingChannelTest.cpp
   ${PROJECT_SOURCE_DIR}/src/devmand/test/DemoDeviceTest.cpp
@@ -158,6 +167,7 @@ add_executable(devmantest
 target_link_libraries(devmantest
   devman
   devman_channel_snmp
+  devman_channel_cli
   gtest
   gtest_main
   devman_service_magma)
