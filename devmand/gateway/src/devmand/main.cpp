@@ -25,8 +25,12 @@
 #include <devmand/devices/cli/PlaintextCliDevice.h>
 #include <devmand/magma/DevConf.h>
 #include <devmand/magma/Service.h>
+#include <libssh/libssh.h>
+#include <libssh/callbacks.h>
 
 int main(int argc, char* argv[]) {
+  ssh_threads_set_callbacks(ssh_threads_get_pthread());
+  ssh_init();
   // TODO Work around for magma issue. Get rid of this...
   std::this_thread::sleep_for(std::chrono::seconds(10));
 
@@ -66,5 +70,6 @@ int main(int argc, char* argv[]) {
       app.getEventBase(), devmand::FLAGS_device_configuration_file));
 
   app.run();
+  ssh_finalize();
   return app.status();
 }
