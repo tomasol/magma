@@ -24,13 +24,14 @@ using std::string;
 using folly::IOThreadPoolExecutor;
 using folly::Unit;
 using devmand::channels::cli::sshsession::SshSession;
+using std::shared_ptr;
 
 class SshSessionAsync {
 private:
-    IOThreadPoolExecutor &executor;
+    shared_ptr<IOThreadPoolExecutor> executor;
     SshSession session;
 public:
-    explicit SshSessionAsync(IOThreadPoolExecutor &_executor);
+    explicit SshSessionAsync(shared_ptr<IOThreadPoolExecutor> _executor);
     Future<Unit> openShell(const string& ip, int port, const string& username, const string& password);
     Future<Unit> write(const string &command);
     Future<string> read(int timeoutMillis);

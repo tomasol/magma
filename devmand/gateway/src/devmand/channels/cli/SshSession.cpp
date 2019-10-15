@@ -103,7 +103,9 @@ namespace sshsession {
     }
 
     void SshSession::write(const string& command) {
-        int bytes = ssh_channel_write(sessionState.channel, command.c_str(), sizeof(command.c_str()));
+        //TODO check if command is not empty
+        const char *data = command.c_str();
+        int bytes = ssh_channel_write(sessionState.channel, data, (unsigned int) command.length()*sizeof(data[0]));
         if (bytes == SSH_ERROR) {
             terminate();
         }
@@ -115,7 +117,7 @@ namespace sshsession {
 
     SshSession::SshSession(int _verbosity) : verbosity(_verbosity) {}
 
-    SshSession::SshSession() : verbosity(SSH_LOG_PROTOCOL) {}
+    SshSession::SshSession() : verbosity(SSH_LOG_NOLOG) {}
 
     string SshSession::readUntilOutput(string lastOutput) {
         string result;

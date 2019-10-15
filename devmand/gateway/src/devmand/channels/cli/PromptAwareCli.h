@@ -15,24 +15,25 @@ namespace cli {
 
 using devmand::channels::cli::sshsession::SshSessionAsync;
 using std::string;
+using std::shared_ptr;
 
 class PromptResolver {
 public:
-    string resolvePrompt(SshSessionAsync & session, const string & newline);
+    string resolvePrompt(shared_ptr<SshSessionAsync> session, const string & newline);
 
     void removeEmptyStrings(std::vector<string> &split) const;
 };
 
 class CliInitializer {
 public:
-    void initialize(SshSessionAsync & session);
+    void initialize(shared_ptr<SshSessionAsync> session);
 };
 
 class PromptAwareCli : public Cli {
 private:
-    SshSessionAsync &session;
+    shared_ptr<SshSessionAsync> session;
 public:
-    PromptAwareCli(SshSessionAsync &session);
+    PromptAwareCli(shared_ptr<SshSessionAsync> session);
 
     string prompt;
 public:
