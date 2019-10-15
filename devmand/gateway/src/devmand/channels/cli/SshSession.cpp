@@ -120,7 +120,7 @@ namespace sshsession {
     string SshSession::readUntilOutput(string lastOutput) {
         string result;
         while (true) {
-            string && output = read(500); //TODO 500 ms?
+            string && output = read(1000); //TODO 1000 ms?
             if (output.empty()) {
                 continue;
             }
@@ -128,7 +128,7 @@ namespace sshsession {
             std::size_t found = result.find(lastOutput);
             if (found != std::string::npos) {
                 // TODO check for any additional output after lastOutput
-                return result.substr(0, found + lastOutput.length());
+                return result.substr(0, found);
             }
         }
     }

@@ -78,7 +78,17 @@ namespace cli {
 
     PromptAwareCli::PromptAwareCli(SshSessionAsync &_session) : session(_session) {}
 
-
+    folly::Future<std::string> PromptAwareCli::executeAndRead(const Command &cmd) const {
+        const string &command = cmd.toString();
+        return session.write(command)
+          .thenValue([=](...) {
+              return session.readUntilOutput(command);
+        }).thenValue([=](...) {
+              return session.write(newline);
+        }).thenValue([=](...) {
+              return session.readUntilOutput(prompt);;
+        });
+    }
 }
 }
 }

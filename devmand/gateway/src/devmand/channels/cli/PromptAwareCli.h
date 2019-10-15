@@ -39,9 +39,7 @@ public:
     string newline = "\n"; //TODO make configurable
     void resolvePrompt(PromptResolver resolver = PromptResolver());
     void initializeCli(CliInitializer initializer = CliInitializer());
-    folly::Future<std::string> executeAndRead(const Command& cmd) const {
-        return folly::Future<std::string>(cmd.toString());
-    }
+    folly::Future<std::string> executeAndRead(const Command& cmd) const;
 
     folly::Future<std::string> executeAndSwitchPrompt(const Command& cmd) const {
         return folly::Future<std::string>(cmd.toString());
