@@ -5,6 +5,9 @@ project (devmand CXX)
 cmake_minimum_required(VERSION 3.7.2)
 
 set(MGM_COM_DIR /usr/lib/)
+# Pass libyang plugins dir
+add_definitions(-DLIBYANG_PLUGINS_DIR="/usr/lib/libyang/")
+
 add_definitions(-DPROTOBUF_INLINE_NOT_IN_HEADERS=0)
 
 include_directories("/usr/include/prometheus")
@@ -107,7 +110,8 @@ target_link_libraries(devman_channel_snmp
 add_library(devman_channel_cli
   ${PROJECT_SOURCE_DIR}/src/devmand/channels/cli/Command.cpp
   ${PROJECT_SOURCE_DIR}/src/devmand/channels/cli/Channel.cpp
-  ${PROJECT_SOURCE_DIR}/src/devmand/devices/cli/PlaintextCliDevice.cpp)
+  ${PROJECT_SOURCE_DIR}/src/devmand/devices/cli/PlaintextCliDevice.cpp
+  ${PROJECT_SOURCE_DIR}/src/devmand/devices/cli/ModelRegistry.cpp )
 
 target_link_libraries(devman_channel_cli
   devman)
@@ -157,6 +161,7 @@ target_link_libraries(devmand
 
 add_executable(devmantest
   ${PROJECT_SOURCE_DIR}/src/devmand/test/cli/CliTest.cpp
+  ${PROJECT_SOURCE_DIR}/src/devmand/test/cli/ModelRegistryTest.cpp
   ${PROJECT_SOURCE_DIR}/src/devmand/test/cli/PlaintextCliDeviceTest.cpp
   ${PROJECT_SOURCE_DIR}/src/devmand/test/MikrotikChannelTest.cpp
   ${PROJECT_SOURCE_DIR}/src/devmand/test/PingChannelTest.cpp
@@ -170,6 +175,11 @@ target_link_libraries(devmantest
   devman
   devman_channel_snmp
   devman_channel_cli
+
+  # FIXME remove these dependencies from test, once they are used in cli package
+  ydk_openconfig
+  ydk_ietf
+
   gtest
   gtest_main
   devman_service_magma)
