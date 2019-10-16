@@ -1,0 +1,10 @@
+devices:
+  - id: localhost
+    ip: 127.0.0.1
+    type: Device
+    platform: snmp
+    yangConfig: localhost.json
+    channels:
+      snmpChannel:
+        version: v1
+        community: public

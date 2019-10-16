@@ -35,7 +35,8 @@ int main(int argc, char* argv[]) {
   devmand::Application app;
 
   // Add services which export the shared view
-  app.add(std::make_unique<devmand::magma::Service>(app));
+  // FIXME uncomment and find out how to prevent this from blocking !!!
+//  app.add(std::make_unique<devmand::magma::Service>(app));
 
   // Add Demo Platforms
   {
