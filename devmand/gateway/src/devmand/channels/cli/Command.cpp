@@ -14,7 +14,7 @@ namespace cli {
 Command::Command(const std::string _command) : command(_command) {}
 
 // Factory methods
-Command Command::createReadCommand(const std::string& cmd) {
+Command Command::makeReadCommand(const std::string& cmd) {
   return Command(cmd);
 }
 

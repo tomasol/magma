@@ -34,11 +34,11 @@ class Cli {
 
 class EchoCli : public Cli {
  public:
-  folly::Future<std::string> executeAndRead(const Command& cmd) const {
+  folly::Future<std::string> executeAndRead(const Command& cmd) const override {
     return folly::Future<std::string>(cmd.toString());
   }
 
-  folly::Future<std::string> executeAndSwitchPrompt(const Command& cmd) const {
+  folly::Future<std::string> executeAndSwitchPrompt(const Command& cmd) const override {
     return folly::Future<std::string>(cmd.toString());
   }
 };

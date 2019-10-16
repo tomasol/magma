@@ -19,7 +19,7 @@ namespace cli {
 struct Command {
  public:
   Command() = delete;
-  static Command createReadCommand(const std::string& cmd);
+  static Command makeReadCommand(const std::string& cmd);
 
  private:
   explicit Command(std::string _command);

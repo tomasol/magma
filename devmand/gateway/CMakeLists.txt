@@ -106,7 +106,8 @@ target_link_libraries(devman_channel_snmp
 
 add_library(devman_channel_cli
   ${PROJECT_SOURCE_DIR}/src/devmand/channels/cli/Command.cpp
-        ${PROJECT_SOURCE_DIR}/src/devmand/channels/cli/Channel.cpp)
+  ${PROJECT_SOURCE_DIR}/src/devmand/channels/cli/Channel.cpp
+  ${PROJECT_SOURCE_DIR}/src/devmand/devices/cli/PlaintextCliDevice.cpp)
 
 target_link_libraries(devman_channel_cli
   devman)
@@ -155,7 +156,8 @@ target_link_libraries(devmand
   devman_service_magma)
 
 add_executable(devmantest
-  ${PROJECT_SOURCE_DIR}/src/devmand/test/CliTest.cpp
+  ${PROJECT_SOURCE_DIR}/src/devmand/test/cli/CliTest.cpp
+  ${PROJECT_SOURCE_DIR}/src/devmand/test/cli/PlaintextCliDeviceTest.cpp
   ${PROJECT_SOURCE_DIR}/src/devmand/test/MikrotikChannelTest.cpp
   ${PROJECT_SOURCE_DIR}/src/devmand/test/PingChannelTest.cpp
   ${PROJECT_SOURCE_DIR}/src/devmand/test/DemoDeviceTest.cpp

@@ -11,15 +11,15 @@ namespace devmand {
 namespace channels {
 namespace cli {
 
-Channel::Channel(const devmand::channels::cli::Cli& _cli) : cli(_cli) {}
+Channel::Channel(const std::shared_ptr<devmand::channels::cli::Cli> _cli) : cli(_cli) {}
 Channel::~Channel() {}
 
 folly::Future<std::string> Channel::executeAndRead(const Command& cmd) const {
-  LOG(INFO) << "[" << this << "]"
+  LOG(INFO) << "[" << this << "] "
             << "Executing command: "
             << "\"" << cmd << "\"";
 
-  return cli.executeAndRead(cmd);
+  return cli->executeAndRead(cmd);
 }
 
 folly::Future<std::string> Channel::executeAndSwitchPrompt(
@@ -28,7 +28,7 @@ folly::Future<std::string> Channel::executeAndSwitchPrompt(
             << "Executing command and switching prompt: "
             << "\"" << cmd << "\"";
 
-  return cli.executeAndSwitchPrompt(cmd);
+  return cli->executeAndSwitchPrompt(cmd);
 }
 
 } // namespace cli

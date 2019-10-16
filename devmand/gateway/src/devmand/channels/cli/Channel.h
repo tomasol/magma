@@ -5,6 +5,8 @@
 // LICENSE file in the root directory of this source tree. An additional grant
 // of patent rights can be found in the PATENTS file in the same directory.
 
+#pragma once
+
 #include <devmand/channels/Channel.h>
 #include <devmand/channels/cli/Cli.h>
 
@@ -14,7 +16,7 @@ namespace cli {
 
 class Channel : public channels::Channel, public devmand::channels::cli::Cli {
  public:
-  Channel(const devmand::channels::cli::Cli& cli);
+  Channel(const std::shared_ptr<devmand::channels::cli::Cli> cli);
   Channel() = delete;
   virtual ~Channel();
   Channel(const Channel&) = delete;
@@ -22,11 +24,11 @@ class Channel : public channels::Channel, public devmand::channels::cli::Cli {
   Channel(Channel&&) = delete;
   Channel& operator=(Channel&&) = delete;
 
-  folly::Future<std::string> executeAndRead(const Command& cmd) const;
-  folly::Future<std::string> executeAndSwitchPrompt(const Command& cmd) const;
+  folly::Future<std::string> executeAndRead(const Command& cmd) const override;
+  folly::Future<std::string> executeAndSwitchPrompt(const Command& cmd) const override;
 
  private:
-  const devmand::channels::cli::Cli& cli;
+  const std::shared_ptr<devmand::channels::cli::Cli> cli;
 };
 
 } // namespace cli

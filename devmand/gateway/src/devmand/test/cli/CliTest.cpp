@@ -11,6 +11,7 @@
 
 namespace devmand {
 namespace test {
+namespace cli {
 
 using namespace devmand::channels::cli;
 
@@ -26,20 +27,22 @@ class CliTest : public ::testing::Test {
 
 TEST_F(CliTest, api) {
   std::string foo("foo");
-  Command cmd = Command::createReadCommand(foo);
-  EXPECT_EQ(std::string("foo"), cmd.toString());
+  Command cmd = Command::makeReadCommand(foo);
+  EXPECT_EQ("foo", cmd.toString());
   foo.clear();
-  EXPECT_EQ(std::string("foo"), cmd.toString());
+  EXPECT_EQ("foo", cmd.toString());
   cmd.toString().clear();
-  EXPECT_EQ(std::string("foo"), cmd.toString());
+  EXPECT_EQ("foo", cmd.toString());
 
   const EchoCli& mockCli = EchoCli();
   folly::Future<std::string> future = mockCli.executeAndRead(cmd);
-  EXPECT_EQ(std::string("foo"), std::move(future).get());
-  const Channel cliChannel(mockCli);
+  EXPECT_EQ("foo", std::move(future).get());
+
+  const Channel cliChannel(std::make_shared<EchoCli>());
   folly::Future<std::string> futureFromChannel = cliChannel.executeAndRead(cmd);
-  EXPECT_EQ(std::string("foo"), std::move(futureFromChannel).get());
+  EXPECT_EQ("foo", std::move(futureFromChannel).get());
 }
 
+} // namespace cli
 } // namespace test
 } // namespace devmand

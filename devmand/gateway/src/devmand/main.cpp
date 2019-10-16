@@ -22,6 +22,7 @@
 #include <devmand/devices/PingDevice.h>
 #include <devmand/devices/Snmpv2Device.h>
 #include <devmand/devices/mikrotik/Device.h>
+#include <devmand/devices/cli/PlaintextCliDevice.h>
 #include <devmand/magma/DevConf.h>
 #include <devmand/magma/Service.h>
 
@@ -55,6 +56,7 @@ int main(int argc, char* argv[]) {
     app.addPlatform("Ping", devmand::devices::PingDevice::createDevice);
     app.addPlatform("Snmp", devmand::devices::Snmpv2Device::createDevice);
   }
+  app.addPlatform("PlaintextCli", devmand::devices::cli::PlaintextCliDevice::createDevice);
 
   app.setDefaultPlatform(devmand::devices::Snmpv2Device::createDevice);
 
