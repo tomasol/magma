@@ -35,6 +35,7 @@ namespace sshsession {
 
     void SshSession::openShell(const string& ip,
                                int port, const string& username, const string& password) {
+        LOG(INFO) << "Connecting to host: " << ip << " port: " << port;
         sessionState.ip = ip;
         sessionState.port = port;
         sessionState.username = username;
@@ -78,6 +79,7 @@ namespace sshsession {
     void SshSession::terminate() {
         const char *error_message = sessionState.session != nullptr ? ssh_get_error(sessionState.session) : "unknown";
         close();
+        LOG(ERROR) << "Error in SSH connection to host:  " << sessionState.ip << " port: " << sessionState.port;
         string error = "Error with SSH: ";
         throw std::runtime_error(error + error_message);
     }
@@ -90,6 +92,7 @@ namespace sshsession {
                ! ssh_channel_is_eof(sessionState.channel)) {
             int bytes_read = ssh_channel_read_timeout(sessionState.channel, buffer, sizeof(buffer), 0, timeoutMillis);
             if (bytes_read < 0) {
+                LOG(ERROR) << "Error reading data from SSH connection, read bytes: " << bytes_read;
                 terminate();
             }
             else if (bytes_read == 0) {
@@ -107,6 +110,7 @@ namespace sshsession {
         const char *data = command.c_str();
         int bytes = ssh_channel_write(sessionState.channel, data, (unsigned int) command.length()*sizeof(data[0]));
         if (bytes == SSH_ERROR) {
+            LOG(ERROR) << "Error while executing command " << command;
             terminate();
         }
     }
