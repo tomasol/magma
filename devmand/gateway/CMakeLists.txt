@@ -110,6 +110,8 @@ add_library(devman_channel_cli
   ${PROJECT_SOURCE_DIR}/src/devmand/channels/cli/Channel.cpp
   ${PROJECT_SOURCE_DIR}/src/devmand/channels/cli/PromptAwareCli.cpp
   ${PROJECT_SOURCE_DIR}/src/devmand/channels/cli/SshSessionAsync.cpp
+  ${PROJECT_SOURCE_DIR}/src/devmand/channels/cli/CliFlavour.cpp
+  ${PROJECT_SOURCE_DIR}/src/devmand/channels/cli/SshSessionAsync.cpp
   ${PROJECT_SOURCE_DIR}/src/devmand/devices/cli/PlaintextCliDevice.cpp)
 
 target_link_libraries(devman_channel_cli

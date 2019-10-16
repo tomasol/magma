@@ -8,36 +8,28 @@
 #include <devmand/channels/cli/Cli.h>
 #include <folly/futures/Future.h>
 #include <devmand/channels/cli/SshSessionAsync.h>
+#include <devmand/channels/cli/CliFlavour.h>
 
 namespace devmand {
 namespace channels {
 namespace cli {
 
 using devmand::channels::cli::sshsession::SshSessionAsync;
+using devmand::channels::cli::PromptResolver;
+using devmand::channels::cli::CliInitializer;
 using std::string;
 using std::shared_ptr;
-
-class PromptResolver {
-public:
-    string resolvePrompt(shared_ptr<SshSessionAsync> session, const string & newline);
-
-    void removeEmptyStrings(std::vector<string> &split) const;
-};
-
-class CliInitializer {
-public:
-    void initialize(shared_ptr<SshSessionAsync> session);
-};
 
 class PromptAwareCli : public Cli {
 private:
     shared_ptr<SshSessionAsync> session;
+    CliFlavour cliFlavour;
 public:
-    PromptAwareCli(shared_ptr<SshSessionAsync> session);
+    PromptAwareCli(shared_ptr<SshSessionAsync> session, CliFlavour cliFlavour);
 
     string prompt;
 public:
-    string newline = "\n"; //TODO make configurable
+    void init(const string hostname, const int port, const string username, const string password);
     void resolvePrompt(PromptResolver resolver = PromptResolver());
     void initializeCli(CliInitializer initializer = CliInitializer());
     folly::Future<std::string> executeAndRead(const Command& cmd) const;
