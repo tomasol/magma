@@ -57,13 +57,12 @@ class PlaintextCliDeviceTest : public ::testing::Test {
         devmand::cartography::ChannelConfig chnlCfg;
         std::map<std::string, std::string> kvPairs;
         kvPairs.insert(std::make_pair("stateCommand", "show mac access-lists"));
-        kvPairs.insert(std::make_pair("host", "10.19.0.245"));
         kvPairs.insert(std::make_pair("port", "22"));
         kvPairs.insert(std::make_pair("username", "ubnt"));
         kvPairs.insert(std::make_pair("password", "ubnt"));
         chnlCfg.kvPairs = kvPairs;
         deviceConfig.channelConfigs.insert(std::make_pair("cli", chnlCfg));
-
+        deviceConfig.ip = "10.19.0.245";
         std::unique_ptr<devices::Device> dev = PlaintextCliDevice::createDevice(
                 app, deviceConfig);
 

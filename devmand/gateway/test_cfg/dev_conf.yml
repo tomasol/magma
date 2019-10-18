@@ -1,6 +1,6 @@
 devices:
   - id: localhost
-    ip: 127.0.0.1
+    ip: 10.19.0.245
     type: Device
     platform: PlaintextCli
     yangConfig: localhost.json
