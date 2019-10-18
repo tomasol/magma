@@ -1,0 +1,96 @@
+// Copyright (c) 2019-present, Facebook, Inc.
+// All rights reserved.
+//
+// This source code is licensed under the BSD-style license found in the
+// LICENSE file in the root directory of this source tree. An additional grant
+// of patent rights can be found in the PATENTS file in the same directory.
+
+#include <devmand/channels/cli/QueuedCli.h>
+#include <devmand/channels/cli/Command.h>
+#include <folly/executors/IOThreadPoolExecutor.h>
+#include <folly/futures/Promise.h>
+
+#include <iostream>
+#include <regex>
+
+
+using devmand::channels::cli::QueuedCli;
+using devmand::channels::cli::Command;
+using std::string;
+
+namespace devmand {
+    namespace channels {
+        namespace cli {
+
+            QueuedCli::QueuedCli(std::shared_ptr<Cli> _cli) : cli(_cli) {}
+
+            folly::Future<string> QueuedCli::executeAndRead(const Command &cmd) const {
+//                std::cout << this << ": QCli received: '" << cmd << "'\n";
+//
+//                if (!busy) {
+////                    busy = true;
+//                    std::cout << this << ": Executing: '" << cmd << "' using cli " << cli << "\n";
+//                    return cli->executeAndRead(cmd).thenValue([=](std::string passthrough) { return returnAndExecNext(passthrough); });
+//                } else {
+//                    std::cout << this << ": Postponing: '" << cmd << "', current queue size: " << outstandingCmds.size() << "\n";
+//                    folly::Promise<std::string> p;
+//                    const folly::Future<std::string> future_exec = p.getFuture();
+//                    const folly::Future<std::string> f1 = std::move(future_exec).thenValue([=](...) { return cli->executeAndRead(cmd); });
+//                    const folly::Future<std::string> f2 = std::move(f1).thenValue([=](std::string passthrough) { return returnAndExecNext(passthrough); });
+//
+//                    std::cout << this << ": Q size before: '" << outstandingCmds.size() << "'\n";
+//                    outstandingCmds.push(std::move(p));
+//                    std::cout << this << ": Q size after: '" << outstandingCmds.size() << "'\n";
+//
+//                    return f2;
+//                }
+                return folly::Future<std::string>(cmd.toString());
+            }
+
+            folly::Future<string> QueuedCli::test(const Command &cmd) {
+                bool empty = false;
+                LOG(INFO) << this << ": QCli received: '" << cmd << "'\n";
+
+                folly::Promise<std::string> p;
+                auto future_exec = p.getFuture();
+//                folly::Future<std::string> f1 = std::move(future_exec).thenValue([=](...) { return cli->executeAndRead(cmd); });
+//                folly::Future<std::string> f2 = std::move(f1).thenValue([=](std::string passthrough) { return returnAndExecNext(
+//                        passthrough); });
+                folly::Future<std::string> f2 = std::move(future_exec)
+                        .thenValue([=](...) { return cli->executeAndRead(cmd); })
+                        .thenValue([=](std::string result) { return returnAndExecNext(result); });
+
+                {   // synchronized insert block
+                    std::lock_guard<std::mutex> lock(mutex);
+                    empty = outstandingCmds.empty();
+                    outstandingCmds.push(std::move(p));
+                }
+
+                if (empty) {
+                    LOG(INFO) << this << ": Executing...\n";
+                    outstandingCmds.front().setValue("GOGOGO");
+                } else {
+                    LOG(INFO) << this << ": Enqueued (queue size: " << outstandingCmds.size() << ")...\n";
+                }
+
+                return f2;
+            }
+
+            // THREAD SAFETY: there should only one command beinbg processed at time, so
+            // there should be no race on returnAndExecNext
+            folly::Future<string> QueuedCli::returnAndExecNext(std::string result) {
+                LOG(INFO) << this << ": returnAndExecNext '" << result << "'\n";
+
+                outstandingCmds.pop();
+
+                if (outstandingCmds.empty()) {
+                    LOG(INFO) << this << ": Queue empty\n";
+                } else {
+                    LOG(INFO) << this << ": Executing Next...\n";
+                    outstandingCmds.front().setValue("GOGOGO");
+                }
+                return folly::Future<std::string>(result);
+            }
+        }
+    }
+}
