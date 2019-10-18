@@ -24,16 +24,18 @@ namespace cli {
 using namespace devmand::channels::cli;
 using namespace devmand::channels::cli::sshsession;
 
+shared_ptr<IOThreadPoolExecutor> executor = std::make_shared<folly::IOThreadPoolExecutor>(10);
+
 std::unique_ptr<devices::Device> PlaintextCliDevice::createDevice(
     Application& app,
     const cartography::DeviceConfig& deviceConfig) {
     const auto& channelConfigs = deviceConfig.channelConfigs;
     const auto& plaintextCliKv = channelConfigs.at("cli").kvPairs;
     //crate session
-    const std::shared_ptr<SshSessionAsync> &session = std::make_shared<SshSessionAsync>(std::make_shared<folly::IOThreadPoolExecutor>(2));
+    const std::shared_ptr<SshSessionAsync> &session = std::make_shared<SshSessionAsync>(executor);
     //TODO opening SSH connection
     session->openShell(
-            plaintextCliKv.at("host"),
+            deviceConfig.ip,
             std::stoi( plaintextCliKv.at("port")),
             plaintextCliKv.at("username"),
             plaintextCliKv.at("password")).get();
