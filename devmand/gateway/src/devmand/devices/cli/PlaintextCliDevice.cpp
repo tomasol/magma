@@ -7,7 +7,6 @@
 
 #include <iostream>
 #include <stdexcept>
-#include <utility>
 
 #include <folly/Format.h>
 
@@ -15,29 +14,49 @@
 #include <devmand/channels/cli/Cli.h>
 #include <devmand/devices/State.h>
 #include <devmand/devices/cli/PlaintextCliDevice.h>
+#include <devmand/channels/cli/SshSessionAsync.h>
+#include <devmand/channels/cli/PromptAwareCli.h>
 
 namespace devmand {
 namespace devices {
 namespace cli {
 
 using namespace devmand::channels::cli;
+using namespace devmand::channels::cli::sshsession;
 
 std::unique_ptr<devices::Device> PlaintextCliDevice::createDevice(
     Application& app,
     const cartography::DeviceConfig& deviceConfig) {
     const auto& channelConfigs = deviceConfig.channelConfigs;
     const auto& plaintextCliKv = channelConfigs.at("cli").kvPairs;
-  return std::make_unique<devices::cli::PlaintextCliDevice>(
-      app, deviceConfig.id, plaintextCliKv.at("stateCommand"));
+    //crate session
+    const std::shared_ptr<SshSessionAsync> &session = std::make_shared<SshSessionAsync>(std::make_shared<folly::IOThreadPoolExecutor>(2));
+    //TODO opening SSH connection
+    session->openShell(
+            plaintextCliKv.at("host"),
+            std::stoi( plaintextCliKv.at("port")),
+            plaintextCliKv.at("username"),
+            plaintextCliKv.at("password")).get();
+    //TODO create CLI - how to create a CLI stack?
+    const shared_ptr <PromptAwareCli> &cli = std::make_shared<PromptAwareCli>(session, CliFlavour());
+    //TODO initialize CLI
+    cli->initializeCli();
+    //TODO resolve prompt needs to happen
+    cli->resolvePrompt();
+    const std::shared_ptr<Channel> &channel = std::make_shared<Channel>(cli);
+    return std::make_unique<devices::cli::PlaintextCliDevice>(
+      app, deviceConfig.id, plaintextCliKv.at("stateCommand"), channel);
 }
 
 PlaintextCliDevice::PlaintextCliDevice(
     Application& application,
     const Id& id_,
-    const std::string& _stateCommand)
+    const std::string& _stateCommand,
+    const std::shared_ptr<Channel> & _channel)
     : Device(application, id_),
-      channel(std::make_shared<EchoCli>()),
-      stateCommand(Command::makeReadCommand(_stateCommand)) {}
+      channel(_channel),
+      stateCommand(Command::makeReadCommand(_stateCommand)) {
+}
 
 std::shared_ptr<State> PlaintextCliDevice::getState() {
   LOG(INFO) << "[" << this << "] "
@@ -45,8 +64,8 @@ std::shared_ptr<State> PlaintextCliDevice::getState() {
 
   auto state = State::make(app, *this);
 
-  state->addRequest(channel.executeAndRead(stateCommand)
-                        .thenValue([state, cmd = stateCommand](auto v) {
+  state->addRequest(channel->executeAndRead(stateCommand)
+                        .thenValue([state, cmd = stateCommand](std::string v) {
                           state->setStatus(true);
                           state->update()[cmd.toString()] = v;
                         }));
