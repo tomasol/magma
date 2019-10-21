@@ -40,8 +40,10 @@ class PlaintextCliDeviceTest : public ::testing::Test {
         chnlCfg.kvPairs = kvPairs;
         deviceConfig.channelConfigs.insert(std::make_pair("cli", chnlCfg));
 
-        std::unique_ptr<devices::Device> dev = PlaintextCliDevice::createDevice(
-                app, deviceConfig);
+        const std::shared_ptr<EchoCli> &echoCli = std::make_shared<EchoCli>();
+        const std::shared_ptr<Channel> &channel = std::make_shared<Channel>(echoCli);
+        std::unique_ptr<devices::Device> dev = std::make_unique<PlaintextCliDevice>(
+                app, deviceConfig.id, "show interfaces brief", channel);
 
         std::shared_ptr<State> state = dev->getState();
         const folly::dynamic& stateResult = state->collect().get();
