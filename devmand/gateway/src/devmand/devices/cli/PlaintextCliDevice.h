@@ -19,7 +19,7 @@ using namespace devmand::channels::cli;
 
 class PlaintextCliDevice : public Device {
  public:
-  PlaintextCliDevice(Application& application, const Id& id, const std::string& stateCommand);
+  PlaintextCliDevice(Application& application, const Id& id, const std::string& stateCommand, const std::shared_ptr<Channel> &channel);
   PlaintextCliDevice() = delete;
   virtual ~PlaintextCliDevice() = default;
   PlaintextCliDevice(const PlaintextCliDevice&) = delete;
@@ -41,7 +41,7 @@ class PlaintextCliDevice : public Device {
   }
 
  private:
-  const Channel channel;
+  std::shared_ptr<Channel> channel;
   const Command stateCommand;
 };
 

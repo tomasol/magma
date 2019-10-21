@@ -9,7 +9,6 @@
 #include <devmand/channels/cli/CliFlavour.h>
 #include <regex>
 
-
 namespace devmand {
 namespace channels {
 namespace cli {
@@ -22,7 +21,9 @@ namespace cli {
     static const int DEFAULT_MILLIS = 1000; //TODO value?
 
     void CliInitializer::initialize(shared_ptr <SshSessionAsync> session) {
-        session->read(1000).wait();
+        session->write("enable\n")
+        .thenValue([=](...){ return session->write("ubnt\n"); })
+        .thenValue([=](...){ return session->write("terminal length 0\n"); }).get();
     }
 
     string PromptResolver::resolvePrompt(shared_ptr <SshSessionAsync> session, const string &newline) {
@@ -61,7 +62,6 @@ namespace cli {
             PromptResolver _resolver, CliInitializer _initializer, string _newline )
             : resolver(_resolver), initializer(_initializer), newline(_newline) {}
 
-  // CliFlavour::CliFlavour() {}
 } // namespace cli
 } // namespace channels
 } // namespace devmand

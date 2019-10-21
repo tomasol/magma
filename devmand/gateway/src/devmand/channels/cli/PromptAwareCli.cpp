@@ -21,12 +21,12 @@ namespace devmand {
     namespace channels {
         namespace cli {
 
-            void PromptAwareCli::resolvePrompt(PromptResolver resolver) {
-                this->prompt = resolver.resolvePrompt(session, cliFlavour.newline);
+            void PromptAwareCli::resolvePrompt() {
+                this->prompt = cliFlavour.resolver.resolvePrompt(session, cliFlavour.newline);
             }
 
-            void PromptAwareCli::initializeCli(CliInitializer initializer) {
-                initializer.initialize(session);
+            void PromptAwareCli::initializeCli() {
+                cliFlavour.initializer.initialize(session);
             }
 
             folly::Future<string> PromptAwareCli::executeAndRead(const Command &cmd) const {
@@ -37,7 +37,7 @@ namespace devmand {
                         }).thenValue([=](...) {
                             return session->write(cliFlavour.newline);
                         }).thenValue([=](...) {
-                            return session->readUntilOutput(prompt);;
+                            return session->readUntilOutput(prompt);
                         });
             }
 

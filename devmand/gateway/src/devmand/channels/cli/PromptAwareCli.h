@@ -30,8 +30,8 @@ public:
     string prompt;
 public:
     void init(const string hostname, const int port, const string username, const string password);
-    void resolvePrompt(PromptResolver resolver = PromptResolver());
-    void initializeCli(CliInitializer initializer = CliInitializer());
+    void resolvePrompt();
+    void initializeCli();
     folly::Future<std::string> executeAndRead(const Command& cmd) const;
 
     folly::Future<std::string> executeAndSwitchPrompt(const Command& cmd) const {

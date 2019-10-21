@@ -10,6 +10,8 @@
 #include <devmand/devices/cli/PlaintextCliDevice.h>
 #include <devmand/Application.h>
 #include <gtest/gtest.h>
+#include <folly/executors/IOThreadPoolExecutor.h>
+#include <boost/algorithm/string/trim.hpp>
 
 namespace devmand {
 namespace test {
@@ -29,25 +31,48 @@ class PlaintextCliDeviceTest : public ::testing::Test {
   PlaintextCliDeviceTest& operator=(PlaintextCliDeviceTest&&) = delete;
 };
 
-TEST_F(PlaintextCliDeviceTest, checkEcho) {
-  devmand::Application app;
-  cartography::DeviceConfig deviceConfig;
-  devmand::cartography::ChannelConfig chnlCfg;
-  std::map<std::string, std::string> kvPairs;
-  kvPairs.insert(std::make_pair("stateCommand", "show interfaces brief"));
-  chnlCfg.kvPairs = kvPairs;
-  deviceConfig.channelConfigs.insert(std::make_pair("cli", chnlCfg));
+    TEST_F(PlaintextCliDeviceTest, checkEcho) {
+        devmand::Application app;
+        cartography::DeviceConfig deviceConfig;
+        devmand::cartography::ChannelConfig chnlCfg;
+        std::map<std::string, std::string> kvPairs;
+        kvPairs.insert(std::make_pair("stateCommand", "show interfaces brief"));
+        chnlCfg.kvPairs = kvPairs;
+        deviceConfig.channelConfigs.insert(std::make_pair("cli", chnlCfg));
 
-  std::unique_ptr<devices::Device> dev = PlaintextCliDevice::createDevice(
-      app, deviceConfig);
+        std::unique_ptr<devices::Device> dev = PlaintextCliDevice::createDevice(
+                app, deviceConfig);
 
-  std::shared_ptr<State> state = dev->getState();
-  const folly::dynamic& stateResult = state->collect().get();
+        std::shared_ptr<State> state = dev->getState();
+        const folly::dynamic& stateResult = state->collect().get();
 
-  std::stringstream buffer;
-  buffer << stateResult["show interfaces brief"];
-  EXPECT_EQ("show interfaces brief", buffer.str());
-}
+        std::stringstream buffer;
+        buffer << stateResult["show interfaces brief"];
+        EXPECT_EQ("show interfaces brief", buffer.str());
+    }
+
+    TEST_F(PlaintextCliDeviceTest, ubiquiti) {
+        devmand::Application app;
+        cartography::DeviceConfig deviceConfig;
+        devmand::cartography::ChannelConfig chnlCfg;
+        std::map<std::string, std::string> kvPairs;
+        kvPairs.insert(std::make_pair("stateCommand", "show mac access-lists"));
+        kvPairs.insert(std::make_pair("port", "22"));
+        kvPairs.insert(std::make_pair("username", "ubnt"));
+        kvPairs.insert(std::make_pair("password", "ubnt"));
+        chnlCfg.kvPairs = kvPairs;
+        deviceConfig.channelConfigs.insert(std::make_pair("cli", chnlCfg));
+        deviceConfig.ip = "10.19.0.245";
+        std::unique_ptr<devices::Device> dev = PlaintextCliDevice::createDevice(
+                app, deviceConfig);
+
+        std::shared_ptr<State> state = dev->getState();
+        const folly::dynamic& stateResult = state->collect().get();
+
+        std::stringstream buffer;
+        buffer << stateResult[kvPairs.at("stateCommand")];
+        EXPECT_EQ("No ACLs are configured", boost::algorithm::trim_copy(buffer.str()));
+    }
 
 } // namespace cli
 } // namespace test

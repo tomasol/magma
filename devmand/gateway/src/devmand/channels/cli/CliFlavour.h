@@ -26,7 +26,7 @@ public:
 };
 
 class CliInitializer {
-    public:
+public:
     void initialize(shared_ptr<SshSessionAsync> session);
 };
 
@@ -36,8 +36,6 @@ public:
     PromptResolver resolver;
     CliInitializer initializer;
     string newline;
-
-   // CliFlavour();
 
     CliFlavour(PromptResolver _resolver = PromptResolver(),
                CliInitializer _initializer = CliInitializer(),

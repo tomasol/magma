@@ -37,7 +37,7 @@ TEST_F(CliTest, promptAwareCli) {
     int iterations = 10;
     std::shared_ptr<folly::IOThreadPoolExecutor> executor = std::make_shared<folly::IOThreadPoolExecutor>(10);
     CliFlavour cliFlavour;
-    const Command &cmd = Command::createReadCommand("ip addr | grep inet | grep 85");
+    const Command &cmd = Command::makeReadCommand("ip addr | grep inet | grep 85");
     for (int i = 0; i < iterations; i++) {
         const std::shared_ptr<SshSessionAsync> &session = std::make_shared<SshSessionAsync>(executor);
         clis.push_back(new PromptAwareCli(session, cliFlavour));
