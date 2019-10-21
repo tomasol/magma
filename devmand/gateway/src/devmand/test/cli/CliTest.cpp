@@ -66,18 +66,26 @@ TEST_F(CliTest, queuedCli) {
     const std::shared_ptr<PromptAwareCli> &cli = std::make_shared<PromptAwareCli>(session, cliFlavour);
     cli->init("localhost", 22, "root", "root");
     cli->resolvePrompt();
-    QueuedCli qcli(cli);
+    QueuedCli qcli(cli, 3, 1);
 
     std::vector<std::string> results;
     results.push_back("root");
     results.push_back("inet 172.8.0.85/16 brd 172.8.255.255 scope global eth0");
     results.push_back("4.15.0-65-generic");
+    results.push_back("");
+    results.push_back("/root");
+    results.push_back("hello");
+    results.push_back("-bash: foo: command not found");
 
     // create requests
     std::vector<Command> cmds;
     cmds.push_back(Command::makeReadCommand("whoami"));
     cmds.push_back(Command::makeReadCommand("ip addr | grep inet | grep 85"));
     cmds.push_back(Command::makeReadCommand("uname -r"));
+    cmds.push_back(Command::makeReadCommand("sleep 1"));
+    cmds.push_back(Command::makeReadCommand("pwd"));
+    cmds.push_back(Command::makeReadCommand("echo \"hello\""));
+    cmds.push_back(Command::makeReadCommand("foo "));
 
     // send requests
     std::vector<folly::Future<std::string>> futures;
@@ -90,12 +98,11 @@ TEST_F(CliTest, queuedCli) {
     const std::vector<folly::Try<std::string>> &values = collectAll(futures.begin(), futures.end()).get();
 
     // check values
-    EXPECT_EQ(values.size(), 3);
+    EXPECT_EQ(values.size(), results.size());
     for (unsigned int i = 0; i < values.size(); ++i) {
 //    for (auto v : values) {
 //        std::cout << "main: value " << v.value() << "\n";
-        string cliOutput = boost::algorithm::trim_copy(values[i].value());
-        EXPECT_EQ(cliOutput, results[i]);
+        EXPECT_EQ(boost::algorithm::trim_copy(values[i].value()), results[i]);
     }
 }
 

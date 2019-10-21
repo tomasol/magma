@@ -23,7 +23,7 @@ namespace devmand {
                 std::mutex mutex;
 
             public:
-                QueuedCli(std::shared_ptr<Cli> cli);
+                QueuedCli(std::shared_ptr<Cli> cli, unsigned int hi_limit = 1000, unsigned int lo_limit = 900);
 
                 folly::Future<std::string> executeAndRead(const Command& cmd) const override;
 
@@ -34,6 +34,27 @@ namespace devmand {
 
                 folly::Future<std::string> test(const Command &cmd);
                 folly::Future<std::string> returnAndExecNext(std::string result);
+
+            private:
+                void wait() {
+                    ready = false;
+                    std::unique_lock<std::mutex> lk(m);
+                    cv.wait(lk, [this] { return ready; });
+                }
+
+                void notify() {
+                    {
+                        std::lock_guard<std::mutex> lk(m);
+                        ready = true;
+                    }
+                    cv.notify_one();
+                }
+
+            private:
+                std::mutex m;
+                std::condition_variable cv;
+                bool ready{false};
+                unsigned int hi_limit, lo_limit;
             };
 
 

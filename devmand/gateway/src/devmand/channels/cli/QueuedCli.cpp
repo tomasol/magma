@@ -22,7 +22,12 @@ namespace devmand {
     namespace channels {
         namespace cli {
 
-            QueuedCli::QueuedCli(std::shared_ptr<Cli> _cli) : cli(_cli) {}
+            QueuedCli::QueuedCli(std::shared_ptr<Cli> _cli, unsigned int _hi_limit, unsigned int _lo_limit) :
+            cli(_cli),
+            ready(true),
+            hi_limit(_hi_limit),
+            lo_limit(_lo_limit)
+            {}
 
             folly::Future<string> QueuedCli::executeAndRead(const Command &cmd) const {
 //                std::cout << this << ": QCli received: '" << cmd << "'\n";
@@ -49,13 +54,17 @@ namespace devmand {
 
             folly::Future<string> QueuedCli::test(const Command &cmd) {
                 bool empty = false;
-                LOG(INFO) << this << ": QCli received: '" << cmd << "'\n";
+                LOG(INFO) << this << ": QCli received: '" << cmd.toString() << " ready (" << ready << ")'\n";
+
+                if (outstandingCmds.size() >= hi_limit) {
+                    LOG(INFO) << this << ": queue size (" << outstandingCmds.size() << ") reached HI-limit -> WAIT\n";
+                    wait();
+                }
+
+                LOG(INFO) << this << ": Enqueued '" << cmd << "' (queue size: " << outstandingCmds.size() << ")...\n";
 
                 folly::Promise<std::string> p;
                 auto future_exec = p.getFuture();
-//                folly::Future<std::string> f1 = std::move(future_exec).thenValue([=](...) { return cli->executeAndRead(cmd); });
-//                folly::Future<std::string> f2 = std::move(f1).thenValue([=](std::string passthrough) { return returnAndExecNext(
-//                        passthrough); });
                 folly::Future<std::string> f2 = std::move(future_exec)
                         .thenValue([=](...) { return cli->executeAndRead(cmd); })
                         .thenValue([=](std::string result) { return returnAndExecNext(result); });
@@ -82,6 +91,10 @@ namespace devmand {
                 LOG(INFO) << this << ": returnAndExecNext '" << result << "'\n";
 
                 outstandingCmds.pop();
+                if (!ready && outstandingCmds.size() <= lo_limit) {
+                    LOG(INFO) << this << ": queue size reached LO-limit(" << lo_limit << ") -> RELEASE\n";
+                    notify();
+                }
 
                 if (outstandingCmds.empty()) {
                     LOG(INFO) << this << ": Queue empty\n";
