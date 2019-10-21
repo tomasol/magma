@@ -9,6 +9,7 @@
 #include <devmand/channels/cli/Cli.h>
 #include <gtest/gtest.h>
 #include <folly/executors/IOThreadPoolExecutor.h>
+#include <folly/executors/ThreadedExecutor.h>
 #include <devmand/channels/cli/SshSessionAsync.h>
 #include <devmand/channels/cli/PromptAwareCli.h>
 #include <devmand/channels/cli/QueuedCli.h>
@@ -103,6 +104,36 @@ TEST_F(CliTest, queuedCli) {
 //    for (auto v : values) {
 //        std::cout << "main: value " << v.value() << "\n";
         EXPECT_EQ(boost::algorithm::trim_copy(values[i].value()), results[i]);
+    }
+}
+
+TEST_F(CliTest, queuedCliMT) {
+    const int loopcount = 10;
+
+    std::shared_ptr<folly::IOThreadPoolExecutor> io_executor = std::make_shared<folly::IOThreadPoolExecutor>(10);
+    folly::ThreadedExecutor executor;
+    const std::shared_ptr<SshSessionAsync> &session = std::make_shared<SshSessionAsync>(io_executor);
+    CliFlavour cliFlavour;
+    const std::shared_ptr<PromptAwareCli> &cli = std::make_shared<PromptAwareCli>(session, cliFlavour);
+    cli->init("localhost", 22, "root", "root");
+    cli->resolvePrompt();
+    QueuedCli qcli(cli);
+
+    // create requests
+    Command cmd = Command::makeReadCommand("whoami");
+    std::vector<folly::Future<std::string>> futures;
+    for (int i = 0; i < loopcount; ++i) {
+        futures.push_back(qcli.test(cmd).via(&executor));
+    }
+
+    // collect values
+    const std::vector<folly::Try<std::string>> &values = collectAll(futures.begin(), futures.end()).get();
+
+    // check values
+    EXPECT_EQ(values.size(), loopcount);
+    for (auto v : values) {
+//            std::cout << "main: value " << v.value() << "\n";
+        EXPECT_EQ(boost::algorithm::trim_copy(v.value()), "root");
     }
 }
 
