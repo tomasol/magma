@@ -11,10 +11,7 @@
 import type {ContextRouter} from 'react-router-dom';
 import type {WithAlert} from '@fbcnms/ui/components/Alert/withAlert';
 import type {WithStyles} from '@material-ui/core';
-import type {
-  magmad_gateway,
-  tier,
-} from '../../common/__generated__/MagmaAPIBindings';
+import type {magmad_gateway, tier} from '@fbcnms/magma-api';
 
 import Button from '@material-ui/core/Button';
 import DeleteIcon from '@material-ui/icons/Delete';
@@ -22,7 +19,7 @@ import EditIcon from '@material-ui/icons/Edit';
 import IconButton from '@material-ui/core/IconButton';
 import LoadingFiller from '@fbcnms/ui/components/LoadingFiller';
 import LoadingFillerBackdrop from '@fbcnms/ui/components/LoadingFillerBackdrop';
-import MagmaV1API from '../../common/MagmaV1API';
+import MagmaV1API from '@fbcnms/magma-api/client/WebClient';
 import NestedRouteLink from '@fbcnms/ui/components/NestedRouteLink';
 import React from 'react';
 import Table from '@material-ui/core/Table';
@@ -42,7 +39,7 @@ import {map, sortBy} from 'lodash';
 import {withStyles} from '@material-ui/core/styles';
 
 type State = {
-  gateways: ?(magmad_gateway[]),
+  gateways: ?{[string]: magmad_gateway},
   errorMessage: ?string,
   saving: boolean,
   networkUpgradeTiers: ?(tier[]),
@@ -114,7 +111,7 @@ const SupportedVersionsTable = (props: {supportedVersions: string[]}) => {
 };
 
 const GatewayUpgradeStatusTable = (props: {
-  tableData: Array<magmad_gateway>,
+  tableData: {[string]: magmad_gateway},
   networkUpgradeTiers: ?(tier[]),
   onUpgradeTierChange: (gatewayID: string, tierID: string) => void,
 }) => {
