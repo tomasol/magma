@@ -7,39 +7,43 @@
 
 #pragma once
 
-#include <folly/futures/Future.h>
-#include <folly/executors/IOThreadPoolExecutor.h>
-#include <devmand/channels/cli/SshSession.h>
 #include <devmand/channels/cli/Command.h>
+#include <devmand/channels/cli/SshSession.h>
+#include <folly/executors/IOThreadPoolExecutor.h>
+#include <folly/futures/Future.h>
 
 namespace devmand {
 namespace channels {
 namespace cli {
 namespace sshsession {
 
-using folly::makeFuture;
-using folly::via;
-using folly::Future;
-using std::string;
-using folly::IOThreadPoolExecutor;
-using folly::Unit;
 using devmand::channels::cli::sshsession::SshSession;
+using folly::Future;
+using folly::IOThreadPoolExecutor;
+using folly::makeFuture;
+using folly::Unit;
+using folly::via;
 using std::shared_ptr;
+using std::string;
 
 class SshSessionAsync {
-private:
-    shared_ptr<IOThreadPoolExecutor> executor;
-    SshSession session;
-public:
-    explicit SshSessionAsync(shared_ptr<IOThreadPoolExecutor> _executor);
-    Future<Unit> openShell(const string& ip, int port, const string& username, const string& password);
-    Future<Unit> write(const string &command);
-    Future<string> read(int timeoutMillis);
-    Future<string> readUntilOutput(string lastOutput);
-    Future<Unit> close();
-    ~SshSessionAsync();
-};
+ private:
+  shared_ptr<IOThreadPoolExecutor> executor;
+  SshSession session;
 
+ public:
+  explicit SshSessionAsync(shared_ptr<IOThreadPoolExecutor> _executor);
+  Future<Unit> openShell(
+      const string& ip,
+      int port,
+      const string& username,
+      const string& password);
+  Future<Unit> write(const string& command);
+  Future<string> read(int timeoutMillis);
+  Future<string> readUntilOutput(string lastOutput);
+  Future<Unit> close();
+  ~SshSessionAsync();
+};
 
 } // namespace sshsession
 } // namespace cli

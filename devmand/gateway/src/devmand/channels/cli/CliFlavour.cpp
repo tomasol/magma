@@ -13,54 +13,64 @@ namespace devmand {
 namespace channels {
 namespace cli {
 
-    using devmand::channels::cli::PromptResolver;
-    using devmand::channels::cli::CliInitializer;
-    using devmand::channels::cli::CliFlavour;
-    using devmand::channels::cli::sshsession::SshSessionAsync;
+using devmand::channels::cli::CliFlavour;
+using devmand::channels::cli::CliInitializer;
+using devmand::channels::cli::PromptResolver;
+using devmand::channels::cli::sshsession::SshSessionAsync;
 
-    static const int DEFAULT_MILLIS = 1000; //TODO value?
+static const int DEFAULT_MILLIS = 1000; // TODO value?
 
-    void CliInitializer::initialize(shared_ptr <SshSessionAsync> session) {
-        session->write("enable\n")
-        .thenValue([=](...){ return session->write("ubnt\n"); })
-        .thenValue([=](...){ return session->write("terminal length 0\n"); }).get();
+void CliInitializer::initialize(shared_ptr<SshSessionAsync> session) {
+  session->write("enable\n")
+      .thenValue([=](...) { return session->write("ubnt\n"); })
+      .thenValue([=](...) { return session->write("terminal length 0\n"); })
+      .get();
+}
+
+string PromptResolver::resolvePrompt(
+    shared_ptr<SshSessionAsync> session,
+    const string& newline) {
+  session->read(DEFAULT_MILLIS).get(); // clear input, converges faster on
+                                       // prompt
+  for (int i = 1;; i++) {
+    int millis = i * DEFAULT_MILLIS;
+    session->write(newline + newline).get();
+    string output = session->read(millis).get();
+
+    std::regex regxp("\\" + newline);
+    std::vector<string> split(
+        std::sregex_token_iterator(output.begin(), output.end(), regxp, -1),
+        std::sregex_token_iterator());
+
+    removeEmptyStrings(split);
+
+    if (split.size() == 2) {
+      string s0 = boost::algorithm::trim_copy(split[0]);
+      string s1 = boost::algorithm::trim_copy(split[1]);
+      if (s0 == s1) {
+        return s0;
+      }
     }
+  }
+}
 
-    string PromptResolver::resolvePrompt(shared_ptr <SshSessionAsync> session, const string &newline) {
-        session->read(DEFAULT_MILLIS).get(); //clear input, converges faster on prompt
-        for (int i = 1;; i++) {
-            int millis = i * DEFAULT_MILLIS;
-            session->write(newline + newline).get();
-            string output = session->read(millis).get();
-
-            std::regex regxp("\\" + newline);
-            std::vector<string> split(
-                    std::sregex_token_iterator(output.begin(),
-                                               output.end(), regxp, -1),
-                    std::sregex_token_iterator());
-
-            removeEmptyStrings(split);
-
-            if (split.size() == 2) {
-                string s0 = boost::algorithm::trim_copy(split[0]);
-                string s1 = boost::algorithm::trim_copy(split[1]);
-                if (s0 == s1) {
-                    return s0;
-                }
-            }
-        }
-    }
-
-    void PromptResolver::removeEmptyStrings(std::vector<string> &split) const {
-        split.erase(remove_if(split.begin(), split.end(), [](string &el) {
+void PromptResolver::removeEmptyStrings(std::vector<string>& split) const {
+  split.erase(
+      remove_if(
+          split.begin(),
+          split.end(),
+          [](string& el) {
             boost::algorithm::trim(el);
             return el.empty();
-        }), split.end());
-    }
+          }),
+      split.end());
+}
 
-    CliFlavour::CliFlavour (
-            PromptResolver _resolver, CliInitializer _initializer, string _newline )
-            : resolver(_resolver), initializer(_initializer), newline(_newline) {}
+CliFlavour::CliFlavour(
+    PromptResolver _resolver,
+    CliInitializer _initializer,
+    string _newline)
+    : resolver(_resolver), initializer(_initializer), newline(_newline) {}
 
 } // namespace cli
 } // namespace channels

@@ -37,7 +37,7 @@ class Model {
   const string& getDir() const {
     return dir;
   }
-  bool operator< (const Model& x) const {
+  bool operator<(const Model& x) const {
     return dir < x.dir;
   }
 

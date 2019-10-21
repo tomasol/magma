@@ -20,14 +20,14 @@ using namespace spdlog::level;
 //  auto logger = spdlog::create<Spd2Glog>("spd_logger");
 //  logger->info("log me");
 class Spd2Glog : public spdlog::sinks::base_sink<std::mutex> {
-public:
-    void log(const spdlog::details::log_msg& msg) override;
-    void toGlog(const spdlog::details::log_msg &msg);
+ public:
+  void log(const spdlog::details::log_msg& msg) override;
+  void toGlog(const spdlog::details::log_msg& msg);
 
-protected:
-    void _sink_it(const spdlog::details::log_msg& msg) override;
-    void flush() override;
+ protected:
+  void _sink_it(const spdlog::details::log_msg& msg) override;
+  void flush() override;
 };
-}
-}
-}
+} // namespace cli
+} // namespace channels
+} // namespace devmand

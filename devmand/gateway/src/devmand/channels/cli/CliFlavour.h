@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include <memory>
 #include <devmand/channels/cli/SshSessionAsync.h>
+#include <memory>
 
 using devmand::channels::cli::sshsession::SshSessionAsync;
 
@@ -16,32 +16,33 @@ namespace devmand {
 namespace channels {
 namespace cli {
 
-using std::string;
 using std::shared_ptr;
+using std::string;
 
 class PromptResolver {
-public:
-    string resolvePrompt(shared_ptr<SshSessionAsync> session, const string & newline);
-    void removeEmptyStrings(std::vector<string> &split) const;
+ public:
+  string resolvePrompt(
+      shared_ptr<SshSessionAsync> session,
+      const string& newline);
+  void removeEmptyStrings(std::vector<string>& split) const;
 };
 
 class CliInitializer {
-public:
-    void initialize(shared_ptr<SshSessionAsync> session);
+ public:
+  void initialize(shared_ptr<SshSessionAsync> session);
 };
-
 
 class CliFlavour {
-public:
-    PromptResolver resolver;
-    CliInitializer initializer;
-    string newline;
+ public:
+  PromptResolver resolver;
+  CliInitializer initializer;
+  string newline;
 
-    CliFlavour(PromptResolver _resolver = PromptResolver(),
-               CliInitializer _initializer = CliInitializer(),
-               string _newline = "\n");
+  CliFlavour(
+      PromptResolver _resolver = PromptResolver(),
+      CliInitializer _initializer = CliInitializer(),
+      string _newline = "\n");
 };
-
 
 } // namespace cli
 } // namespace channels

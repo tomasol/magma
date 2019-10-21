@@ -158,9 +158,9 @@ TEST_F(ModelRegistryTest, jsonSerializationNestedMultiThread) {
     folly::Future<folly::Unit> f = folly::via(&executor, [&, i]() {
       Bundle& bundleOpenconfig = mreg.getBundle(Model::OPENCONFIG_0_1_6);
 
-//      DLOG(INFO) << "Executing: " << i << " on thread "
-//                 << std::this_thread::get_id()
-//                 << " with bundle: " << &bundleOpenconfig << endl;
+      //      DLOG(INFO) << "Executing: " << i << " on thread "
+      //                 << std::this_thread::get_id()
+      //                 << " with bundle: " << &bundleOpenconfig << endl;
 
       shared_ptr<OpenconfigInterface> originalIfc = interfaceCpp();
 

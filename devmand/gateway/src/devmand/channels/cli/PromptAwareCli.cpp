@@ -5,47 +5,49 @@
 // LICENSE file in the root directory of this source tree. An additional grant
 // of patent rights can be found in the PATENTS file in the same directory.
 
+#include <devmand/channels/cli/Command.h>
 #include <devmand/channels/cli/PromptAwareCli.h>
 #include <devmand/channels/cli/SshSessionAsync.h>
-#include <devmand/channels/cli/Command.h>
 #include <folly/executors/IOThreadPoolExecutor.h>
 
-using devmand::channels::cli::PromptAwareCli;
-using devmand::channels::cli::PromptResolver;
 using devmand::channels::cli::CliInitializer;
 using devmand::channels::cli::Command;
+using devmand::channels::cli::PromptAwareCli;
+using devmand::channels::cli::PromptResolver;
 using std::string;
 
 namespace devmand {
-    namespace channels {
-        namespace cli {
+namespace channels {
+namespace cli {
 
-            void PromptAwareCli::resolvePrompt() {
-                this->prompt = cliFlavour.resolver.resolvePrompt(session, cliFlavour.newline);
-            }
+void PromptAwareCli::resolvePrompt() {
+  this->prompt = cliFlavour.resolver.resolvePrompt(session, cliFlavour.newline);
+}
 
-            void PromptAwareCli::initializeCli() {
-                cliFlavour.initializer.initialize(session);
-            }
+void PromptAwareCli::initializeCli() {
+  cliFlavour.initializer.initialize(session);
+}
 
-            folly::Future<string> PromptAwareCli::executeAndRead(const Command &cmd) {
-                const string &command = cmd.toString();
-                return session->write(command)
-                        .thenValue([=](...) {
-                            return session->readUntilOutput(command);
-                        }).thenValue([=](...) {
-                            return session->write(cliFlavour.newline);
-                        }).thenValue([=](...) {
-                            return session->readUntilOutput(prompt);
-                        });
-            }
+folly::Future<string> PromptAwareCli::executeAndRead(const Command& cmd) {
+  const string& command = cmd.toString();
+  return session->write(command)
+      .thenValue([=](...) { return session->readUntilOutput(command); })
+      .thenValue([=](...) { return session->write(cliFlavour.newline); })
+      .thenValue([=](...) { return session->readUntilOutput(prompt); });
+}
 
-            PromptAwareCli::PromptAwareCli(shared_ptr<SshSessionAsync> _session, CliFlavour _cliFlavour)
-                    : session(_session), cliFlavour(_cliFlavour) {}
+PromptAwareCli::PromptAwareCli(
+    shared_ptr<SshSessionAsync> _session,
+    CliFlavour _cliFlavour)
+    : session(_session), cliFlavour(_cliFlavour) {}
 
-            void PromptAwareCli::init(const string hostname, const int port, const string username, const string password) {
-                session->openShell(hostname, port, username, password).get();
-            }
-        }
-    }
+void PromptAwareCli::init(
+    const string hostname,
+    const int port,
+    const string username,
+    const string password) {
+  session->openShell(hostname, port, username, password).get();
+}
+} // namespace cli
+} // namespace channels
 }

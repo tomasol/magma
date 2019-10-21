@@ -23,8 +23,7 @@ class Cli {
   Cli& operator=(Cli&&) = delete;
 
  public:
-  virtual folly::Future<std::string> executeAndRead(
-      const Command& cmd) = 0;
+  virtual folly::Future<std::string> executeAndRead(const Command& cmd) = 0;
 
   virtual folly::Future<std::string> executeAndSwitchPrompt(
       const Command& cmd) = 0;
@@ -38,7 +37,8 @@ class EchoCli : public Cli {
     return folly::Future<std::string>(cmd.toString());
   }
 
-  folly::Future<std::string> executeAndSwitchPrompt(const Command& cmd) override {
+  folly::Future<std::string> executeAndSwitchPrompt(
+      const Command& cmd) override {
     return folly::Future<std::string>(cmd.toString());
   }
 };
