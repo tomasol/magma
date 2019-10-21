@@ -64,12 +64,14 @@ std::shared_ptr<State> PlaintextCliDevice::getState() {
   LOG(INFO) << "[" << this << "] "
             << "Retrieving state";
 
-  auto state = State::make(app, *this);
+  auto state = State::make(*reinterpret_cast<MetricSink*>(&app), getId());
 
   state->addRequest(channel->executeAndRead(stateCommand)
                         .thenValue([state, cmd = stateCommand](std::string v) {
                           state->setStatus(true);
-                          state->update()[cmd.toString()] = v;
+                          state->update([&v, &cmd](auto& lockedState) {
+                            lockedState[cmd.toString()] = v;
+                          });
                         }));
   return state;
 }
