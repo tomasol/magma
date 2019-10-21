@@ -13,7 +13,6 @@
 using devmand::channels::cli::PromptAwareCli;
 using devmand::channels::cli::PromptResolver;
 using devmand::channels::cli::CliInitializer;
-using devmand::channels::cli::SshSessionAsync;
 using devmand::channels::cli::Command;
 using std::string;
 

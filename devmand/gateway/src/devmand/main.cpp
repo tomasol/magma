@@ -28,7 +28,14 @@
 #include <libssh/libssh.h>
 #include <libssh/callbacks.h>
 
+static void log_callback(int priority, const char *function, const char *buffer, void *userData) {
+  (void) priority;
+  (void) userData;
+  DLOG(INFO) << function << ": " << buffer;
+}
+
 int main(int argc, char* argv[]) {
+  ssh_set_log_callback(log_callback);
   ssh_threads_set_callbacks(ssh_threads_get_pthread());
   ssh_init();
   // TODO Work around for magma issue. Get rid of this...
