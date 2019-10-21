@@ -29,30 +29,7 @@ namespace devmand {
             lo_limit(_lo_limit)
             {}
 
-            folly::Future<string> QueuedCli::executeAndRead(const Command &cmd) const {
-//                std::cout << this << ": QCli received: '" << cmd << "'\n";
-//
-//                if (!busy) {
-////                    busy = true;
-//                    std::cout << this << ": Executing: '" << cmd << "' using cli " << cli << "\n";
-//                    return cli->executeAndRead(cmd).thenValue([=](std::string passthrough) { return returnAndExecNext(passthrough); });
-//                } else {
-//                    std::cout << this << ": Postponing: '" << cmd << "', current queue size: " << outstandingCmds.size() << "\n";
-//                    folly::Promise<std::string> p;
-//                    const folly::Future<std::string> future_exec = p.getFuture();
-//                    const folly::Future<std::string> f1 = std::move(future_exec).thenValue([=](...) { return cli->executeAndRead(cmd); });
-//                    const folly::Future<std::string> f2 = std::move(f1).thenValue([=](std::string passthrough) { return returnAndExecNext(passthrough); });
-//
-//                    std::cout << this << ": Q size before: '" << outstandingCmds.size() << "'\n";
-//                    outstandingCmds.push(std::move(p));
-//                    std::cout << this << ": Q size after: '" << outstandingCmds.size() << "'\n";
-//
-//                    return f2;
-//                }
-                return folly::Future<std::string>(cmd.toString());
-            }
-
-            folly::Future<string> QueuedCli::test(const Command &cmd) {
+            folly::Future<string> QueuedCli::executeAndRead(const Command &cmd) {
                 bool empty = false;
                 LOG(INFO) << this << ": QCli received: '" << cmd.toString() << " ready (" << ready << ")'\n";
 
@@ -65,7 +42,7 @@ namespace devmand {
 
                 folly::Promise<std::string> p;
                 auto future_exec = p.getFuture();
-                folly::Future<std::string> f2 = std::move(future_exec)
+                folly::Future<std::string> f = std::move(future_exec)
                         .thenValue([=](...) { return cli->executeAndRead(cmd); })
                         .thenValue([=](std::string result) { return returnAndExecNext(result); });
 
@@ -82,7 +59,7 @@ namespace devmand {
                     LOG(INFO) << this << ": Enqueued (queue size: " << outstandingCmds.size() << ")...\n";
                 }
 
-                return f2;
+                return f;
             }
 
             // THREAD SAFETY: there should only one command beinbg processed at time, so

@@ -24,21 +24,21 @@ class Cli {
 
  public:
   virtual folly::Future<std::string> executeAndRead(
-      const Command& cmd) const = 0;
+      const Command& cmd) = 0;
 
   virtual folly::Future<std::string> executeAndSwitchPrompt(
-      const Command& cmd) const = 0;
+      const Command& cmd) = 0;
 };
 
 // TODO remove once not necessary (when the real CLI stack is implemented)
 
 class EchoCli : public Cli {
  public:
-  folly::Future<std::string> executeAndRead(const Command& cmd) const override {
+  folly::Future<std::string> executeAndRead(const Command& cmd) override {
     return folly::Future<std::string>(cmd.toString());
   }
 
-  folly::Future<std::string> executeAndSwitchPrompt(const Command& cmd) const override {
+  folly::Future<std::string> executeAndSwitchPrompt(const Command& cmd) override {
     return folly::Future<std::string>(cmd.toString());
   }
 };

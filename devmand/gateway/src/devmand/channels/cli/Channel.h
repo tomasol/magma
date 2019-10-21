@@ -24,8 +24,8 @@ class Channel : public channels::Channel, public devmand::channels::cli::Cli {
   Channel(Channel&&) = delete;
   Channel& operator=(Channel&&) = delete;
 
-  folly::Future<std::string> executeAndRead(const Command& cmd) const override;
-  folly::Future<std::string> executeAndSwitchPrompt(const Command& cmd) const override;
+  folly::Future<std::string> executeAndRead(const Command& cmd) override;
+  folly::Future<std::string> executeAndSwitchPrompt(const Command& cmd) override;
 
  private:
   const std::shared_ptr<devmand::channels::cli::Cli> cli;

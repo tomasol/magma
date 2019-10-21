@@ -32,9 +32,9 @@ public:
     void init(const string hostname, const int port, const string username, const string password);
     void resolvePrompt();
     void initializeCli();
-    folly::Future<std::string> executeAndRead(const Command& cmd) const;
+    folly::Future<std::string> executeAndRead(const Command& cmd);
 
-    folly::Future<std::string> executeAndSwitchPrompt(const Command& cmd) const {
+    folly::Future<std::string> executeAndSwitchPrompt(const Command& cmd) {
         return folly::Future<std::string>(cmd.toString());
     }
 };
