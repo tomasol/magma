@@ -32,7 +32,6 @@ namespace devmand {
                     return folly::Future<std::string>(cmd.toString());
                 }
 
-                folly::Future<std::string> test(const Command &cmd);
                 folly::Future<std::string> returnAndExecNext(std::string result);
 
             private:
