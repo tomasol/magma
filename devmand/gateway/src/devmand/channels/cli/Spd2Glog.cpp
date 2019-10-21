@@ -9,11 +9,6 @@
 #include <glog/logging.h>
 #include <spdlog/details/log_msg.h>
 
-void devmand::channels::cli::Spd2Glog::log(
-    const spdlog::details::log_msg& msg) {
-  toGlog(msg);
-}
-
 void devmand::channels::cli::Spd2Glog::_sink_it(
     const spdlog::details::log_msg& msg) {
   toGlog(msg);

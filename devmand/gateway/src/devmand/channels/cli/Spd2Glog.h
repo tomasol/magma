@@ -21,7 +21,6 @@ using namespace spdlog::level;
 //  logger->info("log me");
 class Spd2Glog : public spdlog::sinks::base_sink<std::mutex> {
  public:
-  void log(const spdlog::details::log_msg& msg) override;
   void toGlog(const spdlog::details::log_msg& msg);
 
  protected:
