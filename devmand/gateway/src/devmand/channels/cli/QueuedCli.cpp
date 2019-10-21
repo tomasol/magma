@@ -29,7 +29,7 @@ namespace devmand {
             lo_limit(_lo_limit)
             {}
 
-            folly::Future<string> QueuedCli::executeAndRead(const Command &cmd) const {
+            folly::Future<string> QueuedCli::executeAndRead(const Command &cmd) {
 //                std::cout << this << ": QCli received: '" << cmd << "'\n";
 //
 //                if (!busy) {

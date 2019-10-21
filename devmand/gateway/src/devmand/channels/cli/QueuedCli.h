@@ -25,9 +25,9 @@ namespace devmand {
             public:
                 QueuedCli(std::shared_ptr<Cli> cli, unsigned int hi_limit = 1000, unsigned int lo_limit = 900);
 
-                folly::Future<std::string> executeAndRead(const Command& cmd) const override;
+                folly::Future<std::string> executeAndRead(const Command& cmd) override;
 
-                folly::Future<std::string> executeAndSwitchPrompt(const Command& cmd) const override {
+                folly::Future<std::string> executeAndSwitchPrompt(const Command& cmd) override {
                     LOG(ERROR) << "[" << this << "] " << "Not Implemented\n";
                     return folly::Future<std::string>(cmd.toString());
                 }

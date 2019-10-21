@@ -146,11 +146,11 @@ TEST_F(CliTest, api) {
   cmd.toString().clear();
   EXPECT_EQ("foo", cmd.toString());
 
-  const EchoCli& mockCli = EchoCli();
-  folly::Future<std::string> future = mockCli.executeAndRead(cmd);
+  const auto mockCli = std::make_shared<EchoCli>();
+  folly::Future<std::string> future = mockCli->executeAndRead(cmd);
   EXPECT_EQ("foo", std::move(future).get());
 
-  const Channel cliChannel(std::make_shared<EchoCli>());
+  Channel cliChannel(std::make_shared<EchoCli>());
   folly::Future<std::string> futureFromChannel = cliChannel.executeAndRead(cmd);
   EXPECT_EQ("foo", std::move(futureFromChannel).get());
 }

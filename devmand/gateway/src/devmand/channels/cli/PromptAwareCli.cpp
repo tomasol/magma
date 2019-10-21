@@ -28,7 +28,7 @@ namespace devmand {
                 cliFlavour.initializer.initialize(session);
             }
 
-            folly::Future<string> PromptAwareCli::executeAndRead(const Command &cmd) const {
+            folly::Future<string> PromptAwareCli::executeAndRead(const Command &cmd) {
                 const string &command = cmd.toString();
                 return session->write(command)
                         .thenValue([=](...) {
