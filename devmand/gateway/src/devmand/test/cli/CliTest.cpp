@@ -11,6 +11,7 @@
 #include <folly/executors/IOThreadPoolExecutor.h>
 #include <devmand/channels/cli/SshSessionAsync.h>
 #include <devmand/channels/cli/PromptAwareCli.h>
+#include <devmand/channels/cli/QueuedCli.h>
 #include <boost/algorithm/string/trim.hpp>
 
 namespace devmand {
@@ -58,7 +59,45 @@ TEST_F(CliTest, promptAwareCli) {
     }
 }
 
+TEST_F(CliTest, queuedCli) {
+    std::shared_ptr<folly::IOThreadPoolExecutor> executor = std::make_shared<folly::IOThreadPoolExecutor>(10);
+    const std::shared_ptr<SshSessionAsync> &session = std::make_shared<SshSessionAsync>(executor);
+    CliFlavour cliFlavour;
+    const std::shared_ptr<PromptAwareCli> &cli = std::make_shared<PromptAwareCli>(session, cliFlavour);
+    cli->init("localhost", 22, "root", "root");
+    cli->resolvePrompt();
+    QueuedCli qcli(cli);
 
+    std::vector<std::string> results;
+    results.push_back("root");
+    results.push_back("inet 172.8.0.85/16 brd 172.8.255.255 scope global eth0");
+    results.push_back("4.15.0-65-generic");
+
+    // create requests
+    std::vector<Command> cmds;
+    cmds.push_back(Command::makeReadCommand("whoami"));
+    cmds.push_back(Command::makeReadCommand("ip addr | grep inet | grep 85"));
+    cmds.push_back(Command::makeReadCommand("uname -r"));
+
+    // send requests
+    std::vector<folly::Future<std::string>> futures;
+    for (const auto &cmd : cmds) {
+        futures.push_back(qcli.test(cmd));
+//        futures.push_back(qcli.executeAndRead(cmd));
+    }
+
+    // collect values
+    const std::vector<folly::Try<std::string>> &values = collectAll(futures.begin(), futures.end()).get();
+
+    // check values
+    EXPECT_EQ(values.size(), 3);
+    for (unsigned int i = 0; i < values.size(); ++i) {
+//    for (auto v : values) {
+//        std::cout << "main: value " << v.value() << "\n";
+        string cliOutput = boost::algorithm::trim_copy(values[i].value());
+        EXPECT_EQ(cliOutput, results[i]);
+    }
+}
 
 TEST_F(CliTest, api) {
   std::string foo("foo");
