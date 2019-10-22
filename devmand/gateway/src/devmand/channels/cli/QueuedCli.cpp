@@ -29,16 +29,16 @@ QueuedCli::QueuedCli(
 
 folly::Future<string> QueuedCli::executeAndRead(const Command& cmd) {
   bool empty = false;
-  LOG(INFO) << this << ": QCli received: '" << cmd.toString() << " ready ("
+  DLOG(INFO) << this << ": QCli received: '" << cmd.toString() << " ready ("
             << ready << ")'\n";
 
   if (outstandingCmds.size() >= hi_limit) {
-    LOG(INFO) << this << ": queue size (" << outstandingCmds.size()
+    DLOG(INFO) << this << ": queue size (" << outstandingCmds.size()
               << ") reached HI-limit -> WAIT\n";
     wait();
   }
 
-  LOG(INFO) << this << ": Enqueued '" << cmd
+  DLOG(INFO) << this << ": Enqueued '" << cmd
             << "' (queue size: " << outstandingCmds.size() << ")...\n";
 
   folly::Promise<std::string> p;
@@ -56,10 +56,10 @@ folly::Future<string> QueuedCli::executeAndRead(const Command& cmd) {
   }
 
   if (empty) {
-    LOG(INFO) << this << ": Executing...\n";
+    DLOG(INFO) << this << ": Executing...\n";
     outstandingCmds.front().setValue("GOGOGO");
   } else {
-    LOG(INFO) << this << ": Enqueued (queue size: " << outstandingCmds.size()
+    DLOG(INFO) << this << ": Enqueued (queue size: " << outstandingCmds.size()
               << ")...\n";
   }
 
@@ -69,19 +69,19 @@ folly::Future<string> QueuedCli::executeAndRead(const Command& cmd) {
 // THREAD SAFETY: there should only one command beinbg processed at time, so
 // there should be no race on returnAndExecNext
 folly::Future<string> QueuedCli::returnAndExecNext(std::string result) {
-  LOG(INFO) << this << ": returnAndExecNext '" << result << "'\n";
+  DLOG(INFO) << this << ": returnAndExecNext '" << result << "'\n";
 
   outstandingCmds.pop();
   if (!ready && outstandingCmds.size() <= lo_limit) {
-    LOG(INFO) << this << ": queue size reached LO-limit(" << lo_limit
+    DLOG(INFO) << this << ": queue size reached LO-limit(" << lo_limit
               << ") -> RELEASE\n";
     notify();
   }
 
   if (outstandingCmds.empty()) {
-    LOG(INFO) << this << ": Queue empty\n";
+    DLOG(INFO) << this << ": Queue empty\n";
   } else {
-    LOG(INFO) << this << ": Executing Next...\n";
+    DLOG(INFO) << this << ": Executing Next...\n";
     outstandingCmds.front().setValue("GOGOGO");
   }
   return folly::Future<std::string>(result);
