@@ -12,6 +12,7 @@
 #include <devmand/channels/cli/QueuedCli.h>
 #include <devmand/channels/cli/SshSessionAsync.h>
 #include <folly/executors/IOThreadPoolExecutor.h>
+#include <folly/executors/CPUThreadPoolExecutor.h>
 #include <folly/executors/ThreadedExecutor.h>
 #include <gtest/gtest.h>
 
@@ -67,9 +68,7 @@ TEST_F(CliTest, promptAwareCli) {
 
 TEST_F(CliTest, queuedCli) {
   QueuedCli qcli(std::make_shared<AsyncEchoCli>(
-          std::make_shared<folly::ThreadedExecutor>()),
-                  3,
-                  1);
+    std::make_shared<folly::ThreadedExecutor>()),3,1);
 
   std::vector<std::string> results;
     results.push_back("one");
@@ -110,25 +109,16 @@ TEST_F(CliTest, queuedCli) {
 
 TEST_F(CliTest, queuedCliMT) {
   const int loopcount = 10;
+  folly::CPUThreadPoolExecutor executor(8);
 
-  std::shared_ptr<folly::IOThreadPoolExecutor> io_executor =
-      std::make_shared<folly::IOThreadPoolExecutor>(10);
-  folly::ThreadedExecutor executor;
-  const std::shared_ptr<SshSessionAsync>& session =
-      std::make_shared<SshSessionAsync>(io_executor);
-  CliFlavour cliFlavour;
-  const std::shared_ptr<PromptAwareCli>& cli =
-      std::make_shared<PromptAwareCli>(session, cliFlavour);
-  cli->init("localhost", 22, "root", "root");
-  cli->resolvePrompt();
-//  QueuedCli qcli(cli);
-  QueuedCli qcli(std::make_shared<EchoCli>());
+  QueuedCli qcli(std::make_shared<AsyncEchoCli>(
+    std::make_shared<folly::ThreadedExecutor>()));
 
   // create requests
-  Command cmd = Command::makeReadCommand("whoami");
+  Command cmd = Command::makeReadCommand("hello");
   std::vector<folly::Future<std::string>> futures;
   for (int i = 0; i < loopcount; ++i) {
-    futures.push_back(qcli.executeAndRead(cmd).via(&executor));
+    futures.push_back(folly::via(&executor, [&, i]() { return qcli.executeAndRead(cmd); }));
   }
 
   // collect values
@@ -138,7 +128,7 @@ TEST_F(CliTest, queuedCliMT) {
   // check values
   EXPECT_EQ(values.size(), loopcount);
   for (auto v : values) {
-    EXPECT_EQ(boost::algorithm::trim_copy(v.value()), "root");
+    EXPECT_EQ(boost::algorithm::trim_copy(v.value()), "hello");
   }
 }
 
