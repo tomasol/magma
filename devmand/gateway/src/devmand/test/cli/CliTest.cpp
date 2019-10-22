@@ -66,39 +66,34 @@ TEST_F(CliTest, promptAwareCli) {
 }
 
 TEST_F(CliTest, queuedCli) {
-  std::shared_ptr<folly::IOThreadPoolExecutor> executor =
-      std::make_shared<folly::IOThreadPoolExecutor>(10);
-  const std::shared_ptr<SshSessionAsync>& session =
-      std::make_shared<SshSessionAsync>(executor);
-  CliFlavour cliFlavour;
-  const std::shared_ptr<PromptAwareCli>& cli =
-      std::make_shared<PromptAwareCli>(session, cliFlavour);
-  cli->init("localhost", 22, "root", "root");
-  cli->resolvePrompt();
-  QueuedCli qcli(cli, 3, 1);
+  QueuedCli qcli(std::make_shared<AsyncEchoCli>(
+          std::make_shared<folly::ThreadedExecutor>()),
+                  3,
+                  1);
 
   std::vector<std::string> results;
-  results.push_back("root");
-  results.push_back("inet 172.8.0.85/16 brd 172.8.255.255 scope global eth0");
-  results.push_back("4.15.0-65-generic");
-  results.push_back("");
-  results.push_back("/root");
-  results.push_back("hello");
-  results.push_back("-bash: foo: command not found");
+    results.push_back("one");
+    results.push_back("two");
+    results.push_back("three");
+    results.push_back("four");
+    results.push_back("five");
+    results.push_back("six");
+    results.push_back("seven");
 
   // create requests
   std::vector<Command> cmds;
-  cmds.push_back(Command::makeReadCommand("whoami"));
-  cmds.push_back(Command::makeReadCommand("ip addr | grep inet | grep 85"));
-  cmds.push_back(Command::makeReadCommand("uname -r"));
-  cmds.push_back(Command::makeReadCommand("sleep 1"));
-  cmds.push_back(Command::makeReadCommand("pwd"));
-  cmds.push_back(Command::makeReadCommand("echo \"hello\""));
-  cmds.push_back(Command::makeReadCommand("foo "));
+  cmds.push_back(Command::makeReadCommand("one"));
+  cmds.push_back(Command::makeReadCommand("two"));
+  cmds.push_back(Command::makeReadCommand("three"));
+  cmds.push_back(Command::makeReadCommand("four"));
+  cmds.push_back(Command::makeReadCommand("five"));
+  cmds.push_back(Command::makeReadCommand("six"));
+  cmds.push_back(Command::makeReadCommand("seven"));
 
   // send requests
   std::vector<folly::Future<std::string>> futures;
   for (const auto& cmd : cmds) {
+    DLOG(INFO) << "test exec '" << cmd << "'\n";
     futures.push_back(qcli.executeAndRead(cmd));
   }
 
@@ -126,7 +121,8 @@ TEST_F(CliTest, queuedCliMT) {
       std::make_shared<PromptAwareCli>(session, cliFlavour);
   cli->init("localhost", 22, "root", "root");
   cli->resolvePrompt();
-  QueuedCli qcli(cli);
+//  QueuedCli qcli(cli);
+  QueuedCli qcli(std::make_shared<EchoCli>());
 
   // create requests
   Command cmd = Command::makeReadCommand("whoami");

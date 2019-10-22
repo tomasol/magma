@@ -9,6 +9,8 @@
 
 #include <devmand/channels/cli/Command.h>
 #include <folly/futures/Future.h>
+#include <folly/futures/Promise.h>
+#include <folly/executors/ThreadedExecutor.h>
 
 namespace devmand {
 namespace channels {
@@ -42,6 +44,39 @@ class EchoCli : public Cli {
     return folly::Future<std::string>(cmd.toString());
   }
 };
+
+// TODO remove once not necessary (when the real CLI stack is implemented)
+
+    class AsyncEchoCli : public Cli {
+    public:
+        AsyncEchoCli(std::shared_ptr<folly::ThreadedExecutor> _executor) : executor(_executor) {}
+
+        folly::Future<std::string> executeAndRead(const Command& cmd) override {
+            DLOG(INFO) << ": AsyncEchoCli:executeAndRead '" << cmd << "'\n";
+
+            folly::Promise<std::string> p;
+            folly::Future<std::string> f = p.getFuture()
+                    .via(executor.get())
+                    .thenValue([=](...) { return delay(cmd); });
+            p.setValue("GOGOGO");
+            return f;
+        }
+
+        folly::Future<std::string> executeAndSwitchPrompt(
+                const Command& cmd) override {
+            return folly::Future<std::string>(cmd.toString());
+        }
+
+    private:
+        std::shared_ptr<folly::ThreadedExecutor> executor;
+
+        folly::Future<std::string> delay(const Command& cmd) {
+            DLOG(INFO) << ": AsyncEchoCli:delay '" << cmd << "' before\n";
+            sleep(1);
+            DLOG(INFO) << ": AsyncEchoCli:delay '" << cmd << "' after\n";
+            return folly::Future<std::string>(cmd.toString());
+        }
+    };
 
 } // namespace cli
 } // namespace channels
