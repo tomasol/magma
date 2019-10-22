@@ -11,9 +11,8 @@
 #include <folly/Format.h>
 
 #include <devmand/channels/cli/Channel.h>
+#include <devmand/channels/cli/IoConfigurationBuilder.h>
 #include <devmand/channels/cli/Cli.h>
-#include <devmand/channels/cli/PromptAwareCli.h>
-#include <devmand/channels/cli/SshSessionAsync.h>
 #include <devmand/devices/State.h>
 #include <devmand/devices/cli/PlaintextCliDevice.h>
 
@@ -24,35 +23,17 @@ namespace cli {
 using namespace devmand::channels::cli;
 using namespace devmand::channels::cli::sshsession;
 
-shared_ptr<IOThreadPoolExecutor> executor =
-    std::make_shared<folly::IOThreadPoolExecutor>(10);
-
 std::unique_ptr<devices::Device> PlaintextCliDevice::createDevice(
     Application& app,
     const cartography::DeviceConfig& deviceConfig) {
-  const auto& channelConfigs = deviceConfig.channelConfigs;
-  const auto& plaintextCliKv = channelConfigs.at("cli").kvPairs;
-  // crate session
-  const std::shared_ptr<SshSessionAsync>& session =
-      std::make_shared<SshSessionAsync>(executor);
-  // TODO opening SSH connection
-  session
-      ->openShell(
-          deviceConfig.ip,
-          std::stoi(plaintextCliKv.at("port")),
-          plaintextCliKv.at("username"),
-          plaintextCliKv.at("password"))
-      .get();
-  // TODO create CLI - how to create a CLI stack?
-  const shared_ptr<PromptAwareCli>& cli =
-      std::make_shared<PromptAwareCli>(session, CliFlavour());
-  // TODO initialize CLI
-  cli->initializeCli();
-  // TODO resolve prompt needs to happen
-  cli->resolvePrompt();
-  const std::shared_ptr<Channel>& channel = std::make_shared<Channel>(cli);
+
+  IoConfigurationBuilder ioConfigurationBuilder(deviceConfig);
+  const std::shared_ptr<Channel>& channel = std::make_shared<Channel>(ioConfigurationBuilder.getIo());
   return std::make_unique<devices::cli::PlaintextCliDevice>(
-      app, deviceConfig.id, plaintextCliKv.at("stateCommand"), channel);
+      app,
+      deviceConfig.id,
+      deviceConfig.channelConfigs.at("cli").kvPairs.at("stateCommand"),
+      channel);
 }
 
 PlaintextCliDevice::PlaintextCliDevice(
