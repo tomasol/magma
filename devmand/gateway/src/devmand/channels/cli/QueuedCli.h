@@ -16,11 +16,11 @@ namespace devmand {
 namespace channels {
 namespace cli {
 
-class QueuedCli : public Cli { // TODO: check thread safety
+class QueuedCli : public Cli {
  private:
   std::shared_ptr<Cli> cli;
   std::queue<folly::Promise<std::string>>
-      outstandingCmds; // TODO: check q size limit
+      outstandingCmds;
   std::mutex mutex;
 
  public:

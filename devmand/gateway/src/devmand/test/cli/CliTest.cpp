@@ -118,6 +118,7 @@ TEST_F(CliTest, queuedCliMT) {
   Command cmd = Command::makeReadCommand("hello");
   std::vector<folly::Future<std::string>> futures;
   for (int i = 0; i < loopcount; ++i) {
+    DLOG(INFO) << "test exec '" << cmd << "'\n";
     futures.push_back(folly::via(&executor, [&, i]() { return qcli.executeAndRead(cmd); }));
   }
 

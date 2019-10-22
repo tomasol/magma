@@ -12,6 +12,9 @@
 #include <folly/futures/Promise.h>
 #include <folly/executors/ThreadedExecutor.h>
 
+#include <chrono>
+#include <thread>
+
 namespace devmand {
 namespace channels {
 namespace cli {
@@ -71,9 +74,9 @@ class EchoCli : public Cli {
         std::shared_ptr<folly::ThreadedExecutor> executor;
 
         folly::Future<std::string> delay(const Command& cmd) {
-            DLOG(INFO) << ": AsyncEchoCli:delay '" << cmd << "' before\n";
-            sleep(1);
-            DLOG(INFO) << ": AsyncEchoCli:delay '" << cmd << "' after\n";
+            DLOG(INFO) << ": AsyncEchoCli:delay [" << std::this_thread::get_id() << "] '" << cmd << "' before\n";
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+            DLOG(INFO) << ": AsyncEchoCli:delay [" << std::this_thread::get_id() << "] '" << cmd << "' after\n";
             return folly::Future<std::string>(cmd.toString());
         }
     };
