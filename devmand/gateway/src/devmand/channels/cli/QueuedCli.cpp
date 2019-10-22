@@ -29,8 +29,8 @@ QueuedCli::QueuedCli(
 
 folly::Future<string> QueuedCli::executeAndRead(const Command& cmd) {
   bool empty = false;
-  DLOG(INFO) << this << ": QCli received: '" << cmd.toString() << " ready ("
-            << ready << ")'\n";
+  DLOG(INFO) << this << ": QCli received: '" << cmd.toString() << "' ready ("
+            << ready << ")\n";
 
   if (outstandingCmds.size() >= hi_limit) {
     DLOG(INFO) << this << ": queue size (" << outstandingCmds.size()
