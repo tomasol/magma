@@ -45,7 +45,7 @@ class Model {
   static const Model IETF_0_1_5;
 };
 
-struct Bundle {
+class Bundle {
  public:
   explicit Bundle(const Model& model);
   Bundle() = delete;
@@ -96,7 +96,7 @@ class SerializationException : public std::exception {
     msg = buffer.str();
   };
 
-  SerializationException(shared_ptr<Entity> _entity, string _cause) {
+  SerializationException(shared_ptr<Entity>& _entity, string _cause) {
     std::stringstream buffer;
     buffer << "Failed to decode: " << typeid(*_entity).name() << " due to "
            << _cause;

@@ -12,8 +12,6 @@
 #include <folly/executors/CPUThreadPoolExecutor.h>
 #include <folly/futures/Future.h>
 #include <gtest/gtest.h>
-// Point the code to the right make_unique, not the one in ydk/types.h
-using std::make_unique;
 #include <devmand/devices/cli/ModelRegistry.h>
 #include <spdlog/spdlog.h>
 #include <ydk_ietf/iana_if_type.hpp>

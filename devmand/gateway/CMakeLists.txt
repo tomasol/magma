@@ -79,6 +79,8 @@ target_link_libraries(devman
   ssh_threads
   pcre
   ydk
+  ydk_openconfig
+  ydk_ietf
   curl
   xslt
   xml2
@@ -118,6 +120,7 @@ add_library(devman_channel_cli
   ${PROJECT_SOURCE_DIR}/src/devmand/channels/cli/CliFlavour.cpp
   ${PROJECT_SOURCE_DIR}/src/devmand/channels/cli/SshSessionAsync.cpp
   ${PROJECT_SOURCE_DIR}/src/devmand/devices/cli/PlaintextCliDevice.cpp
+  ${PROJECT_SOURCE_DIR}/src/devmand/devices/cli/StructuredUbntDevice.cpp
   ${PROJECT_SOURCE_DIR}/src/devmand/devices/cli/ModelRegistry.cpp
   ${PROJECT_SOURCE_DIR}/src/devmand/channels/cli/Spd2Glog.cpp
   ${PROJECT_SOURCE_DIR}/src/devmand/channels/cli/IoConfigurationBuilder.cpp
@@ -187,11 +190,6 @@ target_link_libraries(devmantest
   devman
   devman_channel_snmp
   devman_channel_cli
-
-  # FIXME remove these dependencies from test, once they are used in cli package
-  ydk_openconfig
-  ydk_ietf
-
   gtest
   gtest_main
   devman_service_magma)

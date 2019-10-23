@@ -21,12 +21,13 @@
 #include <devmand/devices/FrinxDevice.h>
 #include <devmand/devices/PingDevice.h>
 #include <devmand/devices/Snmpv2Device.h>
-#include <devmand/devices/mikrotik/Device.h>
 #include <devmand/devices/cli/PlaintextCliDevice.h>
+#include <devmand/devices/cli/StructuredUbntDevice.h>
+#include <devmand/devices/mikrotik/Device.h>
 #include <devmand/magma/DevConf.h>
 #include <devmand/magma/Service.h>
-#include <libssh/libssh.h>
 #include <libssh/callbacks.h>
+#include <libssh/libssh.h>
 
 static void log_callback(int priority, const char *function, const char *buffer, void *userData) {
   (void) priority;
@@ -68,7 +69,11 @@ int main(int argc, char* argv[]) {
     app.addPlatform("Ping", devmand::devices::PingDevice::createDevice);
     app.addPlatform("Snmp", devmand::devices::Snmpv2Device::createDevice);
   }
-  app.addPlatform("PlaintextCli", devmand::devices::cli::PlaintextCliDevice::createDevice);
+  // CLI
+  {
+    app.addPlatform("PlaintextCli", devmand::devices::cli::PlaintextCliDevice::createDevice);
+    app.addPlatform("StructuredUbntCli", devmand::devices::cli::StructuredUbntDevice::createDevice);
+  }
 
   app.setDefaultPlatform(devmand::devices::Snmpv2Device::createDevice);
 
