@@ -1,6 +1,7 @@
 #pragma once
 
 #include <boost/algorithm/string.hpp>
+#include <ydk/types.hpp>
 #include <regex>
 #include <vector>
 
@@ -50,11 +51,26 @@ vector<T> parseKeys(
   return retval;
 }
 
-extern void parseValue(
+void parseValue(
     const string& output,
     const regex& pattern,
     const uint& groupToExtract,
     const std::function<void(string)>& setter);
+
+template <typename T>
+void parseLeaf(
+    const string& output,
+    const regex& pattern,
+    ydk::YLeaf& leaf,
+    const uint& groupToExtract = 1,
+    const function<T(string)>& postProcess = [](auto str) { return str; }) {
+  parseValue(output, pattern, groupToExtract, [&postProcess, &leaf](string v) {
+    leaf = postProcess(v);
+  });
+}
+
+extern function<ydk::uint64(string)> toUI64;
+extern function<ydk::uint16(string)> toUI16;
 
 } // namespace cli
 } // namespace devices

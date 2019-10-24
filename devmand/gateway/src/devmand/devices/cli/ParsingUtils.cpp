@@ -6,6 +6,9 @@ namespace cli {
 
 using namespace std;
 
+function<ydk::uint64(string)> toUI64 = [](auto s) { return stoull(s); };
+function<ydk::uint16(string)> toUI16 = [](auto s) { return stoi(s); };
+
 void parseValue(
     const string& output,
     const regex& pattern,

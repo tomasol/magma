@@ -77,7 +77,7 @@ class UbntFakeCli : public Cli {
           "";
     } else if (cmd.toString().find("show interface ethernet") == 0) {
       return "\n"
-             "Total Packets Received (Octets)................ 4270668181\n"
+             "Total Packets Received (Octets)................ 42706681\n"
              "Packets Received 64 Octets..................... 2522468\n"
              "Packets Received 65-127 Octets................. 235916\n"
              "Packets Received 128-255 Octets................ 2334087\n"
@@ -222,130 +222,100 @@ StructuredUbntDevice::StructuredUbntDevice(
     : Device(application, id_), channel(_channel) {}
 
 using Ifcs = openconfig::openconfig_interfaces::Interfaces;
-using AdminState = Ifcs::Interface::State::AdminStatus;
-using OperState = Ifcs::Interface::State::OperStatus;
+using Ifc = openconfig::openconfig_interfaces::Interfaces::Interface;
+using AdminState = Ifc::State::AdminStatus;
+using OperState = Ifc::State::OperStatus;
+
+static const auto shutdown = regex("shutdown");
+static const auto description = regex(R"(description '?(.+?)'?)");
+static const auto mtu = regex(R"(mtu (.+))");
 
 static void parseConfig(
     Channel& channel,
     const string& ifcId,
-    shared_ptr<Ifcs::Interface::Config>& cfg) {
+    shared_ptr<Ifc::Config>& cfg) {
   const Command cmd =
       Command::makeReadCommand("show running-config interface " + ifcId);
   string output = channel.executeAndRead(cmd).get();
 
   cfg->name = ifcId;
+  parseLeaf(output, mtu, cfg->mtu, 1, toUI16);
+  parseLeaf<string>(output, description, cfg->description);
   cfg->enabled = true;
-  parseValue(output, regex("shutdown"), 0, [&cfg](string value) {
-    cfg->enabled = "shutdown" == value;
+  parseLeaf<bool>(output, shutdown, cfg->enabled, 0, [](auto str) {
+    return "shutdown" == str;
   });
 
-  // TODO support other types
-  cfg->type = regex_match(ifcId, regex(R"(\d+/\d+)"))
-      ? (ietf::iana_if_type::IanaInterfaceType)
-            ietf::iana_if_type::EthernetCsmacd()
-      : (ietf::iana_if_type::IanaInterfaceType)ietf::iana_if_type::Other();
-
-  parseValue(
-      output, regex(R"(description '?(.+?)'?)"), 1, [&cfg](string value) {
-        cfg->description = value;
-      });
-
-  parseValue(output, regex(R"(mtu (.+))"), 1, [&cfg](string value) {
-    cfg->mtu = stoi(value);
-  });
+  if (regex_match(ifcId, regex(R"(\d+/\d+)"))) {
+    cfg->type = ietf::iana_if_type::EthernetCsmacd();
+  } else {
+    cfg->type = ietf::iana_if_type::Other();
+  }
 }
+
+static const auto inOct =
+    regex(R"(Total Packets Received \(Octets\).*?(\d+).*)");
+static const auto inUPkt = regex(R"(Unicast Packets Received.*?(\d+).*)");
+static const auto inMPkt = regex(R"(Multicast Packets Received.*?(\d+).*)");
+static const auto inBPkt = regex(R"(Broadcast Packets Received.*?(\d+).*)");
+static const auto inDisc = regex(R"(Receive Packets Discarded.*?(\d+).*)");
+static const auto inErrors =
+    regex(R"(Total Packets Received with MAC Errors.*?(\d+).*)");
+
+static const auto outOct =
+    regex(R"(Total Packets Transmitted \(Octets\).*?(\d+).*)");
+static const auto outUPkt = regex(R"(Unicast Packets Transmitted.*?(\d+).*)");
+static const auto outMPkt = regex(R"(Multicast Packets Transmitted.*?(\d+).*)");
+static const auto outBPkt = regex(R"(Broadcast Packets Transmitted.*?(\d+).*)");
+static const auto outDisc = regex(R"(Transmit Packets Discarded.*?(\d+).*)");
+static const auto outErrors = regex(R"(Total Transmit Errors.*?(\d+).*)");
+
+static const auto counterReset =
+    regex(R"(Time Since Counters Last Cleared.*?([^.]+).*)");
 
 static void parseEthernetCounters(
     const string& output,
-    shared_ptr<Ifcs::Interface::State::Counters>& ctr) {
+    shared_ptr<Ifc::State::Counters>& ctr) {
   // FIXME there is a bug in YDK
   // https://github.com/CiscoDevNet/ydk-cpp/blob/58f8dc4f6d078ec8c672c96bf8db7ecb84d14007/core/ydk/src/json_subtree_codec.cpp#L227
   // they assume any number to be an int, bigger numbers such as uint64 below
   // fail the encoding process
 
-  parseValue(
-      output,
-      regex(R"(Total Packets Received \(Octets\).*?(\d+).*)"),
-      1,
-      [&ctr](string v) { ctr->in_octets = stoull(v); });
-  parseValue(
-      output,
-      regex(R"(Unicast Packets Received.*?(\d+).*)"),
-      1,
-      [&ctr](string v) { ctr->in_unicast_pkts = stoull(v); });
-  parseValue(
-      output,
-      regex(R"(Multicast Packets Received.*?(\d+).*)"),
-      1,
-      [&ctr](string v) { ctr->in_multicast_pkts = stoull(v); });
-  parseValue(
-      output,
-      regex(R"(Broadcast Packets Received.*?(\d+).*)"),
-      1,
-      [&ctr](string v) { ctr->in_broadcast_pkts = stoull(v); });
-  parseValue(
-      output,
-      regex(R"(Receive Packets Discarded.*?(\d+).*)"),
-      1,
-      [&ctr](string v) { ctr->in_discards = stoull(v); });
-  parseValue(
-      output,
-      regex(R"(Total Packets Received with MAC Errors.*?(\d+).*)"),
-      1,
-      [&ctr](string v) { ctr->in_errors = stoull(v); });
+  parseLeaf(output, inOct, ctr->in_octets, 1, toUI64);
+  parseLeaf(output, inUPkt, ctr->in_unicast_pkts, 1, toUI64);
+  parseLeaf(output, inMPkt, ctr->in_multicast_pkts, 1, toUI64);
+  parseLeaf(output, inBPkt, ctr->in_broadcast_pkts, 1, toUI64);
+  parseLeaf(output, inDisc, ctr->in_discards, 1, toUI64);
+  parseLeaf(output, inErrors, ctr->in_errors, 1, toUI64);
 
-  parseValue(
-      output,
-      regex(R"(Total Packets Transmitted \(Octets\).*?(\d+).*)"),
-      1,
-      [&ctr](string v) { ctr->out_octets = stoull(v); });
-  parseValue(
-      output,
-      regex(R"(Unicast Packets Transmitted.*?(\d+).*)"),
-      1,
-      [&ctr](string v) { ctr->out_unicast_pkts = stoull(v); });
-  parseValue(
-      output,
-      regex(R"(Multicast Packets Transmitted.*?(\d+).*)"),
-      1,
-      [&ctr](string v) { ctr->out_multicast_pkts = stoull(v); });
-  parseValue(
-      output,
-      regex(R"(Broadcast Packets Transmitted.*?(\d+).*)"),
-      1,
-      [&ctr](string v) { ctr->out_broadcast_pkts = stoull(v); });
-  parseValue(
-      output,
-      regex(R"(Transmit Packets Discarded.*?(\d+).*)"),
-      1,
-      [&ctr](string v) { ctr->out_discards = stoull(v); });
-  parseValue(
-      output, regex(R"(Total Transmit Errors.*?(\d+).*)"), 1, [&ctr](string v) {
-        ctr->out_errors = stoull(v);
-      });
+  parseLeaf(output, outOct, ctr->out_octets, 1, toUI64);
+  parseLeaf(output, outUPkt, ctr->out_unicast_pkts, 1, toUI64);
+  parseLeaf(output, outMPkt, ctr->out_multicast_pkts, 1, toUI64);
+  parseLeaf(output, outBPkt, ctr->out_broadcast_pkts, 1, toUI64);
+  parseLeaf(output, outDisc, ctr->out_discards, 1, toUI64);
+  parseLeaf(output, outErrors, ctr->out_errors, 1, toUI64);
 
-  parseValue(
-      output,
-      regex(R"(Time Since Counters Last Cleared.*?([^.]+).*)"),
-      1,
-      [&ctr](string v) { ctr->last_clear = v; });
+  parseLeaf<string>(output, counterReset, ctr->last_clear, 1);
 }
+
+static const auto mtuState = regex(R"(Max Frame Size.*?(\d+).*)");
 
 static void parseState(
     Channel& channel,
     const string& ifcId,
-    shared_ptr<Ifcs::Interface::State>& state,
-    const shared_ptr<Ifcs::Interface::Config>& cfg) {
+    shared_ptr<Ifc::State>& state,
+    const shared_ptr<Ifc::Config>& cfg) {
   const Command cmdState =
       Command::makeReadCommand("show interfaces description");
-  string outputState = channel.executeAndRead(cmdState).get();
+  string stateOut = channel.executeAndRead(cmdState).get();
+  const auto regexIfcState = regex(ifcId + R"(\s+(\S+)\s+(\S+)\s*(.*))");
 
   state->name = cfg->name.get();
   state->type = cfg->type.get();
   state->enabled = cfg->enabled.get();
+  parseLeaf<string>(stateOut, regexIfcState, state->description, 3);
 
-  const auto regexIfcState = regex(ifcId + R"(\s+(\S+)\s+(\S+)\s*(.*))");
-  parseValue(outputState, regexIfcState, 1, [&state](string value) {
+  parseValue(stateOut, regexIfcState, 1, [&state](string value) {
     if ("Enable" == value) {
       state->admin_status = AdminState::UP;
     } else if ("Disable" == value) {
@@ -353,7 +323,7 @@ static void parseState(
     }
   });
 
-  parseValue(outputState, regexIfcState, 2, [&state](string value) {
+  parseValue(stateOut, regexIfcState, 2, [&state](string value) {
     if ("Up" == value) {
       state->oper_status = OperState::UP;
     } else if ("Down" == value) {
@@ -361,36 +331,17 @@ static void parseState(
     }
   });
 
-  parseValue(outputState, regexIfcState, 3, [&state](string value) {
-    state->description = value;
-  });
-
-  YLeaf et(YType::identityref, "type");
-  et.set(ietf::iana_if_type::EthernetCsmacd());
-
-  if (cfg->type == et) {
+  if (cfg->type.get() == ietf::iana_if_type::EthernetCsmacd().to_string()) {
     const Command cmdStateEth =
         Command::makeReadCommand("show interface ethernet " + ifcId);
     string outputStateEth = channel.executeAndRead(cmdStateEth).get();
-    parseValue(
-        outputStateEth,
-        regex(R"(Max Frame Size.*?(\d+).*)"),
-        1,
-        [&state](string value) { state->mtu = stoi(value); });
-
-    // FIXME Uncomment line once bug in YDK is fixed, see parseEthernetCounters
-    // for details
-
-    // parseEthernetCounters(outputStateEth, state->counters);
-    auto ctr = make_shared<Ifcs::Interface::State::Counters>();
-    parseEthernetCounters(outputStateEth, ctr);
+    parseLeaf(outputStateEth, mtuState, state->mtu, 1, toUI16);
+    parseEthernetCounters(outputStateEth, state->counters);
   }
 }
 
-static shared_ptr<Ifcs::Interface> parseInterface(
-    Channel& channel,
-    const string& ifcId) {
-  auto ifc = make_shared<Ifcs::Interface>();
+static shared_ptr<Ifc> parseInterface(Channel& channel, const string& ifcId) {
+  auto ifc = make_shared<Ifc>();
   ifc->name = ifcId;
   parseConfig(channel, ifcId, ifc->config);
   parseState(channel, ifcId, ifc->state, ifc->config);
@@ -401,10 +352,9 @@ static shared_ptr<Ifcs> parseIfcs(Channel& channel) {
   auto cmd = Command::makeReadCommand("show interfaces description");
   string output = channel.executeAndRead(cmd).get();
   regex ifcIdRegex(R"(^(\S+)\s+(\S+)\s+(\S+)\s*(.*))");
-  vector<string> ids = parseKeys<string>(output, ifcIdRegex, 1, 3);
 
   auto interfaces = make_shared<Ifcs>();
-  for (auto& ifcId : ids) {
+  for (auto& ifcId : parseKeys<string>(output, ifcIdRegex, 1, 3)) {
     interfaces->interface.append(parseInterface(channel, ifcId));
   }
   return interfaces;
@@ -418,11 +368,10 @@ shared_ptr<State> StructuredUbntDevice::getState() {
   state->setStatus(true);
 
   auto& bundle = mreg->getBundle(Model::OPENCONFIG_0_1_6);
-
   auto ifcs = parseIfcs(*channel);
+
   // TODO the conversion here is: Object -> Json -> folly:dynamic
   // the json step is unnecessary
-
   string json = bundle.encode(*ifcs);
   folly::dynamic dynamicIfcs = folly::parseJson(json);
   state->update([&dynamicIfcs](folly::dynamic& lockedState) {
