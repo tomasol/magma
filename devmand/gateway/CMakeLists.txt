@@ -120,6 +120,7 @@ add_library(devman_channel_cli
   ${PROJECT_SOURCE_DIR}/src/devmand/channels/cli/CliFlavour.cpp
   ${PROJECT_SOURCE_DIR}/src/devmand/channels/cli/SshSessionAsync.cpp
   ${PROJECT_SOURCE_DIR}/src/devmand/devices/cli/PlaintextCliDevice.cpp
+  ${PROJECT_SOURCE_DIR}/src/devmand/devices/cli/ParsingUtils.cpp
   ${PROJECT_SOURCE_DIR}/src/devmand/devices/cli/StructuredUbntDevice.cpp
   ${PROJECT_SOURCE_DIR}/src/devmand/devices/cli/ModelRegistry.cpp
   ${PROJECT_SOURCE_DIR}/src/devmand/channels/cli/Spd2Glog.cpp
