@@ -6,6 +6,7 @@
 // of patent rights can be found in the PATENTS file in the same directory.
 
 #include <devmand/channels/cli/SshSessionAsync.h>
+#include <devmand/channels/cli/SshSession.h>
 #include <folly/executors/IOThreadPoolExecutor.h>
 #include <folly/futures/Future.h>
 
@@ -15,6 +16,7 @@ namespace cli {
 namespace sshsession {
 
 using devmand::channels::cli::sshsession::SshSessionAsync;
+using devmand::channels::cli::sshsession::SshSession;
 
 SshSessionAsync::SshSessionAsync(shared_ptr<IOThreadPoolExecutor> _executor)
     : executor(_executor) {}
@@ -51,6 +53,11 @@ Future<string> SshSessionAsync::readUntilOutput(string lastOutput) {
   return via(executor.get(), [this, lastOutput] {
     return session.readUntilOutput(lastOutput);
   });
+}
+
+
+SshSession * SshSessionAsync::getSshSession() { //TODO leaking internal stuff
+   return &(this->session);
 }
 
 } // namespace sshsession

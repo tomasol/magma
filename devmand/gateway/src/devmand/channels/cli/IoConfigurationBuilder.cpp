@@ -8,11 +8,40 @@
 #include <devmand/channels/cli/IoConfigurationBuilder.h>
 #include <devmand/channels/cli/PromptAwareCli.h>
 #include <devmand/channels/cli/SshSessionAsync.h>
+#include <devmand/channels/cli/SshSession.h>
 #include <folly/executors/IOThreadPoolExecutor.h>
 
 namespace devmand::channels::cli {
     using devmand::channels::cli::IoConfigurationBuilder;
+    using devmand::channels::cli::sshsession::SshSession;
+    using devmand::channels::cli::sshsession::SshSessionAsync;
     using folly::IOThreadPoolExecutor;
+
+
+void cb(evutil_socket_t fd, short , void *ptr);
+void cb(evutil_socket_t fd, short what, void *ptr)
+{
+    (void) fd;
+    (void) what;
+    auto * sshSession = (SshSession *)ptr;
+   const std::string &output = sshSession->read();
+    sshSession->readQueue.push(output);
+}
+
+void sshReadNotificationThread(SshSession *sshSession);
+void sshReadNotificationThread(SshSession *sshSession)
+{
+    //event_set_log_callback(write_to_file_cb); //TODO have a log callback
+    struct event_base *base;
+    struct event *event_on_heap;
+    //event_enable_debug_mode(); //TODO set debug?
+    base = event_base_new();
+    event_on_heap = event_new(base, sshSession->getSshFd(), EV_READ|EV_PERSIST, cb, sshSession);
+    event_add(event_on_heap, NULL);
+    event_base_dispatch(base);
+    event_free(event_on_heap);
+    event_base_free(base);
+}
 
     //TODO executor?
     shared_ptr<IOThreadPoolExecutor> executor =
@@ -35,6 +64,8 @@ namespace devmand::channels::cli {
                         plaintextCliKv.at("username"),
                         plaintextCliKv.at("password"))
                 .get();
+        std::thread notificationThread(sshReadNotificationThread, session->getSshSession());
+        notificationThread.detach();
         // TODO create CLI - how to create a CLI stack?
         const shared_ptr<PromptAwareCli>& cli =
                 std::make_shared<PromptAwareCli>(session, CliFlavour());

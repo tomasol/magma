@@ -30,8 +30,7 @@ class SshSessionAsync {
  private:
   shared_ptr<IOThreadPoolExecutor> executor;
   SshSession session;
-
- public:
+public:
   explicit SshSessionAsync(shared_ptr<IOThreadPoolExecutor> _executor);
   Future<Unit> openShell(
       const string& ip,
@@ -39,9 +38,10 @@ class SshSessionAsync {
       const string& username,
       const string& password);
   Future<Unit> write(const string& command);
-  Future<string> read(int timeoutMillis);
+  Future<string> read(int timeoutMillis); //for clearing ssh channel and prompt resolving
   Future<string> readUntilOutput(string lastOutput);
   Future<Unit> close();
+  SshSession * getSshSession();
   ~SshSessionAsync();
 };
 

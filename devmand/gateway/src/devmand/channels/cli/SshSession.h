@@ -10,6 +10,8 @@
 #include <devmand/channels/Channel.h>
 #include <devmand/channels/cli/Cli.h>
 #include <libssh/libssh.h>
+#include <boost/lockfree/spsc_queue.hpp>
+#include <boost/lockfree/policies.hpp>
 
 namespace devmand {
 namespace channels {
@@ -18,6 +20,8 @@ namespace sshsession {
 
 using std::runtime_error;
 using std::string;
+using boost::lockfree::spsc_queue;
+using boost::lockfree::capacity;
 
 class SshSession {
  private:
@@ -34,7 +38,10 @@ class SshSession {
   void terminate();
 
  public:
+  spsc_queue<string, capacity<200>> readQueue;
+
   explicit SshSession(int verbosity);
+  socket_t getSshFd();
   SshSession();
   ~SshSession();
 
@@ -46,6 +53,7 @@ class SshSession {
   void close();
   void write(const string& command);
   string read(int timeoutMillis);
+  string read();
   string readUntilOutput(string lastOutput);
 };
 

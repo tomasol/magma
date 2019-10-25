@@ -41,7 +41,7 @@ PromptAwareCli::PromptAwareCli(
     CliFlavour _cliFlavour)
     : session(_session), cliFlavour(_cliFlavour) {}
 
-void PromptAwareCli::init(
+void PromptAwareCli::init( //TODO remove
     const string hostname,
     const int port,
     const string username,

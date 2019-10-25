@@ -97,8 +97,15 @@ string SshSession::read(int timeoutMillis) {
 
   while (ssh_channel_is_open(sessionState.channel) &&
          !ssh_channel_is_eof(sessionState.channel)) {
-    int bytes_read = ssh_channel_read_timeout(
-        sessionState.channel, buffer, sizeof(buffer), 0, timeoutMillis);
+      int bytes_read;
+      if (timeoutMillis == -1) {
+          bytes_read = ssh_channel_read_nonblocking(
+          sessionState.channel, buffer, sizeof(buffer), 0);
+      } else {
+          bytes_read = ssh_channel_read_timeout(
+          sessionState.channel, buffer, sizeof(buffer), 0, timeoutMillis);
+      }
+
     if (bytes_read < 0) {
       LOG(ERROR) << "Error reading data from SSH connection, read bytes: "
                  << bytes_read;
@@ -132,13 +139,13 @@ SshSession::~SshSession() {
 
 SshSession::SshSession(int _verbosity) : verbosity(_verbosity) {}
 
-SshSession::SshSession() : verbosity(SSH_LOG_NOLOG) {}
+SshSession::SshSession() : verbosity(SSH_LOG_PROTOCOL) {}
 
 string SshSession::readUntilOutput(string lastOutput) {
   string result;
-  while (true) {
-    string&& output = read(1000); // TODO 1000 ms?
-    if (output.empty()) {
+  while (true) { //TODO this wastes CPU if output from SSH is delayed
+    string output;
+    if (!readQueue.pop(output) || output.empty()) {
       continue;
     }
     result.append(output);
@@ -149,6 +156,14 @@ string SshSession::readUntilOutput(string lastOutput) {
     }
   }
 }
+
+    string SshSession::read() {
+        return read(-1);
+    }
+
+    socket_t SshSession::getSshFd() {
+        return ssh_get_fd(sessionState.session);
+    }
 
 } // namespace sshsession
 } // namespace cli
