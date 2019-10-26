@@ -157,8 +157,9 @@ string SshSession::readUntilOutput(string lastOutput) {
   }
 }
 
-    string SshSession::read() {
-        return read(-1);
+    void SshSession::read() {
+        const string &output = read(-1);
+        readQueue.push(output);
     }
 
     socket_t SshSession::getSshFd() {

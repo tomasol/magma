@@ -11,6 +11,7 @@
 #include <devmand/channels/cli/SshSession.h>
 #include <folly/executors/IOThreadPoolExecutor.h>
 #include <folly/futures/Future.h>
+#include <event2/event.h>
 
 namespace devmand {
 namespace channels {
@@ -30,6 +31,7 @@ class SshSessionAsync {
  private:
   shared_ptr<IOThreadPoolExecutor> executor;
   SshSession session;
+  event * sessionEvent;
 public:
   explicit SshSessionAsync(shared_ptr<IOThreadPoolExecutor> _executor);
   Future<Unit> openShell(
@@ -41,7 +43,9 @@ public:
   Future<string> read(int timeoutMillis); //for clearing ssh channel and prompt resolving
   Future<string> readUntilOutput(string lastOutput);
   Future<Unit> close();
-  SshSession * getSshSession();
+  void setEvent(event *);
+  void read();
+  socket_t getSshFd();
   ~SshSessionAsync();
 };
 

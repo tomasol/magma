@@ -53,7 +53,7 @@ class SshSession {
   void close();
   void write(const string& command);
   string read(int timeoutMillis);
-  string read();
+  void read();
   string readUntilOutput(string lastOutput);
 };
 
