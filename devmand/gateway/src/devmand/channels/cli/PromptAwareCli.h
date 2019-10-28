@@ -25,10 +25,10 @@ using std::string;
 class PromptAwareCli : public Cli {
  private:
   shared_ptr<SshSessionAsync> session;
-  CliFlavour cliFlavour;
+  shared_ptr<CliFlavour> cliFlavour;
 
  public:
-  PromptAwareCli(shared_ptr<SshSessionAsync> session, CliFlavour cliFlavour);
+  PromptAwareCli(shared_ptr<SshSessionAsync> session, shared_ptr<CliFlavour> cliFlavour);
 
   string prompt;
 

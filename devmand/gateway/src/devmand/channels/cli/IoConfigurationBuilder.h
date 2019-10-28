@@ -19,12 +19,9 @@ using std::shared_ptr;
 namespace devmand::channels::cli {
 class IoConfigurationBuilder {
 private:
-    CliFlavour cliFlavour;
     DeviceConfig deviceConfig;
 public:
-    IoConfigurationBuilder(
-            const DeviceConfig &deviceConfig,
-            const CliFlavour &cliFlavour = CliFlavour());
+    IoConfigurationBuilder(const DeviceConfig &deviceConfig);
 
     shared_ptr<Cli> getIo();
 };

@@ -62,9 +62,11 @@ TEST_F(PlaintextCliDeviceTest, ubiquiti) {
   kvPairs.insert(std::make_pair("port", "22"));
   kvPairs.insert(std::make_pair("username", "ubnt"));
   kvPairs.insert(std::make_pair("password", "ubnt"));
+  kvPairs.insert(std::make_pair("flavour", "ubiquiti"));
   chnlCfg.kvPairs = kvPairs;
   deviceConfig.channelConfigs.insert(std::make_pair("cli", chnlCfg));
   deviceConfig.ip = "10.19.0.245";
+  deviceConfig.id = "ubiquiti-test-device";
   std::unique_ptr<devices::Device> dev =
       PlaintextCliDevice::createDevice(app, deviceConfig);
 

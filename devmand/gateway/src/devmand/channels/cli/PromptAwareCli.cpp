@@ -21,24 +21,24 @@ namespace channels {
 namespace cli {
 
 void PromptAwareCli::resolvePrompt() {
-  this->prompt = cliFlavour.resolver.resolvePrompt(session, cliFlavour.newline);
+  this->prompt = cliFlavour->resolver->resolvePrompt(session, cliFlavour->newline);
 }
 
 void PromptAwareCli::initializeCli() {
-  cliFlavour.initializer.initialize(session);
+  cliFlavour->initializer->initialize(session);
 }
 
 folly::Future<string> PromptAwareCli::executeAndRead(const Command& cmd) {
   const string& command = cmd.toString();
   return session->write(command)
       .thenValue([=](...) { return session->readUntilOutput(command); })
-      .thenValue([=](...) { return session->write(cliFlavour.newline); })
+      .thenValue([=](...) { return session->write(cliFlavour->newline); })
       .thenValue([=](...) { return session->readUntilOutput(prompt); });
 }
 
 PromptAwareCli::PromptAwareCli(
     shared_ptr<SshSessionAsync> _session,
-    CliFlavour _cliFlavour)
+    shared_ptr<CliFlavour> _cliFlavour)
     : session(_session), cliFlavour(_cliFlavour) {}
 
 void PromptAwareCli::init( //TODO remove

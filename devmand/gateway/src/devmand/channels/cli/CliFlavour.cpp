@@ -17,10 +17,16 @@ using devmand::channels::cli::CliFlavour;
 using devmand::channels::cli::CliInitializer;
 using devmand::channels::cli::PromptResolver;
 using devmand::channels::cli::sshsession::SshSessionAsync;
+using devmand::channels::cli::EmptyInitializer;
+using devmand::channels::cli::UbiquitiInitializer;
 
 static const int DEFAULT_MILLIS = 1000; // TODO value?
 
-void CliInitializer::initialize(shared_ptr<SshSessionAsync> session) {
+void EmptyInitializer::initialize(shared_ptr<SshSessionAsync> session) {
+    (void) session;
+}
+
+void UbiquitiInitializer::initialize(shared_ptr<SshSessionAsync> session) {
   session->write("enable\n")
       .thenValue([=](...) { return session->write("ubnt\n"); })
       .thenValue([=](...) { return session->write("terminal length 0\n"); })
@@ -67,10 +73,15 @@ void PromptResolver::removeEmptyStrings(std::vector<string>& split) const {
 }
 
 CliFlavour::CliFlavour(
-    PromptResolver _resolver,
-    CliInitializer _initializer,
+    PromptResolver * _resolver,
+    CliInitializer * _initializer,
     string _newline)
     : resolver(_resolver), initializer(_initializer), newline(_newline) {}
+
+CliFlavour::~CliFlavour() {
+    delete resolver;
+    delete initializer;
+}
 
 } // namespace cli
 } // namespace channels

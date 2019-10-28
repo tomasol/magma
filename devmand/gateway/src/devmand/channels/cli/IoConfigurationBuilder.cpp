@@ -12,6 +12,7 @@
 #include <folly/executors/IOThreadPoolExecutor.h>
 #include <folly/Singleton.h>
 #include <devmand/channels/cli/SshSocketReader.h>
+#include <magma_logging.h>
 
 namespace devmand::channels::cli {
     using devmand::channels::cli::IoConfigurationBuilder;
@@ -26,11 +27,10 @@ namespace devmand::channels::cli {
             std::make_shared<IOThreadPoolExecutor>(10);
 
     IoConfigurationBuilder::IoConfigurationBuilder(
-            const DeviceConfig &_deviceConfig,
-            const CliFlavour &_cliFlavour)
-            : cliFlavour(_cliFlavour), deviceConfig(_deviceConfig) {}
+            const DeviceConfig &_deviceConfig) : deviceConfig(_deviceConfig) {}
 
     shared_ptr<Cli> IoConfigurationBuilder::getIo() {
+        MLOG(MDEBUG) << "Creating CLI ssh device for " << deviceConfig.id << " (host: " << deviceConfig.ip << ")";
         const auto& plaintextCliKv = deviceConfig.channelConfigs.at("cli").kvPairs;
         // crate session
         const std::shared_ptr<SshSessionAsync>& session =
@@ -42,9 +42,19 @@ namespace devmand::channels::cli {
                         plaintextCliKv.at("username"),
                         plaintextCliKv.at("password"))
                 .get();
+        //TODO externalize this flavour resolution logic
+        shared_ptr<CliFlavour> cl;
+        if ( plaintextCliKv.find("flavour") != plaintextCliKv.end()) {
+            if (plaintextCliKv.at("flavour") == "ubiquiti") {
+                cl = std::make_shared<CliFlavour>(new PromptResolver(), new UbiquitiInitializer());
+            } //TODO else ??
+        } else {
+            cl = std::make_shared<CliFlavour>(new PromptResolver(), new EmptyInitializer());
+        }
+
         // TODO create CLI - how to create a CLI stack?
-        const shared_ptr<PromptAwareCli>& cli =
-                std::make_shared<PromptAwareCli>(session, CliFlavour());
+        const shared_ptr<PromptAwareCli>& cli = std::make_shared<PromptAwareCli>(session, cl);
+
         // TODO initialize CLI
         cli->initializeCli();
         // TODO resolve prompt needs to happen

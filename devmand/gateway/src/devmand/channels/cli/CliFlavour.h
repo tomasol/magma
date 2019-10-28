@@ -29,19 +29,34 @@ class PromptResolver {
 
 class CliInitializer {
  public:
-  void initialize(shared_ptr<SshSessionAsync> session);
+ virtual ~CliInitializer() = default;
+ virtual void initialize(shared_ptr<SshSessionAsync> session) = 0;
+};
+
+class EmptyInitializer : public CliInitializer {
+ public:
+  void initialize(shared_ptr<SshSessionAsync> session) override;
+  ~EmptyInitializer() override = default;
+};
+
+class UbiquitiInitializer : public CliInitializer {
+ public:
+  void initialize(shared_ptr<SshSessionAsync> session) override;
+  ~UbiquitiInitializer() override = default;
 };
 
 class CliFlavour {
  public:
-  PromptResolver resolver;
-  CliInitializer initializer;
+  PromptResolver * resolver;
+  CliInitializer * initializer;
   string newline;
 
   CliFlavour(
-      PromptResolver _resolver = PromptResolver(),
-      CliInitializer _initializer = CliInitializer(),
+      PromptResolver * _resolver,
+      CliInitializer * _initializer,
       string _newline = "\n");
+
+    virtual ~CliFlavour();
 };
 
 } // namespace cli
