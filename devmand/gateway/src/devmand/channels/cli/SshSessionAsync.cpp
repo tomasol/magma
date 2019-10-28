@@ -22,7 +22,6 @@ SshSessionAsync::SshSessionAsync(shared_ptr<IOThreadPoolExecutor> _executor)
     : executor(_executor) {}
 
 SshSessionAsync::~SshSessionAsync() {
-  event_del(this->sessionEvent); //TODO check
   event_free(this->sessionEvent);
   session.close();
 }
@@ -51,7 +50,7 @@ Future<Unit> SshSessionAsync::close() {
   return via(executor.get(), [this] { session.close(); });
 }
 
-Future<string> SshSessionAsync::readUntilOutput(string lastOutput) {
+Future<string> SshSessionAsync::readUntilOutput(const string& lastOutput) {
   return via(executor.get(), [this, lastOutput] {
     return session.readUntilOutput(lastOutput);
   });
@@ -63,6 +62,13 @@ void SshSessionAsync::setEvent(event * event) {
 
 void SshSessionAsync::read() {
     return this->session.read();
+}
+
+void readCallback(evutil_socket_t fd, short what, void *ptr)
+{
+    (void) fd;
+    (void) what;
+    ((SshSessionAsync *)ptr)->read();
 }
 
 socket_t SshSessionAsync::getSshFd() {

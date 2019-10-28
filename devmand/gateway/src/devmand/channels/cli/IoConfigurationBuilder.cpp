@@ -18,6 +18,7 @@ namespace devmand::channels::cli {
     using devmand::channels::cli::SshSocketReader;
     using devmand::channels::cli::sshsession::SshSession;
     using devmand::channels::cli::sshsession::SshSessionAsync;
+    using devmand::channels::cli::sshsession::readCallback;
     using folly::IOThreadPoolExecutor;
 
     //TODO executor?
@@ -48,7 +49,8 @@ namespace devmand::channels::cli {
         cli->initializeCli();
         // TODO resolve prompt needs to happen
         cli->resolvePrompt();
-        event *sessionEvent = folly::Singleton<SshSocketReader>::try_get()->addSshReader(session.get());
+        //TODO create async data reader
+        event *sessionEvent = SshSocketReader::getInstance().addSshReader(readCallback, session->getSshFd(), session.get());
         session->setEvent(sessionEvent);
         return cli;
     }

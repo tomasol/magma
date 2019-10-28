@@ -10,15 +10,6 @@
 
 using devmand::channels::cli::sshsession::SshSessionAsync;
 
-void cb(evutil_socket_t fd, short , void *ptr);
-void cb(evutil_socket_t fd, short what, void *ptr)
-{
-    (void) fd;
-    (void) what;
-    auto * session = (SshSessionAsync *)ptr;
-    session->read();
-}
-
 void sshReadNotificationThread(struct event_base *base);
 void sshReadNotificationThread(struct event_base *base) {
     event_base_dispatch(base);
@@ -30,12 +21,17 @@ devmand::channels::cli::SshSocketReader::SshSocketReader() {
     notificationThread.detach();
 }
 
-struct event * devmand::channels::cli::SshSocketReader::addSshReader(SshSessionAsync * session) {
-    struct event *event_on_heap = event_new(this->base, session->getSshFd(), EV_READ|EV_PERSIST, cb, session);
+struct event * devmand::channels::cli::SshSocketReader::addSshReader(event_callback_fn callbackFn, socket_t fd, void *ptr) {
+    struct event *event_on_heap = event_new(this->base, fd, EV_READ|EV_PERSIST, callbackFn, ptr);
     event_add(event_on_heap, nullptr);
     return event_on_heap;
 }
 
 devmand::channels::cli::SshSocketReader::~SshSocketReader() {
     event_base_free(base);
+}
+
+devmand::channels::cli::SshSocketReader &devmand::channels::cli::SshSocketReader::getInstance() {
+    static SshSocketReader instance;
+    return instance;
 }

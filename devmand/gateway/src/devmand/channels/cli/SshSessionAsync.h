@@ -27,6 +27,8 @@ using folly::via;
 using std::shared_ptr;
 using std::string;
 
+void readCallback(evutil_socket_t fd, short , void *ptr);
+
 class SshSessionAsync {
  private:
   shared_ptr<IOThreadPoolExecutor> executor;
@@ -41,7 +43,7 @@ public:
       const string& password);
   Future<Unit> write(const string& command);
   Future<string> read(int timeoutMillis); //for clearing ssh channel and prompt resolving
-  Future<string> readUntilOutput(string lastOutput);
+  Future<string> readUntilOutput(const string& lastOutput);
   Future<Unit> close();
   void setEvent(event *);
   void read();
