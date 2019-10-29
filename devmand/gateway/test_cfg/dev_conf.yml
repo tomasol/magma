@@ -9,13 +9,17 @@ devices:
         port: 22
         username: ubnt
         password: ubnt
+        flavour: ubiquiti
         stateCommand: show interfaces status all
 
-  - id: ubntFakeYdk
-    ip: 0.0.0.0
+  - id: ubntYdk
+    ip: 10.19.0.245
     type: Device
     platform: StructuredUbntCli
     yangConfig: localhost.json
     channels:
       cliChannel:
-        a: b
+        port: 22
+        username: ubnt
+        password: ubnt
+        flavour: ubiquiti
