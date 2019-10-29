@@ -17,6 +17,8 @@
 #include <devmand/devices/Device.h>
 #include <devmand/devices/State.h>
 #include <devmand/Application.h>
+#include <chrono>
+#include <magma_logging.h>
 
 namespace devmand {
 namespace test {
@@ -66,7 +68,11 @@ TEST_F(CliTest, PlaintextCliDevices) {
 
         for (const auto& dev : ds) {
             std::shared_ptr<State> state = dev->getState();
+            auto t1 = std::chrono::high_resolution_clock::now();
             const folly::dynamic& stateResult = state->collect().get();
+            auto t2 = std::chrono::high_resolution_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::microseconds>( t2 - t1 ).count();
+            MLOG(MDEBUG) << "Retrieving state took: " << duration << " mu.";
             std::stringstream buffer;
 
             buffer << stateResult["echo 123"];
