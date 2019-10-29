@@ -9,6 +9,9 @@
 #include <devmand/channels/cli/SshSession.h>
 #include <folly/executors/IOThreadPoolExecutor.h>
 #include <folly/futures/Future.h>
+#include <mutex>
+#include <condition_variable>
+#include <boost/lockfree/spsc_queue.hpp>
 
 namespace devmand {
 namespace channels {
@@ -17,6 +20,9 @@ namespace sshsession {
 
 using devmand::channels::cli::sshsession::SshSessionAsync;
 using devmand::channels::cli::sshsession::SshSession;
+using std::lock_guard;
+using std::unique_lock;
+using boost::lockfree::spsc_queue;
 
 SshSessionAsync::SshSessionAsync(shared_ptr<IOThreadPoolExecutor> _executor)
     : executor(_executor) {}
@@ -72,15 +78,22 @@ socket_t SshSessionAsync::getSshFd() {
 }
 
 void SshSessionAsync::read() {
-    const string &output = this->session.read();
-    readQueue.push(output);
+    {
+        std::lock_guard<mutex> guard(mutex1);
+        const string &output = this->session.read();
+        readQueue.push(output);
+    }
+    condition.notify_one();
 }
 
  string SshSessionAsync::readUntilOutputBlocking(string lastOutput) {
      string result;
-     while (true) { //TODO this wastes CPU if output from SSH is delayed
+     while (true) {
+         unique_lock<mutex> lck(mutex1);
+         condition.wait(lck, [this]{ return this->readQueue.read_available(); });
          string output;
-         if (!readQueue.pop(output) || output.empty()) {
+         readQueue.pop(output);
+         if (output.empty()) {  //sometimes we get the string "" or " " back, we can ignore that ...
              continue;
          }
          result.append(output);
@@ -91,7 +104,6 @@ void SshSessionAsync::read() {
          }
      }
  }
-
 
 } // namespace sshsession
 } // namespace cli

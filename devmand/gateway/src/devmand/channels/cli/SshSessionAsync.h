@@ -30,6 +30,8 @@ using std::shared_ptr;
 using std::string;
 using boost::lockfree::spsc_queue;
 using boost::lockfree::capacity;
+using std::mutex;
+using std::condition_variable;
 
 void readCallback(evutil_socket_t fd, short , void *ptr);
 
@@ -39,7 +41,8 @@ class SshSessionAsync {
   SshSession session;
   event * sessionEvent;
   spsc_queue<string, capacity<200>> readQueue;
-
+  mutex mutex1;
+  condition_variable condition;
 public:
   explicit SshSessionAsync(shared_ptr<IOThreadPoolExecutor> _executor);
   Future<Unit> openShell(
