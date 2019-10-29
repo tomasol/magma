@@ -12,6 +12,7 @@
 #include <devmand/devices/cli/PlaintextCliDevice.h>
 #include <folly/executors/IOThreadPoolExecutor.h>
 #include <gtest/gtest.h>
+#include <devmand/channels/cli/CliFlavour.h>
 
 namespace devmand {
 namespace test {
@@ -20,6 +21,7 @@ namespace cli {
 using namespace devmand::channels::cli;
 using namespace devmand::devices;
 using namespace devmand::devices::cli;
+using devmand::channels::cli::UBIQUITI;
 
 class PlaintextCliDeviceTest : public ::testing::Test {
  public:
@@ -62,7 +64,7 @@ TEST_F(PlaintextCliDeviceTest, ubiquiti) {
   kvPairs.insert(std::make_pair("port", "22"));
   kvPairs.insert(std::make_pair("username", "ubnt"));
   kvPairs.insert(std::make_pair("password", "ubnt"));
-  kvPairs.insert(std::make_pair("flavour", "ubiquiti"));
+  kvPairs.insert(std::make_pair("flavour", UBIQUITI));
   chnlCfg.kvPairs = kvPairs;
   deviceConfig.channelConfigs.insert(std::make_pair("cli", chnlCfg));
   deviceConfig.ip = "10.19.0.245";

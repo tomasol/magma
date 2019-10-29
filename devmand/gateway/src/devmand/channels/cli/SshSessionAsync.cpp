@@ -70,14 +70,14 @@ void readCallback(evutil_socket_t fd, short what, void *ptr)
 {
     (void) fd;
     (void) what;
-    ((SshSessionAsync *)ptr)->read();
+    ((SshSessionAsync *) ptr)->readToBuffer();
 }
 
 socket_t SshSessionAsync::getSshFd() {
     return this->session.getSshFd();
 }
 
-void SshSessionAsync::read() {
+void SshSessionAsync::readToBuffer() {
     {
         std::lock_guard<mutex> guard(mutex1);
         const string &output = this->session.read();

@@ -42,15 +42,9 @@ namespace devmand::channels::cli {
                         plaintextCliKv.at("username"),
                         plaintextCliKv.at("password"))
                 .get();
-        //TODO externalize this flavour resolution logic
-        shared_ptr<CliFlavour> cl;
-        if ( plaintextCliKv.find("flavour") != plaintextCliKv.end()) {
-            if (plaintextCliKv.at("flavour") == "ubiquiti") {
-                cl = std::make_shared<CliFlavour>(new DefaultPromptResolver(), new UbiquitiInitializer());
-            } //TODO else ??
-        } else {
-            cl = std::make_shared<CliFlavour>(new DefaultPromptResolver(), new EmptyInitializer());
-        }
+
+        shared_ptr<CliFlavour> cl = plaintextCliKv.find("flavour") != plaintextCliKv.end()
+                ? CliFlavour::create(plaintextCliKv.at("flavour")) : CliFlavour::create("");
 
         // TODO create CLI - how to create a CLI stack?
         const shared_ptr<PromptAwareCli>& cli = std::make_shared<PromptAwareCli>(session, cl);

@@ -55,7 +55,7 @@ public:
   Future<string> readUntilOutput(const string& lastOutput);
   Future<Unit> close();
   void setEvent(event *);
-  void read();
+  void readToBuffer();
   socket_t getSshFd();
   string readUntilOutputBlocking(string lastOutput);
   ~SshSessionAsync();

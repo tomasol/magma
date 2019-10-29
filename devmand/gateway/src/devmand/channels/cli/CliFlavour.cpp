@@ -84,6 +84,14 @@ CliFlavour::~CliFlavour() {
     delete initializer;
 }
 
+    shared_ptr<CliFlavour> CliFlavour::create(string flavour) {
+    if (flavour == UBIQUITI) {
+        return std::make_shared<CliFlavour>(new DefaultPromptResolver(), new UbiquitiInitializer());
+    }
+
+    return std::make_shared<CliFlavour>(new DefaultPromptResolver(), new EmptyInitializer());
+}
+
 } // namespace cli
 } // namespace channels
 } // namespace devmand

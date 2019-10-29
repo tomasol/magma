@@ -11,10 +11,14 @@
 #include <memory>
 
 using devmand::channels::cli::sshsession::SshSessionAsync;
+using std::shared_ptr;
+using std::string;
 
 namespace devmand {
 namespace channels {
 namespace cli {
+
+static const char *const UBIQUITI = "ubiquiti";
 
 using std::shared_ptr;
 using std::string;
@@ -55,6 +59,7 @@ class UbiquitiInitializer : public CliInitializer {
 
 class CliFlavour {
  public:
+  static shared_ptr<CliFlavour> create(string flavour);
   PromptResolver * resolver;
   CliInitializer * initializer;
   string newline;
