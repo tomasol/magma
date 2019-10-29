@@ -46,10 +46,10 @@ namespace devmand::channels::cli {
         shared_ptr<CliFlavour> cl;
         if ( plaintextCliKv.find("flavour") != plaintextCliKv.end()) {
             if (plaintextCliKv.at("flavour") == "ubiquiti") {
-                cl = std::make_shared<CliFlavour>(new PromptResolver(), new UbiquitiInitializer());
+                cl = std::make_shared<CliFlavour>(new DefaultPromptResolver(), new UbiquitiInitializer());
             } //TODO else ??
         } else {
-            cl = std::make_shared<CliFlavour>(new PromptResolver(), new EmptyInitializer());
+            cl = std::make_shared<CliFlavour>(new DefaultPromptResolver(), new EmptyInitializer());
         }
 
         // TODO create CLI - how to create a CLI stack?

@@ -20,6 +20,14 @@ using std::shared_ptr;
 using std::string;
 
 class PromptResolver {
+public:
+    virtual string resolvePrompt(
+            shared_ptr<SshSessionAsync> session,
+            const string& newline) = 0;
+    virtual ~PromptResolver() = default;
+};
+
+class DefaultPromptResolver : public PromptResolver {
  public:
   string resolvePrompt(
       shared_ptr<SshSessionAsync> session,

@@ -19,6 +19,7 @@ using devmand::channels::cli::PromptResolver;
 using devmand::channels::cli::sshsession::SshSessionAsync;
 using devmand::channels::cli::EmptyInitializer;
 using devmand::channels::cli::UbiquitiInitializer;
+using devmand::channels::cli::DefaultPromptResolver;
 
 static const int DEFAULT_MILLIS = 1000; // TODO value?
 
@@ -33,7 +34,7 @@ void UbiquitiInitializer::initialize(shared_ptr<SshSessionAsync> session) {
       .get();
 }
 
-string PromptResolver::resolvePrompt(
+string DefaultPromptResolver::resolvePrompt(
     shared_ptr<SshSessionAsync> session,
     const string& newline) {
   session->read(DEFAULT_MILLIS).get(); // clear input, converges faster on
@@ -60,7 +61,7 @@ string PromptResolver::resolvePrompt(
   }
 }
 
-void PromptResolver::removeEmptyStrings(std::vector<string>& split) const {
+void DefaultPromptResolver::removeEmptyStrings(std::vector<string>& split) const {
   split.erase(
       remove_if(
           split.begin(),
