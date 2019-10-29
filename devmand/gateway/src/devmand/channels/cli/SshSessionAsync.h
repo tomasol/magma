@@ -12,6 +12,8 @@
 #include <folly/executors/IOThreadPoolExecutor.h>
 #include <folly/futures/Future.h>
 #include <event2/event.h>
+#include <boost/lockfree/spsc_queue.hpp>
+#include <boost/lockfree/policies.hpp>
 
 namespace devmand {
 namespace channels {
@@ -26,6 +28,8 @@ using folly::Unit;
 using folly::via;
 using std::shared_ptr;
 using std::string;
+using boost::lockfree::spsc_queue;
+using boost::lockfree::capacity;
 
 void readCallback(evutil_socket_t fd, short , void *ptr);
 
@@ -34,6 +38,8 @@ class SshSessionAsync {
   shared_ptr<IOThreadPoolExecutor> executor;
   SshSession session;
   event * sessionEvent;
+  spsc_queue<string, capacity<200>> readQueue;
+
 public:
   explicit SshSessionAsync(shared_ptr<IOThreadPoolExecutor> _executor);
   Future<Unit> openShell(
@@ -48,6 +54,7 @@ public:
   void setEvent(event *);
   void read();
   socket_t getSshFd();
+  string readUntilOutputBlocking(string lastOutput);
   ~SshSessionAsync();
 };
 

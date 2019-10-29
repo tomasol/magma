@@ -141,30 +141,13 @@ SshSession::SshSession(int _verbosity) : verbosity(_verbosity) {}
 
 SshSession::SshSession() : verbosity(SSH_LOG_PROTOCOL) {}
 
-string SshSession::readUntilOutput(string lastOutput) {
-  string result;
-  while (true) { //TODO this wastes CPU if output from SSH is delayed
-    string output;
-    if (!readQueue.pop(output) || output.empty()) {
-      continue;
-    }
-    result.append(output);
-    std::size_t found = result.find(lastOutput);
-    if (found != std::string::npos) {
-      // TODO check for any additional output after lastOutput
-      return result.substr(0, found);
-    }
-  }
+string SshSession::read() {
+    return read(-1);
 }
 
-    void SshSession::read() {
-        const string &output = read(-1);
-        readQueue.push(output);
-    }
-
-    socket_t SshSession::getSshFd() {
-        return ssh_get_fd(sessionState.session);
-    }
+socket_t SshSession::getSshFd() {
+    return ssh_get_fd(sessionState.session);
+}
 
 } // namespace sshsession
 } // namespace cli

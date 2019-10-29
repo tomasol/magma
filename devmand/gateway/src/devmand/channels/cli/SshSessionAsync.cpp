@@ -52,16 +52,12 @@ Future<Unit> SshSessionAsync::close() {
 
 Future<string> SshSessionAsync::readUntilOutput(const string& lastOutput) {
   return via(executor.get(), [this, lastOutput] {
-    return session.readUntilOutput(lastOutput);
+    return this->readUntilOutputBlocking(lastOutput);
   });
 }
 
 void SshSessionAsync::setEvent(event * event) {
     this->sessionEvent = event;
-}
-
-void SshSessionAsync::read() {
-    return this->session.read();
 }
 
 void readCallback(evutil_socket_t fd, short what, void *ptr)
@@ -74,6 +70,28 @@ void readCallback(evutil_socket_t fd, short what, void *ptr)
 socket_t SshSessionAsync::getSshFd() {
     return this->session.getSshFd();
 }
+
+void SshSessionAsync::read() {
+    const string &output = this->session.read();
+    readQueue.push(output);
+}
+
+ string SshSessionAsync::readUntilOutputBlocking(string lastOutput) {
+     string result;
+     while (true) { //TODO this wastes CPU if output from SSH is delayed
+         string output;
+         if (!readQueue.pop(output) || output.empty()) {
+             continue;
+         }
+         result.append(output);
+         std::size_t found = result.find(lastOutput);
+         if (found != std::string::npos) {
+             // TODO check for any additional output after lastOutput
+             return result.substr(0, found);
+         }
+     }
+ }
+
 
 } // namespace sshsession
 } // namespace cli
