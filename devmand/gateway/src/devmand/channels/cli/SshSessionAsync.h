@@ -39,7 +39,7 @@ class SshSessionAsync {
  private:
   shared_ptr<IOThreadPoolExecutor> executor;
   SshSession session;
-  event * sessionEvent;
+  event * sessionEvent = nullptr;
   spsc_queue<string, capacity<200>> readQueue;
   mutex mutex1;
   condition_variable condition;

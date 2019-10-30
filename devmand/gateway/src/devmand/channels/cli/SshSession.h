@@ -37,6 +37,7 @@ class SshSession {
   explicit SshSession(int verbosity);
   socket_t getSshFd();
   SshSession();
+  string getHost();
   ~SshSession();
   void openShell(
       const string& ip,

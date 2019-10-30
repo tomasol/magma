@@ -8,6 +8,7 @@
 #include <devmand/channels/cli/SshSession.h>
 #include <libssh/libssh.h>
 #include <experimental/optional>
+#include <magma_logging.h>
 
 namespace devmand {
 namespace channels {
@@ -84,8 +85,7 @@ void SshSession::terminate() {
   const char* error_message = sessionState.session != nullptr
       ? ssh_get_error(sessionState.session)
       : "unknown";
-  close();
-  LOG(ERROR) << "Error in SSH connection to host:  " << sessionState.ip
+  MLOG(MERROR) << "Error in SSH connection to host:  " << sessionState.ip
              << " port: " << sessionState.port;
   string error = "Error with SSH: ";
   throw std::runtime_error(error + error_message);
@@ -107,7 +107,7 @@ string SshSession::read(int timeoutMillis) {
       }
 
     if (bytes_read < 0) {
-      LOG(ERROR) << "Error reading data from SSH connection, read bytes: "
+      MLOG(MERROR) << "Error reading data from SSH connection, read bytes: "
                  << bytes_read;
       terminate();
     } else if (bytes_read == 0) {
@@ -121,7 +121,10 @@ string SshSession::read(int timeoutMillis) {
 }
 
 void SshSession::write(const string& command) {
-  // TODO check if command is not empty
+  if (command.empty()) {
+      MLOG(MERROR) << "Command for execution for host: " << getHost() << " is empty, this should not happen";
+      return;
+  }
   const char* data = command.c_str();
   int bytes = ssh_channel_write(
       sessionState.channel,
@@ -147,6 +150,10 @@ string SshSession::read() {
 
 socket_t SshSession::getSshFd() {
     return ssh_get_fd(sessionState.session);
+}
+
+string SshSession::getHost() {
+    return sessionState.ip;
 }
 
 } // namespace sshsession

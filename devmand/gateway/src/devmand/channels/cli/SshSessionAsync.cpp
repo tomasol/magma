@@ -10,7 +10,9 @@
 #include <folly/executors/IOThreadPoolExecutor.h>
 #include <folly/futures/Future.h>
 #include <mutex>
+#include <chrono>
 #include <condition_variable>
+#include <ErrorHandler.h>
 #include <boost/lockfree/spsc_queue.hpp>
 
 namespace devmand {
@@ -20,6 +22,7 @@ namespace sshsession {
 
 using devmand::channels::cli::sshsession::SshSessionAsync;
 using devmand::channels::cli::sshsession::SshSession;
+using devmand::ErrorHandler;
 using std::lock_guard;
 using std::unique_lock;
 using boost::lockfree::spsc_queue;
@@ -28,7 +31,9 @@ SshSessionAsync::SshSessionAsync(shared_ptr<IOThreadPoolExecutor> _executor)
     : executor(_executor) {}
 
 SshSessionAsync::~SshSessionAsync() {
-  event_free(this->sessionEvent);
+  if (this->sessionEvent != nullptr && event_get_base(this->sessionEvent) != nullptr) {
+      event_free(this->sessionEvent);
+  }
   session.close();
 }
 
@@ -57,9 +62,9 @@ Future<Unit> SshSessionAsync::close() {
 }
 
 Future<string> SshSessionAsync::readUntilOutput(const string& lastOutput) {
-  return via(executor.get(), [this, lastOutput] {
-    return this->readUntilOutputBlocking(lastOutput);
-  });
+    return via(executor.get(), [this, lastOutput] {
+        return this->readUntilOutputBlocking(lastOutput);
+    });
 }
 
 void SshSessionAsync::setEvent(event * event) {
@@ -80,8 +85,10 @@ socket_t SshSessionAsync::getSshFd() {
 void SshSessionAsync::readToBuffer() {
     {
         std::lock_guard<mutex> guard(mutex1);
-        const string &output = this->session.read();
-        readQueue.push(output);
+        ErrorHandler::executeWithCatch([this]() {
+            const string &output = this->session.read();
+            readQueue.push(output);
+        });
     }
     condition.notify_one();
 }
@@ -90,10 +97,12 @@ void SshSessionAsync::readToBuffer() {
      string result;
      while (true) {
          unique_lock<mutex> lck(mutex1);
-         condition.wait(lck, [this]{ return this->readQueue.read_available(); });
+         condition.wait_for(lck, std::chrono::seconds(2), [this]{ return this->readQueue.read_available(); });
+         //TODO check if readQueue is being filled, if I always wake up on timeout something
+         //is wrong (session gone bad?) and I probably have to throw an exception so I terminate
+
          string output;
-         readQueue.pop(output);
-         if (output.empty()) {  //sometimes we get the string "" or " " back, we can ignore that ...
+         if (!readQueue.pop(output) || output.empty()) {  //sometimes we get the string "" or " " back, we can ignore that ...
              continue;
          }
          result.append(output);
