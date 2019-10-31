@@ -40,14 +40,14 @@ class RealCliDeviceTest : public ::testing::Test {
   RealCliDeviceTest& operator=(RealCliDeviceTest&&) = delete;
 };
 
-DeviceConfig getConfig();
-DeviceConfig getConfig() {
+DeviceConfig getConfig(string username);
+DeviceConfig getConfig(string username) {
     DeviceConfig deviceConfig;
     ChannelConfig chnlCfg;
     std::map<std::string, std::string> kvPairs;
     kvPairs.insert(std::make_pair("stateCommand", "echo 123"));
     kvPairs.insert(std::make_pair("port", "22"));
-    kvPairs.insert(std::make_pair("username", "root"));
+    kvPairs.insert(std::make_pair("username", username));
     kvPairs.insert(std::make_pair("password", "root"));
     chnlCfg.kvPairs = kvPairs;
     deviceConfig.channelConfigs.insert(std::make_pair("cli", chnlCfg));
@@ -56,12 +56,17 @@ DeviceConfig getConfig() {
     return deviceConfig;
 }
 
+TEST_F(RealCliDeviceTest, plaintextCliDevicesError) {
+        Application app;
+        EXPECT_ANY_THROW(PlaintextCliDevice::createDevice(app, getConfig("root123")));
+}
+
 TEST_F(RealCliDeviceTest, tenPlaintextCliDevices) {
         Application app;
 
         std::vector<std::unique_ptr<Device>> ds;
         for (int i = 0; i < 10; i++) {
-            ds.push_back(std::move(PlaintextCliDevice::createDevice(app, getConfig())));
+            ds.push_back(std::move(PlaintextCliDevice::createDevice(app, getConfig("root"))));
         }
 
         for (const auto& dev : ds) {
