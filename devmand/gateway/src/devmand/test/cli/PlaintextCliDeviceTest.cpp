@@ -12,7 +12,6 @@
 #include <devmand/devices/cli/PlaintextCliDevice.h>
 #include <folly/executors/IOThreadPoolExecutor.h>
 #include <gtest/gtest.h>
-#include <devmand/channels/cli/CliFlavour.h>
 
 namespace devmand {
 namespace test {
@@ -21,7 +20,6 @@ namespace cli {
 using namespace devmand::channels::cli;
 using namespace devmand::devices;
 using namespace devmand::devices::cli;
-using devmand::channels::cli::UBIQUITI;
 
 class PlaintextCliDeviceTest : public ::testing::Test {
  public:
@@ -55,31 +53,7 @@ TEST_F(PlaintextCliDeviceTest, checkEcho) {
   EXPECT_EQ("show interfaces brief", buffer.str());
 }
 
-TEST_F(PlaintextCliDeviceTest, ubiquiti) {
-  devmand::Application app;
-  cartography::DeviceConfig deviceConfig;
-  devmand::cartography::ChannelConfig chnlCfg;
-  std::map<std::string, std::string> kvPairs;
-  kvPairs.insert(std::make_pair("stateCommand", "show mac access-lists"));
-  kvPairs.insert(std::make_pair("port", "22"));
-  kvPairs.insert(std::make_pair("username", "ubnt"));
-  kvPairs.insert(std::make_pair("password", "ubnt"));
-  kvPairs.insert(std::make_pair("flavour", UBIQUITI));
-  chnlCfg.kvPairs = kvPairs;
-  deviceConfig.channelConfigs.insert(std::make_pair("cli", chnlCfg));
-  deviceConfig.ip = "10.19.0.245";
-  deviceConfig.id = "ubiquiti-test-device";
-  std::unique_ptr<devices::Device> dev =
-      PlaintextCliDevice::createDevice(app, deviceConfig);
 
-  std::shared_ptr<State> state = dev->getState();
-  const folly::dynamic& stateResult = state->collect().get();
-
-  std::stringstream buffer;
-  buffer << stateResult[kvPairs.at("stateCommand")];
-  EXPECT_EQ(
-      "No ACLs are configured", boost::algorithm::trim_copy(buffer.str()));
-}
 
 } // namespace cli
 } // namespace test

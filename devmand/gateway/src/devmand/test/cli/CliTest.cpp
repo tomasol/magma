@@ -42,44 +42,6 @@ class CliTest : public ::testing::Test {
   CliTest& operator=(CliTest&&) = delete;
 };
 
-DeviceConfig getConfig();
-DeviceConfig getConfig() {
-    DeviceConfig deviceConfig;
-    ChannelConfig chnlCfg;
-    std::map<std::string, std::string> kvPairs;
-    kvPairs.insert(std::make_pair("stateCommand", "echo 123"));
-    kvPairs.insert(std::make_pair("port", "22"));
-    kvPairs.insert(std::make_pair("username", "root"));
-    kvPairs.insert(std::make_pair("password", "root"));
-    chnlCfg.kvPairs = kvPairs;
-    deviceConfig.channelConfigs.insert(std::make_pair("cli", chnlCfg));
-    deviceConfig.ip = "localhost";
-    deviceConfig.id = "ubuntu-test-device";
-    return deviceConfig;
-}
-
-TEST_F(CliTest, PlaintextCliDevices) {
-        Application app;
-
-        std::vector<std::unique_ptr<Device>> ds;
-        for (int i = 0; i < 10; i++) {
-            ds.push_back(std::move(PlaintextCliDevice::createDevice(app, getConfig())));
-        }
-
-        for (const auto& dev : ds) {
-            std::shared_ptr<State> state = dev->getState();
-            auto t1 = std::chrono::high_resolution_clock::now();
-            const folly::dynamic& stateResult = state->collect().get();
-            auto t2 = std::chrono::high_resolution_clock::now();
-            auto duration = std::chrono::duration_cast<std::chrono::microseconds>( t2 - t1 ).count();
-            MLOG(MDEBUG) << "Retrieving state took: " << duration << " mu.";
-            std::stringstream buffer;
-
-            buffer << stateResult["echo 123"];
-            EXPECT_EQ("123", boost::algorithm::trim_copy(buffer.str()));
-        }
-}
-
 TEST_F(CliTest, queuedCli) {
   QueuedCli qcli(std::make_shared<AsyncEchoCli>(
     std::make_shared<folly::ThreadedExecutor>()),3,1);

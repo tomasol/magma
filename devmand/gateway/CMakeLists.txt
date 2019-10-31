@@ -175,6 +175,7 @@ target_link_libraries(devmand
   devman_service_magma)
 
 add_executable(devmantest
+  ${PROJECT_SOURCE_DIR}/src/devmand/test/cli/RealCliDeviceTest.cpp
   ${PROJECT_SOURCE_DIR}/src/devmand/test/cli/CliTest.cpp
   ${PROJECT_SOURCE_DIR}/src/devmand/test/cli/ModelRegistryTest.cpp
   ${PROJECT_SOURCE_DIR}/src/devmand/test/cli/PlaintextCliDeviceTest.cpp
