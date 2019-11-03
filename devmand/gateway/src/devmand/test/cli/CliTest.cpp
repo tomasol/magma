@@ -8,7 +8,10 @@
 #include <boost/algorithm/string/trim.hpp>
 #include <devmand/channels/cli/Channel.h>
 #include <devmand/channels/cli/Cli.h>
+#include <devmand/channels/cli/PromptAwareCli.h>
 #include <devmand/channels/cli/QueuedCli.h>
+#include <devmand/channels/cli/SshSessionAsync.h>
+#include <folly/executors/IOThreadPoolExecutor.h>
 #include <folly/executors/CPUThreadPoolExecutor.h>
 #include <folly/executors/ThreadedExecutor.h>
 #include <gtest/gtest.h>
@@ -31,6 +34,7 @@ using devmand::devices::Device;
 using devmand::devices::State;
 using devmand::devices::cli::PlaintextCliDevice;
 using devmand::Application;
+using devmand::channels::cli::sshsession::SshSessionAsync;
 
 class CliTest : public ::testing::Test {
  public:
@@ -43,17 +47,17 @@ class CliTest : public ::testing::Test {
 };
 
 TEST_F(CliTest, queuedCli) {
-  QueuedCli qcli(std::make_shared<AsyncEchoCli>(
-    std::make_shared<folly::ThreadedExecutor>()),3,1);
+  std::vector<unsigned int> durations = {2};
+  QueuedCli cli(std::make_shared<AsyncEchoCli>(durations),3,1);
 
   std::vector<std::string> results;
-    results.push_back("one");
-    results.push_back("two");
-    results.push_back("three");
-    results.push_back("four");
-    results.push_back("five");
-    results.push_back("six");
-    results.push_back("seven");
+  results.push_back("one");
+  results.push_back("two");
+  results.push_back("three");
+  results.push_back("four");
+  results.push_back("five");
+  results.push_back("six");
+  results.push_back("seven");
 
   // create requests
   std::vector<Command> cmds;
@@ -69,7 +73,7 @@ TEST_F(CliTest, queuedCli) {
   std::vector<folly::Future<std::string>> futures;
   for (const auto& cmd : cmds) {
     DLOG(INFO) << "test exec '" << cmd << "'\n";
-    futures.push_back(qcli.executeAndRead(cmd));
+    futures.push_back(cli.executeAndRead(cmd));
   }
 
   // collect values
@@ -85,17 +89,17 @@ TEST_F(CliTest, queuedCli) {
 
 TEST_F(CliTest, queuedCliMT) {
   const int loopcount = 10;
+  std::vector<unsigned int> durations = {1};
   folly::CPUThreadPoolExecutor executor(8);
 
-  QueuedCli qcli(std::make_shared<AsyncEchoCli>(
-    std::make_shared<folly::ThreadedExecutor>()));
+  QueuedCli cli(std::make_shared<AsyncEchoCli>(durations));
 
   // create requests
   Command cmd = Command::makeReadCommand("hello");
   std::vector<folly::Future<std::string>> futures;
   for (int i = 0; i < loopcount; ++i) {
     DLOG(INFO) << "test exec '" << cmd << "'\n";
-    futures.push_back(folly::via(&executor, [&, i]() { return qcli.executeAndRead(cmd); }));
+    futures.push_back(folly::via(&executor, [&]() { return cli.executeAndRead(cmd); }));
   }
 
   // collect values
@@ -108,6 +112,11 @@ TEST_F(CliTest, queuedCliMT) {
     EXPECT_EQ(boost::algorithm::trim_copy(v.value()), "hello");
   }
 }
+
+// TODO: KA test to pass through standard commands   (EchoCli)
+// TODO: KA to send periodical requests (no timeout) (EchoCli)
+// TODO: KA to send periodical requests with timeout -> restart cli stack
+// TODO: KA to send periodical requests with error -> restart cli stack
 
 TEST_F(CliTest, api) {
   std::string foo("foo");
