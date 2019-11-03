@@ -29,7 +29,6 @@ class KeepaliveCli : public Cli {
  public:
   KeepaliveCli(
       std::function<std::shared_ptr<Cli>()> func,
-      std::shared_ptr<folly::CPUThreadPoolExecutor> executor,
       unsigned int delay = 1,
       unsigned int timeout = 60);
 

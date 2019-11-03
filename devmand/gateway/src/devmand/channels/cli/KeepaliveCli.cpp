@@ -23,15 +23,15 @@ namespace cli {
 
 KeepaliveCli::KeepaliveCli(
         std::function<std::shared_ptr<Cli>()> _func,
-        std::shared_ptr<folly::CPUThreadPoolExecutor> _executor,
         unsigned int _delay,
         unsigned int _timeout) :
         func(_func),
         delay(_delay),
         timeout(_timeout),
-        quit(false),
-        executor(_executor)
+        quit(false)
 {
+    executor = std::make_shared<folly::CPUThreadPoolExecutor>(1);
+
     // initialeze cli stack for the first time
     cli = func();
     ready = true;
