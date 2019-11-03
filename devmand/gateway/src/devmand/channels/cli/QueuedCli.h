@@ -29,6 +29,8 @@ class QueuedCli : public Cli {
       unsigned int hi_limit = 1000,
       unsigned int lo_limit = 900);
 
+  ~QueuedCli();
+
   folly::Future<std::string> executeAndRead(const Command& cmd) override;
 
   folly::Future<std::string> executeAndSwitchPrompt(
@@ -60,6 +62,7 @@ class QueuedCli : public Cli {
   std::condition_variable cv;
   bool ready{false};
   unsigned int hi_limit, lo_limit;
+  bool quit;
 };
 
 } // namespace cli
