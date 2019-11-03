@@ -9,6 +9,7 @@
 
 #include <devmand/channels/cli/Cli.h>
 #include <folly/futures/Future.h>
+#include <magma_logging.h>
 #include <mutex>
 #include <queue>
 
@@ -35,7 +36,7 @@ class QueuedCli : public Cli {
 
   folly::Future<std::string> executeAndSwitchPrompt(
       const Command& cmd) override {
-    LOG(ERROR) << "[" << this << "] "
+    MLOG(MERROR) << "[" << this << "] "
                << "Not Implemented\n";
     return folly::Future<std::string>(cmd.toString());
   }

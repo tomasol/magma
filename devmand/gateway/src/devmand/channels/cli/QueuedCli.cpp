@@ -33,34 +33,34 @@ QueuedCli::QueuedCli(
 
 QueuedCli::~QueuedCli() {
   quit = true;
-  DLOG(INFO) << this << ": QCli: destructor begin (queue size " << outstandingCmds.size() << ")\n";
+  MLOG(MDEBUG) << this << ": QCli: destructor begin (queue size " << outstandingCmds.size() << ")\n";
   while (!outstandingCmds.empty()) {
-    DLOG(INFO) << this << ": Qli: removing residues (" << outstandingCmds.front().isFulfilled() << ")\n";
+    MLOG(MDEBUG) << this << ": Qli: removing residues (" << outstandingCmds.front().isFulfilled() << ")\n";
     if (!outstandingCmds.front().isFulfilled()) {
       outstandingCmds.front().setException(std::runtime_error("CANCELLED"));
     }
     outstandingCmds.pop();
   }
-  DLOG(INFO) << this << ": QCli: destructor end\n";
+  MLOG(MDEBUG) << this << ": QCli: destructor end\n";
 }
 
 folly::Future<string> QueuedCli::executeAndRead(const Command& cmd) {
   bool empty = false;
-  DLOG(INFO) << this << ": QCli: executeAndRead: '" << cmd.toString() << "' ready ("
+  MLOG(MDEBUG) << this << ": QCli: executeAndRead: '" << cmd.toString() << "' ready ("
             << ready << ")\n";
 
   if (outstandingCmds.size() >= hi_limit) {
-    DLOG(INFO) << this << ": QCli: queue size (" << outstandingCmds.size()
+    MLOG(MDEBUG) << this << ": QCli: queue size (" << outstandingCmds.size()
               << ") reached HI-limit -> WAIT\n";
     wait();
   }
 
-  DLOG(INFO) << this << ": QCli: Enqueued '" << cmd
+  MLOG(MDEBUG) << this << ": QCli: Enqueued '" << cmd
             << "' (queue size: " << outstandingCmds.size() << ")...\n";
 
   folly::Promise<std::string> p;
   p.setInterruptHandler([&](const folly::exception_wrapper& e) {
-    DLOG(INFO) << this << ": QCli: '" << cmd << "' setInterruptHandler " << e << "\n";
+    MLOG(MDEBUG) << this << ": QCli: '" << cmd << "' setInterruptHandler " << e << "\n";
   });
   auto future_exec = p.getFuture();
   folly::Future<std::string> f =
@@ -76,10 +76,10 @@ folly::Future<string> QueuedCli::executeAndRead(const Command& cmd) {
   }
 
   if (empty) {
-    DLOG(INFO) << this << ": QCli: Executing...\n";
+    MLOG(MDEBUG) << this << ": QCli: Executing...\n";
     outstandingCmds.front().setValue("GOGOGO");
   } else {
-    DLOG(INFO) << this << ": QCli: Enqueued (queue size: " << outstandingCmds.size()
+    MLOG(MDEBUG) << this << ": QCli: Enqueued (queue size: " << outstandingCmds.size()
               << ")...\n";
   }
 
@@ -89,24 +89,24 @@ folly::Future<string> QueuedCli::executeAndRead(const Command& cmd) {
 // THREAD SAFETY: there should only one command being processed at time, so
 // there should be no race on returnAndExecNext
 folly::Future<string> QueuedCli::returnAndExecNext(std::string result) {
-  DLOG(INFO) << this << ": QCli: returnAndExecNext '" << result << "'\n";
+  MLOG(MDEBUG) << this << ": QCli: returnAndExecNext '" << result << "'\n";
   if (quit) {
-    DLOG(INFO) << this << ": QCli: FAILED\n";
+    MLOG(MDEBUG) << this << ": QCli: FAILED\n";
 //    return folly::Future<std::string>(result);
     return folly::Future<std::string>(std::runtime_error("FAILED"));
   }
 
   outstandingCmds.pop();
   if (!ready && outstandingCmds.size() <= lo_limit) {
-    DLOG(INFO) << this << ": QCli: queue size reached LO-limit(" << lo_limit
+    MLOG(MDEBUG) << this << ": QCli: queue size reached LO-limit(" << lo_limit
               << ") -> RELEASE\n";
     notify();
   }
 
   if (outstandingCmds.empty()) {
-    DLOG(INFO) << this << ": QCli: Queue empty\n";
+    MLOG(MDEBUG) << this << ": QCli: Queue empty\n";
   } else {
-    DLOG(INFO) << this << ": QCli: Executing Next...\n";
+    MLOG(MDEBUG) << this << ": QCli: Executing Next...\n";
     outstandingCmds.front().setValue("GOGOGO");
   }
   return folly::Future<std::string>(result);

@@ -11,6 +11,7 @@
 #include <folly/futures/Future.h>
 #include <folly/futures/Promise.h>
 #include <folly/executors/CPUThreadPoolExecutor.h>
+#include <magma_logging.h>
 
 #include <chrono>
 #include <thread>
@@ -70,16 +71,16 @@ public:
     }
 
     ~AsyncEchoCli() {
-        DLOG(INFO) << this << ": AsyncEchoCli: desctructor begin (tasks " << executor->getPendingTaskCount() << ")\n";
+        MLOG(MDEBUG) << this << ": AsyncEchoCli: desctructor begin (tasks " << executor->getPendingTaskCount() << ")\n";
         quit = true;
         executor->stop();
-        DLOG(INFO) << this << ": AsyncEchoCli: desctructor after stop (tasks " << executor->getPendingTaskCount() << ")\n";
+        MLOG(MDEBUG) << this << ": AsyncEchoCli: desctructor after stop (tasks " << executor->getPendingTaskCount() << ")\n";
         executor->join();
-        DLOG(INFO) << this << ": AsyncEchoCli: desctructor after join (tasks " << executor->getPendingTaskCount() << ")\n";
+        MLOG(MDEBUG) << this << ": AsyncEchoCli: desctructor after join (tasks " << executor->getPendingTaskCount() << ")\n";
     }
 
     folly::Future<std::string> executeAndRead(const Command& cmd) override {
-        DLOG(INFO) << this << ": AsyncEchoCli:executeAndRead '" << cmd << "'\n";
+        MLOG(MDEBUG) << this << ": AsyncEchoCli:executeAndRead '" << cmd << "'\n";
 
         folly::Promise<std::string> p;
         folly::Future<std::string> f = p.getFuture()
@@ -91,7 +92,7 @@ public:
 
     folly::Future<std::string> executeAndSwitchPrompt(
             const Command& cmd) override {
-        DLOG(INFO) << this << ": AsyncEchoCli:executeAndSwitchPrompt '" << cmd << "'\n";
+        MLOG(MDEBUG) << this << ": AsyncEchoCli:executeAndSwitchPrompt '" << cmd << "'\n";
 
         folly::Promise<std::string> p;
         folly::Future<std::string> f = p.getFuture()
@@ -109,13 +110,13 @@ protected:
 
     folly::Future<std::string> delay(const Command& cmd, unsigned int tis) {
         if (quit) {
-            DLOG(INFO) << this << ": AsyncEchoCli: '" << cmd << "' ABORTED\n";
+            MLOG(MDEBUG) << this << ": AsyncEchoCli: '" << cmd << "' ABORTED\n";
             return folly::Future<std::string>(std::runtime_error(cmd.toString()));
         }
-        DLOG(INFO) << this << ": AsyncEchoCli: '" << cmd << "' busy for " << tis << " second(s) (tid " << std::this_thread::get_id() << ")\n";
+        MLOG(MDEBUG) << this << ": AsyncEchoCli: '" << cmd << "' busy for " << tis << " second(s) (tid " << std::this_thread::get_id() << ")\n";
         std::this_thread::sleep_for(std::chrono::seconds(tis));
 
-        DLOG(INFO) << this << ": AsyncEchoCli: '" << cmd << "' done\n";
+        MLOG(MDEBUG) << this << ": AsyncEchoCli: '" << cmd << "' done\n";
         return folly::Future<std::string>(cmd.toString());
     }
 };
@@ -155,14 +156,14 @@ public:
     }
 
     ~AsyncErrCli() {
-        DLOG(INFO) << this << ": AsyncErrCli: desctructor begin\n";
+        MLOG(MDEBUG) << this << ": AsyncErrCli: desctructor begin\n";
         quit = true;
         executor->join();
-        DLOG(INFO) << this << ": AsyncErrCli: desctructor end\n";
+        MLOG(MDEBUG) << this << ": AsyncErrCli: desctructor end\n";
     }
 
     folly::Future<std::string> executeAndRead(const Command& cmd) override {
-        DLOG(INFO) << this << ": AsyncErrCli:executeAndRead '" << cmd << "'\n";
+        MLOG(MDEBUG) << this << ": AsyncErrCli:executeAndRead '" << cmd << "'\n";
 
         folly::Promise<std::string> p;
         folly::Future<std::string> f = p.getFuture()
@@ -174,7 +175,7 @@ public:
 
     folly::Future<std::string> executeAndSwitchPrompt(
             const Command& cmd) override {
-        DLOG(INFO) << this << ": AsyncErrCli:executeAndSwitchPrompt '" << cmd << "'\n";
+        MLOG(MDEBUG) << this << ": AsyncErrCli:executeAndSwitchPrompt '" << cmd << "'\n";
 
         folly::Promise<std::string> p;
         folly::Future<std::string> f = p.getFuture()
@@ -192,13 +193,13 @@ protected:
 
     folly::Future<std::string> delay(const Command& cmd, unsigned int tis) {
         if (quit) {
-            DLOG(INFO) << this << ": AsyncErrCli: '" << cmd << "' ABORTED\n";
+            MLOG(MDEBUG) << this << ": AsyncErrCli: '" << cmd << "' ABORTED\n";
             return folly::Future<std::string>(std::runtime_error(cmd.toString()));
         }
-        DLOG(INFO) << this << ": AsyncErrCli: '" << cmd << "' busy for " << tis << " second(s) (tid " << std::this_thread::get_id() << ")\n";
+        MLOG(MDEBUG) << this << ": AsyncErrCli: '" << cmd << "' busy for " << tis << " second(s) (tid " << std::this_thread::get_id() << ")\n";
         std::this_thread::sleep_for(std::chrono::seconds(tis));
 
-        DLOG(INFO) << this << ": AsyncErrCli: '" << cmd << "' done\n";
+        MLOG(MDEBUG) << this << ": AsyncErrCli: '" << cmd << "' done\n";
         throw std::runtime_error(cmd.toString());
         return folly::Future<std::string>(std::runtime_error(cmd.toString()));
     }
