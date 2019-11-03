@@ -118,7 +118,7 @@ TEST_F(RealCliDeviceTest, kaPass) {
     kvPairs.insert(std::make_pair("port", "22"));
     kvPairs.insert(std::make_pair("username", "root"));
     kvPairs.insert(std::make_pair("password", "root"));
-    kvPairs.insert(std::make_pair("flavour", UBIQUITI));
+//    kvPairs.insert(std::make_pair("flavour", UBIQUITI));
     chnlCfg.kvPairs = kvPairs;
     deviceConfig.channelConfigs.insert(std::make_pair("cli", chnlCfg));
     deviceConfig.ip = "localhost";
@@ -143,7 +143,7 @@ TEST_F(RealCliDeviceTest, kaTimeout) {
         kvPairs.insert(std::make_pair("port", "22"));
         kvPairs.insert(std::make_pair("username", "root"));
         kvPairs.insert(std::make_pair("password", "root"));
-        kvPairs.insert(std::make_pair("flavour", UBIQUITI));
+//        kvPairs.insert(std::make_pair("flavour", UBIQUITI));
         chnlCfg.kvPairs = kvPairs;
         deviceConfig.channelConfigs.insert(std::make_pair("cli", chnlCfg));
         deviceConfig.ip = "localhost";
