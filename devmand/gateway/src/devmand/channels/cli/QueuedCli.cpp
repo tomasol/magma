@@ -37,7 +37,7 @@ QueuedCli::~QueuedCli() {
     while (!outstandingCmds.empty()) {
         DLOG(INFO) << this << ": Qli: removing residues (" << outstandingCmds.front().isFulfilled() << ")\n";
         if (!outstandingCmds.front().isFulfilled()) {
-            outstandingCmds.front().setException(std::runtime_error("QCLI CANCELLED"));
+            outstandingCmds.front().setException(std::runtime_error("CANCELLED"));
         }
         outstandingCmds.pop();
     }
@@ -91,9 +91,9 @@ folly::Future<string> QueuedCli::executeAndRead(const Command& cmd) {
 folly::Future<string> QueuedCli::returnAndExecNext(std::string result) {
   DLOG(INFO) << this << ": QCli: returnAndExecNext '" << result << "'\n";
   if (quit) {
-      DLOG(INFO) << this << ": QCli: CANCELLED\n";
+      DLOG(INFO) << this << ": QCli: FAILED\n";
 //      return folly::Future<std::string>(result);
-      return folly::Future<std::string>(std::runtime_error("CANCELLED"));
+      return folly::Future<std::string>(std::runtime_error("FAILED"));
   }
 
   outstandingCmds.pop();
