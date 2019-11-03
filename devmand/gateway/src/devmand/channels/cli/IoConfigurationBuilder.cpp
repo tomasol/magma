@@ -7,6 +7,7 @@
 
 #include <devmand/channels/cli/IoConfigurationBuilder.h>
 #include <devmand/channels/cli/PromptAwareCli.h>
+#include <devmand/channels/cli/QueuedCli.h>
 #include <devmand/channels/cli/SshSessionAsync.h>
 #include <devmand/channels/cli/SshSession.h>
 #include <folly/executors/IOThreadPoolExecutor.h>
@@ -56,6 +57,7 @@ namespace devmand::channels::cli {
         //TODO create async data reader
         event *sessionEvent = SshSocketReader::getInstance().addSshReader(readCallback, session->getSshFd(), session.get());
         session->setEvent(sessionEvent);
-        return cli;
+        // create Queued cli
+        return std::make_shared<QueuedCli>(cli);
     }
 }
