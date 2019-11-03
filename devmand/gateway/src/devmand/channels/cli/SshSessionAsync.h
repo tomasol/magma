@@ -43,6 +43,7 @@ class SshSessionAsync {
   spsc_queue<string, capacity<200>> readQueue;
   mutex mutex1;
   condition_variable condition;
+  bool quit;
 public:
   explicit SshSessionAsync(shared_ptr<IOThreadPoolExecutor> _executor);
   Future<Unit> openShell(

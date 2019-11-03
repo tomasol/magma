@@ -28,9 +28,12 @@ using std::unique_lock;
 using boost::lockfree::spsc_queue;
 
 SshSessionAsync::SshSessionAsync(shared_ptr<IOThreadPoolExecutor> _executor)
-    : executor(_executor) {}
+    : executor(_executor), quit(false) {}
 
 SshSessionAsync::~SshSessionAsync() {
+  quit = true;
+  executor->join();
+
   if (this->sessionEvent != nullptr && event_get_base(this->sessionEvent) != nullptr) {
       event_free(this->sessionEvent);
   }
@@ -95,7 +98,7 @@ void SshSessionAsync::readToBuffer() {
 
  string SshSessionAsync::readUntilOutputBlocking(string lastOutput) {
      string result;
-     while (true) {
+     while (!quit) {
          unique_lock<mutex> lck(mutex1);
          condition.wait_for(lck, std::chrono::seconds(2), [this]{ return this->readQueue.read_available(); });
          //TODO check if readQueue is being filled, if I always wake up on timeout something
@@ -112,6 +115,7 @@ void SshSessionAsync::readToBuffer() {
              return result.substr(0, found);
          }
      }
+     return "FINISHED";
  }
 
 } // namespace sshsession
