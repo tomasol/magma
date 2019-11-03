@@ -10,6 +10,7 @@
 #include <devmand/channels/cli/Cli.h>
 #include <devmand/channels/cli/PromptAwareCli.h>
 #include <devmand/channels/cli/QueuedCli.h>
+#include <devmand/channels/cli/KeepaliveCli.h>
 #include <devmand/channels/cli/SshSessionAsync.h>
 #include <folly/executors/IOThreadPoolExecutor.h>
 #include <folly/executors/CPUThreadPoolExecutor.h>
@@ -72,7 +73,7 @@ TEST_F(CliTest, queuedCli) {
   // send requests
   std::vector<folly::Future<std::string>> futures;
   for (const auto& cmd : cmds) {
-    DLOG(INFO) << "test exec '" << cmd << "'\n";
+    MLOG(MDEBUG) << "test exec '" << cmd << "'\n";
     futures.push_back(cli.executeAndRead(cmd));
   }
 
@@ -98,7 +99,7 @@ TEST_F(CliTest, queuedCliMT) {
   Command cmd = Command::makeReadCommand("hello");
   std::vector<folly::Future<std::string>> futures;
   for (int i = 0; i < loopcount; ++i) {
-    DLOG(INFO) << "test exec '" << cmd << "'\n";
+    MLOG(MDEBUG) << "test exec '" << cmd << "'\n";
     futures.push_back(folly::via(&executor, [&]() { return cli.executeAndRead(cmd); }));
   }
 
@@ -114,9 +115,165 @@ TEST_F(CliTest, queuedCliMT) {
 }
 
 // TODO: KA test to pass through standard commands   (EchoCli)
-// TODO: KA to send periodical requests (no timeout) (EchoCli)
+TEST_F(CliTest, keepaliveCliPass) {
+    const int loopcount = 10;
+    std::vector<unsigned int> durations = {1};
+
+//    KeepaliveCli cli(
+//            [&] {
+//                auto ret = std::make_shared<AsyncEchoCli>(durations);
+//                MLOG(MDEBUG) << ": KACli: created new CLi stack (" << ret.get() << ")\n";
+//                return ret;
+//            },
+//            5,
+//            10);
+    QueuedCli cli(std::make_shared<AsyncEchoCli>(durations));
+
+    // create requests
+    Command cmd = Command::makeReadCommand("hello");
+    std::vector<folly::Future<std::string>> futures;
+    for (int i = 0; i < loopcount; ++i) {
+        MLOG(MDEBUG) << "test exec '" << cmd << "'\n";
+        futures.push_back(cli.executeAndRead(cmd));
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
+
+    // collect values
+    const std::vector<folly::Try<std::string>>& values =
+            collectAll(futures.begin(), futures.end()).get();
+
+    // check values
+    EXPECT_EQ(values.size(), loopcount);
+    int res_value = 0;
+    int res_failed = 0;
+    int res_cancelled = 0;
+    int res_other = 0;
+    for (auto v : values) {
+        if (v.hasException()) {
+            std::cout << "main: exception: " << v.exception() << "\n";
+            if(std::strcmp(v.exception().get_exception()->what(), "EXPIRED") == 0) {
+                res_failed++;
+            } else if(std::strcmp(v.exception().get_exception()->what(), "CANCELLED") == 0) {
+                res_cancelled++;
+            } else {
+                res_other++;
+            }
+        } else {
+            std::cout << "main: value " << v.value() << "\n";
+            res_value++;
+        }
+    }
+    EXPECT_EQ(res_value, loopcount);
+    EXPECT_EQ(res_failed, 0);
+    EXPECT_EQ(res_cancelled, 0);
+    EXPECT_EQ(res_other, 0);
+}
+
 // TODO: KA to send periodical requests with timeout -> restart cli stack
+TEST_F(CliTest, keepaliveCliTimeout) {
+    const int loopcount = 10;
+    std::vector<unsigned int> durations = {4};
+
+//    KeepaliveCli cli(
+//            [&] {
+//                auto ret = std::make_shared<AsyncEchoCli>(durations);
+//                MLOG(MDEBUG) << ": KACli: created new CLi stack (" << ret.get() << ")\n";
+//                return ret;
+//            },
+//            5,
+//            5);
+    QueuedCli cli(std::make_shared<AsyncEchoCli>(durations));
+
+    // create requests
+    Command cmd = Command::makeReadCommand("hello");
+    std::vector<folly::Future<std::string>> futures;
+    for (int i = 0; i < loopcount; ++i) {
+        MLOG(MDEBUG) << "test exec '" << cmd << "'\n";
+        futures.push_back(cli.executeAndRead(cmd));
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
+
+    // collect values
+    const std::vector<folly::Try<std::string>>& values =
+            collectAll(futures.begin(), futures.end()).get();
+
+    // check values
+    EXPECT_EQ(values.size(), loopcount);
+    int res_value = 0;
+    int res_failed = 0;
+    int res_cancelled = 0;
+    int res_other = 0;
+    for (auto v : values) {
+        if (v.hasException()) {
+            std::cout << "main: exception: " << v.exception() << "\n";
+            if(std::strcmp(v.exception().get_exception()->what(), "EXPIRED") == 0) {
+                res_failed++;
+            } else if(std::strcmp(v.exception().get_exception()->what(), "CANCELLED") == 0) {
+                res_cancelled++;
+            } else {
+                res_other++;
+            }
+        } else {
+            std::cout << "main: value " << v.value() << "\n";
+            res_value++;
+        }
+    }
+    EXPECT_EQ(res_value, loopcount);
+    EXPECT_EQ(res_failed, 0);
+    EXPECT_EQ(res_cancelled, 0);
+    EXPECT_EQ(res_other, 0);
+}
+
 // TODO: KA to send periodical requests with error -> restart cli stack
+TEST_F(CliTest, keepaliveCliErr) {
+    const int loopcount = 10;
+    std::vector<unsigned int> durations = {1};
+
+//    KeepaliveCli cli(
+//            [&] {
+//                auto ret = std::make_shared<AsyncErrCli>(durations);
+//                MLOG(MDEBUG) << ": KACli: created new CLi stack (" << ret.get() << ")\n";
+//                return ret;
+//            },
+//            5,
+//            5);
+    QueuedCli cli(std::make_shared<AsyncErrCli>(durations));
+
+    // create requests
+    Command cmd = Command::makeReadCommand("hello");
+    std::vector<folly::Future<std::string>> futures;
+    for (int i = 0; i < loopcount; ++i) {
+        MLOG(MDEBUG) << "test exec '" << cmd << "'\n";
+        futures.push_back(cli.executeAndRead(cmd));
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
+
+    // collect values
+    const std::vector<folly::Try<std::string>>& values =
+            collectAll(futures.begin(), futures.end()).get();
+
+    // check values
+    EXPECT_EQ(values.size(), loopcount);
+    int res_value = 0;
+    int res_failed = 0;
+    int res_other = 0;
+    for (auto v : values) {
+        if (v.hasException()) {
+            std::cout << "main: exception: " << v.exception() << "\n";
+            if(std::strcmp(v.exception().get_exception()->what(), "hello") == 0) {
+                res_failed++;
+            } else {
+                res_other++;
+            }
+        } else {
+            std::cout << "main: value " << v.value() << "\n";
+            res_value++;
+        }
+    }
+    EXPECT_EQ(res_value, 0);
+    EXPECT_EQ(res_failed, loopcount);
+    EXPECT_EQ(res_other, 0);
+}
 
 TEST_F(CliTest, api) {
   std::string foo("foo");
