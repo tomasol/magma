@@ -8,12 +8,14 @@
 #include <devmand/channels/cli/IoConfigurationBuilder.h>
 #include <devmand/channels/cli/PromptAwareCli.h>
 #include <devmand/channels/cli/QueuedCli.h>
+#include <devmand/channels/cli/ReadCachingCli.h>
 #include <devmand/channels/cli/SshSessionAsync.h>
 #include <devmand/channels/cli/SshSession.h>
 #include <folly/executors/IOThreadPoolExecutor.h>
 #include <folly/Singleton.h>
 #include <devmand/channels/cli/SshSocketReader.h>
 #include <magma_logging.h>
+#include <folly/container/EvictingCacheMap.h>
 
 namespace devmand::channels::cli {
     using devmand::channels::cli::IoConfigurationBuilder;
@@ -22,6 +24,9 @@ namespace devmand::channels::cli {
     using devmand::channels::cli::sshsession::SshSessionAsync;
     using devmand::channels::cli::sshsession::readCallback;
     using folly::IOThreadPoolExecutor;
+    using folly::EvictingCacheMap;
+    using std::string;
+    using std::make_shared;
 
     //TODO executor?
     shared_ptr<IOThreadPoolExecutor> executor =
@@ -57,7 +62,11 @@ namespace devmand::channels::cli {
         //TODO create async data reader
         event *sessionEvent = SshSocketReader::getInstance().addSshReader(readCallback, session->getSshFd(), session.get());
         session->setEvent(sessionEvent);
+
+        // create caching cli
+        const shared_ptr<ReadCachingCli>& ccli = std::make_shared<ReadCachingCli>(cli, make_shared<EvictingCacheMap<string, string>>(200, 10));
+
         // create Queued cli
-        return std::make_shared<QueuedCli>(cli);
+        return std::make_shared<QueuedCli>(ccli);
     }
 }
