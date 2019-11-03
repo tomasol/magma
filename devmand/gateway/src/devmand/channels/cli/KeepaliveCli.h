@@ -17,12 +17,12 @@ namespace cli {
 
 class KeepaliveCli : public Cli {
  private:
-  std::shared_ptr<Cli> cli;                     // underlaying cli layer
-  std::function<std::shared_ptr<Cli>()> func;   // underlaying initialozator
+  std::shared_ptr<Cli> cli;                     // underlying cli layer
+  std::function<std::shared_ptr<Cli>()> func;   // underlying initializator
   unsigned int delay;                           // how often to send keepalives
   unsigned int timeout;                         // how long does it take to expire a keepalalive
   bool quit;                                    // shut the infinite keepalive loop down, when cli gets destroyed
-  bool ready;                                   // prohibit cli operations when underlaying stack is being reinitalized
+  bool ready;                                   // prohibit cli operations when underlying stack is being reinitalized
   std::shared_ptr<folly::CPUThreadPoolExecutor> executor;   // runs keepalive loop in separate thread
   std::queue<folly::Future<std::string>> outstandingKas;    // list of sent keepalives
 

@@ -32,16 +32,16 @@ QueuedCli::QueuedCli(
     quit(false) {}
 
 QueuedCli::~QueuedCli() {
-    quit = true;
-    DLOG(INFO) << this << ": QCli: destructor begin (queue size " << outstandingCmds.size() << ")\n";
-    while (!outstandingCmds.empty()) {
-        DLOG(INFO) << this << ": Qli: removing residues (" << outstandingCmds.front().isFulfilled() << ")\n";
-        if (!outstandingCmds.front().isFulfilled()) {
-            outstandingCmds.front().setException(std::runtime_error("CANCELLED"));
-        }
-        outstandingCmds.pop();
+  quit = true;
+  DLOG(INFO) << this << ": QCli: destructor begin (queue size " << outstandingCmds.size() << ")\n";
+  while (!outstandingCmds.empty()) {
+    DLOG(INFO) << this << ": Qli: removing residues (" << outstandingCmds.front().isFulfilled() << ")\n";
+    if (!outstandingCmds.front().isFulfilled()) {
+      outstandingCmds.front().setException(std::runtime_error("CANCELLED"));
     }
-    DLOG(INFO) << this << ": QCli: destructor end\n";
+    outstandingCmds.pop();
+  }
+  DLOG(INFO) << this << ": QCli: destructor end\n";
 }
 
 folly::Future<string> QueuedCli::executeAndRead(const Command& cmd) {
@@ -91,9 +91,9 @@ folly::Future<string> QueuedCli::executeAndRead(const Command& cmd) {
 folly::Future<string> QueuedCli::returnAndExecNext(std::string result) {
   DLOG(INFO) << this << ": QCli: returnAndExecNext '" << result << "'\n";
   if (quit) {
-      DLOG(INFO) << this << ": QCli: FAILED\n";
-//      return folly::Future<std::string>(result);
-      return folly::Future<std::string>(std::runtime_error("FAILED"));
+    DLOG(INFO) << this << ": QCli: FAILED\n";
+//    return folly::Future<std::string>(result);
+    return folly::Future<std::string>(std::runtime_error("FAILED"));
   }
 
   outstandingCmds.pop();
