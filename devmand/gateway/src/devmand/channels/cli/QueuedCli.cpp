@@ -92,6 +92,7 @@ folly::Future<string> QueuedCli::returnAndExecNext(std::string result) {
   DLOG(INFO) << this << ": QCli: returnAndExecNext '" << result << "'\n";
   if (quit) {
       DLOG(INFO) << this << ": QCli: CANCELLED\n";
+//      return folly::Future<std::string>(result);
       return folly::Future<std::string>(std::runtime_error("CANCELLED"));
   }
 

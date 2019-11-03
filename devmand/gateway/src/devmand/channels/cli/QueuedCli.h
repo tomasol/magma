@@ -18,16 +18,16 @@ namespace cli {
 
 class QueuedCli : public Cli {
  private:
-  std::shared_ptr<Cli> cli;
+  std::shared_ptr<Cli> cli;                 // underlaying cli layers
   std::queue<folly::Promise<std::string>>
-      outstandingCmds;
-  std::mutex mutex;
+      outstandingCmds;                      // queue of commands waiting for processing
+  std::mutex mutex;                         // blocking lock when queue size limit reached
 
  public:
   QueuedCli(
       std::shared_ptr<Cli> cli,
-      unsigned int hi_limit = 1000,
-      unsigned int lo_limit = 900);
+      unsigned int hi_limit = 1000,         // default queue block size limit
+      unsigned int lo_limit = 900);         // default queue release block size
 
   ~QueuedCli();
 
@@ -40,16 +40,16 @@ class QueuedCli : public Cli {
     return folly::Future<std::string>(cmd.toString());
   }
 
-  folly::Future<std::string> returnAndExecNext(std::string result);
+  folly::Future<std::string> returnAndExecNext(std::string result);     // get next from queue when pending finished
 
  private:
-  void wait() {
+  void wait() {     // blocking wait on conditional variable when queue full
     ready = false;
     std::unique_lock<std::mutex> lk(m);
     cv.wait(lk, [this] { return ready; });
   }
 
-  void notify() {
+  void notify() {   // unblock threads waiting on conditional variable
     {
       std::lock_guard<std::mutex> lk(m);
       ready = true;
@@ -62,7 +62,7 @@ class QueuedCli : public Cli {
   std::condition_variable cv;
   bool ready{false};
   unsigned int hi_limit, lo_limit;
-  bool quit;
+  bool quit;       // do not process next when
 };
 
 } // namespace cli
