@@ -67,7 +67,16 @@ folly::Future<string> QueuedCli::executeAndRead(const Command& cmd) {
       std::move(future_exec)
           .thenValue([=](...) { return cli->executeAndRead(cmd); })
           .thenValue(
-              [=](std::string result) { return returnAndExecNext(result); });
+              [=](std::string result) {
+                  MLOG(MERROR) << ": QCli: on Value '" << result << "'\n";
+                  return returnAndExecNext(result);
+              })
+          .thenError(folly::tag_t<std::runtime_error>{}, /*[&](auto const&)*/ [this](std::exception const& e) {
+              MLOG(MERROR) << ": QCli: on ERROR '" << e.what() << "'\n";
+              returnAndExecNext(e.what());
+              return folly::Future<std::string>(std::runtime_error(e.what()));
+          })
+              ;
 
   { // synchronized insert block
     std::lock_guard<std::mutex> lock(mutex);
@@ -91,9 +100,9 @@ folly::Future<string> QueuedCli::executeAndRead(const Command& cmd) {
 folly::Future<string> QueuedCli::returnAndExecNext(std::string result) {
   MLOG(MDEBUG) << this << ": QCli: returnAndExecNext '" << result << "'\n";
   if (quit) {
-    MLOG(MDEBUG) << this << ": QCli: FAILED\n";
+    MLOG(MDEBUG) << this << ": QCli: EXPIRED\n";
 //    return folly::Future<std::string>(result);
-    return folly::Future<std::string>(std::runtime_error("FAILED"));
+    return folly::Future<std::string>(std::runtime_error("EXPIRED"));
   }
 
   outstandingCmds.pop();
