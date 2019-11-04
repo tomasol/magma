@@ -5,14 +5,11 @@
 // LICENSE file in the root directory of this source tree. An additional grant
 // of patent rights can be found in the PATENTS file in the same directory.
 
-#include <boost/algorithm/string/classification.hpp>
-#include <boost/algorithm/string/join.hpp>
-#include <boost/algorithm/string/replace.hpp>
-#include <boost/algorithm/string/split.hpp>
+#include <devmand/devices/cli/ModelRegistry.h>
+#include <devmand/test/cli/utils/Json.h>
 #include <folly/executors/CPUThreadPoolExecutor.h>
 #include <folly/futures/Future.h>
 #include <gtest/gtest.h>
-#include <devmand/devices/cli/ModelRegistry.h>
 #include <spdlog/spdlog.h>
 #include <ydk_ietf/iana_if_type.hpp>
 #include <ydk_openconfig/openconfig_interfaces.hpp>
@@ -22,6 +19,7 @@ namespace test {
 namespace cli {
 
 using namespace devmand::devices::cli;
+using namespace devmand::test::utils::json;
 
 using OpenconfigInterfaces = openconfig::openconfig_interfaces::Interfaces;
 using OpenconfigInterface = OpenconfigInterfaces::Interface;
@@ -97,19 +95,6 @@ static const string singleInterfaceJson =
     "    }\n"
     "  }\n"
     "}";
-
-static string sortJson(const string& json) {
-  std::vector<std::string> lines;
-  // Split to lines
-  boost::split(lines, json, boost::is_any_of("\n"), boost::token_compress_on);
-  // Sort
-  std::sort(lines.begin(), lines.end());
-  auto joined = boost::algorithm::join(lines, "\n");
-  // Remove comma
-  boost::replace_all(joined, ",", "");
-
-  return joined;
-}
 
 TEST_F(ModelRegistryTest, jsonSerializationTopLevel) {
   Bundle& bundleOpenconfig = mreg.getBundle(Model::OPENCONFIG_0_1_6);

@@ -26,185 +26,9 @@ namespace cli {
 using namespace devmand::channels::cli;
 using namespace std;
 
+// TODO get out of here, this will be a shared single instance for all
+// structured devices
 auto mreg = std::unique_ptr<ModelRegistry>(new ModelRegistry());
-
-// TODO move to unit test
-
-//class UbntFakeCli : public Cli {
-// public:
-//  folly::Future<string> executeAndRead(const Command& cmd) override {
-//    (void)cmd;
-//    if (cmd.toString() == "show interfaces description") {
-//      return "\n"
-//             "Interface  Admin      Link    Description\n"
-//             "---------  ---------  ------  ----------------------------------------------------------------\n"
-//             "0/1        Enable     Up\n"
-//             "0/2        Enable     Down    Some descr\n"
-//             "0/3        Enable     Down\n"
-//             "0/4        Enable     Down\n"
-//             "0/5        Enable     Down\n"
-//             "0/6        Enable     Down\n"
-//             "0/7        Enable     Down\r\n"
-//             "0/8        Enable     Down\n"
-//             "0/9        Enable     Down\n"
-//             "0/10       Enable     Down\n"
-//             "0/11       Enable     Down\n"
-//             "0/12       Enable     Down\n"
-//             "0/13       Enable     Down\n"
-//             "0/14       Enable     Down\n"
-//             "0/15       Enable     Down\n"
-//             "0/16       Enable     Down\n"
-//             "0/17       Enable     Down\n"
-//             "0/18       Enable     Down\n"
-//             "3/1        Enable     Down\n"
-//             "3/2        Enable     Down\n"
-//             "3/3        Enable     Down\n"
-//             "3/4        Enable     Down\n"
-//             "3/5        Enable     Down\n"
-//             "3/6        Enable     Down\n";
-//    } else if (cmd.toString().find("show running-config interface ") == 0) {
-//      string ifcId = cmd.toString().substr(
-//          string("show running-config interface ").size() - 1);
-//
-//      return "\n"
-//             "!Current Configuration:\n"
-//             "!\n"
-//             "interface  " +
-//          ifcId +
-//          "\n"
-//          "description 'This is ifc " +
-//          ifcId +
-//          "'\n"
-//          "mtu 1500\n"
-//          "exit\n"
-//          "";
-//    } else if (cmd.toString().find("show interface ethernet") == 0) {
-//      return "\n"
-//             "Total Packets Received (Octets)................ 42706681\n"
-//             "Packets Received 64 Octets..................... 2522468\n"
-//             "Packets Received 65-127 Octets................. 235916\n"
-//             "Packets Received 128-255 Octets................ 2334087\n"
-//             "Packets Received 256-511 Octets................ 810085\n"
-//             "Packets Received 512-1023 Octets............... 1079612\n"
-//             "Packets Received 1024-1518 Octets.............. 1847904\n"
-//             "Packets Received > 1518 Octets................. 0\n"
-//             "Packets RX and TX 64 Octets.................... 2855454\n"
-//             "Packets RX and TX 65-127 Octets................ 315435\n"
-//             "Packets RX and TX 128-255 Octets............... 2346308\n"
-//             "Packets RX and TX 256-511 Octets............... 811155\n"
-//             "Packets RX and TX 512-1023 Octets.............. 1086055\n"
-//             "Packets RX and TX 1024-1518 Octets............. 1873514\n"
-//             "Packets RX and TX 1519-2047 Octets............. 0\n"
-//             "Packets RX and TX 2048-4095 Octets............. 0\n"
-//             "Packets RX and TX 4096-9216 Octets............. 0\n"
-//             "\n"
-//             "Total Packets Received Without Errors.......... 8830072\n"
-//             "Unicast Packets Received....................... 293117\n"
-//             "Multicast Packets Received..................... 5769311\n"
-//             "Broadcast Packets Received..................... 2767644\n"
-//             "                  \n"
-//             "Receive Packets Discarded...................... 0\n"
-//             "\n"
-//             "Total Packets Received with MAC Errors......... 0\n"
-//             "Jabbers Received............................... 0\n"
-//             "Fragments Received............................. 0\n"
-//             "Undersize Received............................. 0\n"
-//             "Alignment Errors............................... 0\n"
-//             "FCS Errors..................................... 0\n"
-//             "Overruns....................................... 0\n"
-//             "\n"
-//             "Total Received Packets Not Forwarded........... 0\n"
-//             "802.3x Pause Frames Received................... 0\n"
-//             "Unacceptable Frame Type........................ 0\n"
-//             "\n"
-//             "Total Packets Transmitted (Octets)............. 72669652\n"
-//             "Packets Transmitted 64 Octets.................. 332986\n"
-//             "Packets Transmitted 65-127 Octets.............. 79519\n"
-//             "Packets Transmitted 128-255 Octets............. 12221\n"
-//             "Packets Transmitted 256-511 Octets............. 1070\n"
-//             "Packets Transmitted 512-1023 Octets............ 6443\n"
-//             "Packets Transmitted 1024-1518 Octets........... 25610\n"
-//             "Packets Transmitted > 1518 Octets.............. 0\n"
-//             "Max Frame Size................................. 1518\n"
-//             "\n"
-//             "Total Packets Transmitted Successfully......... 457849\n"
-//             "Unicast Packets Transmitted.................... 125182\n"
-//             "Multicast Packets Transmitted.................. 325039\n"
-//             "Broadcast Packets Transmitted.................. 7628\n"
-//             "\n"
-//             "Transmit Packets Discarded..................... 0\n"
-//             "\n"
-//             "Total Transmit Errors.......................... 0\n"
-//             "\n"
-//             "Total Transmit Packets Discarded............... 0\n"
-//             "Single Collision Frames........................ 0\n"
-//             "Multiple Collision Frames...................... 0\n"
-//             "Excessive Collision Frames..................... 0\n"
-//             "\n"
-//             "802.3x Pause Frames Transmitted................ 0\n"
-//             "GVRP PDUs received............................. 0\n"
-//             "GVRP PDUs Transmitted.......................... 0\n"
-//             "GVRP Failed Registrations...................... 0\n"
-//             "GMRP PDUs Received............................. 0\n"
-//             "GMRP PDUs Transmitted.......................... 0\n"
-//             "GMRP Failed Registrations...................... 0\n"
-//             "                  \n"
-//             "STP BPDUs Transmitted.......................... 304922\n"
-//             "STP BPDUs Received............................. 2\n"
-//             "RSTP BPDUs Transmitted......................... 0\n"
-//             "RSTP BPDUs Received............................ 0\n"
-//             "MSTP BPDUs Transmitted......................... 5\n"
-//             "MSTP BPDUs Received............................ 0\n"
-//             "\n"
-//             "EAPOL Frames Transmitted....................... 0\n"
-//             "EAPOL Start Frames Received.................... 0\n"
-//             "\n"
-//             "Load Interval.................................. 5\n"
-//             "Bits Per Second Received....................... 38272\n"
-//             "Bits Per Second Transmitted.................... 4552\n"
-//             "Packets Per Second Received.................... 14\n"
-//             "Packets Per Second Transmitted................. 1\n"
-//             "\n"
-//             "Time Since Counters Last Cleared............... 7 day 1 hr 24 min 53 sec";
-//    } else if (cmd.toString() == "show interfaces description") {
-//      return "\n"
-//             "Interface  Admin      Link    Description\n"
-//             "---------  ---------  ------  ----------------------------------------------------------------\n"
-//             "0/1        Enable     Up\n"
-//             "0/2        Enable     Down\n"
-//             "0/3        Enable     Down\n"
-//             "0/4        Enable     Down\n"
-//             "0/5        Disable    Down    testing\n"
-//             "0/6        Enable     Down\n"
-//             "0/7        Enable     Down\n"
-//             "0/8        Enable     Down\n"
-//             "0/9        Enable     Down\n"
-//             "0/10       Enable     Down\n"
-//             "0/11       Enable     Down\n"
-//             "0/12       Enable     Down\n"
-//             "0/13       Enable     Down\n"
-//             "0/14       Enable     Down\n"
-//             "0/15       Enable     Down\n"
-//             "0/16       Enable     Down\n"
-//             "0/17       Enable     Down\n"
-//             "0/18       Enable     Down\n"
-//             "3/1        Enable     Down\n"
-//             "3/2        Enable     Down\n"
-//             "3/3        Enable     Down\n"
-//             "3/4        Enable     Down\n"
-//             "3/5        Enable     Down\n"
-//             "3/6        Enable     Down\n"
-//             "";
-//    }
-//
-//    return "";
-//  }
-//
-//  folly::Future<string> executeAndSwitchPrompt(const Command& cmd) override {
-//    (void)cmd;
-//    return folly::Future<string>("");
-//  }
-//};
 
 using Ifcs = openconfig::openconfig_interfaces::Interfaces;
 using Ifc = openconfig::openconfig_interfaces::Interfaces::Interface;
@@ -339,7 +163,7 @@ static shared_ptr<Ifcs> parseIfcs(Channel& channel) {
   regex ifcIdRegex(R"(^(\S+)\s+(\S+)\s+(\S+)\s*(.*))");
 
   auto interfaces = make_shared<Ifcs>();
-  for (auto& ifcId : parseKeys<string>(output, ifcIdRegex, 1, 3)) {
+  for (auto& ifcId : parseKeys<string>(output, ifcIdRegex, 1, 4)) {
     interfaces->interface.append(parseInterface(channel, ifcId));
   }
   return interfaces;
@@ -348,11 +172,6 @@ static shared_ptr<Ifcs> parseIfcs(Channel& channel) {
 unique_ptr<devices::Device> StructuredUbntDevice::createDevice(
     Application& app,
     const cartography::DeviceConfig& deviceConfig) {
-  //  const auto& channelConfigs = deviceConfig.channelConfigs;
-  //  const auto& plaintextCliKv = channelConfigs.at("cli").kvPairs;
-
-  //  auto cli = make_shared<UbntFakeCli>();
-  //  auto channel = make_shared<Channel>(cli);
   IoConfigurationBuilder ioConfigurationBuilder(deviceConfig);
   const std::shared_ptr<Channel>& channel =
       std::make_shared<Channel>(ioConfigurationBuilder.getIo());
