@@ -19,7 +19,7 @@ namespace cli {
 
 class QueuedCli : public Cli {
  private:
-  std::shared_ptr<Cli> cli;                 // underlaying cli layers
+  std::shared_ptr<Cli> cli;                 // underlying cli layers
   std::queue<folly::Promise<std::string>>
       outstandingCmds;                      // queue of commands waiting for processing
   std::mutex mutex;                         // blocking lock when queue size limit reached
@@ -55,7 +55,7 @@ class QueuedCli : public Cli {
       std::lock_guard<std::mutex> lk(m);
       ready = true;
     }
-    cv.notify_one();
+    cv.notify_all();
   }
 
  private:
