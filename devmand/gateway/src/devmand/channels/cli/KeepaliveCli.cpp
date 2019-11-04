@@ -51,20 +51,14 @@ KeepaliveCli::~KeepaliveCli() {
 }
 
 folly::Future<string> KeepaliveCli::executeAndRead(const Command& cmd) {
-  while (!ready) {  // wait if stack is being reinitialized (TODO use conditional variable instead)
-    MLOG(MDEBUG) << this << ": KACli: executeAndRead: (cli not ready) '" << cmd << "'\n";
-    std::this_thread::sleep_for(std::chrono::seconds(1));
-  }
+  waitUntilCliReady();
   MLOG(MDEBUG) << this << ": KACli executeAndRead: (cli " << cli.get() << ") '" << cmd << "'\n";
 
   return cli->executeAndRead(cmd);
 }
 
 folly::Future<string> KeepaliveCli::executeAndSwitchPrompt(const Command& cmd) {
-  while (!ready) {  // wait if stack is being reinitialized (TODO use conditional variable instead)
-    MLOG(MDEBUG) << this << ": KACli: executeAndSwitchPrompt: (cli not ready) '" << cmd << "'\n";
-    std::this_thread::sleep_for(std::chrono::seconds(1));
-  }
+  waitUntilCliReady();
   MLOG(MDEBUG) << this << ": KACli executeAndSwitchPrompt: (cli " << cli.get() << ") '" << cmd << "\n";
 
   return cli->executeAndSwitchPrompt(cmd);
@@ -76,10 +70,7 @@ void KeepaliveCli::keepalive() {
 
   // infinite keepaly loop (sending keepalive message every "delay" seconds)
   while (!quit) {
-    while (!ready) {  // wait if stack is being reinitialized (TODO use conditional variable instead)
-      MLOG(MDEBUG) << this << ": KACli: cli not ready yet\n";
-      std::this_thread::sleep_for(std::chrono::seconds(1));
-    }
+    waitUntilCliReady();
     skip = false;
 //        std::ostringstream ss;
 //        ss << "KA #" << ++cnt << std::endl;
@@ -93,8 +84,9 @@ void KeepaliveCli::keepalive() {
         return cli->executeAndRead(cmd);
       })
       .onTimeout(std::chrono::seconds(timeout), [&] {
-        // cli stack is beeing reinitialized, temprorarily disable all send operations
-        ready = false;
+        MLOG(MERROR) << this << ": KACli: TIMEOUT " << cnt << " (outstanding KAs " << outstandingKas.size() << ")\n";
+        // cli stack is being reinitialized, temprorary disable all send operations
+        block();
 
         // make before break (store old cli into tmp, create new cli and then destroy tmp)
         std::shared_ptr<Cli> tmp = std::move(cli);
@@ -108,7 +100,6 @@ void KeepaliveCli::keepalive() {
         }
 
         // remove all pending futures on old stack
-        MLOG(MERROR) << this << ": KACli: TIMEOUT " << cnt << " (outstanding KAs " << outstandingKas.size() << ")\n";
         while (!outstandingKas.empty()) {
           MLOG(MDEBUG) << this << ": KACli: removing residues (ready " << outstandingKas.front().isReady() << ")\n";
           if (!outstandingKas.front().isReady()) {
@@ -118,7 +109,7 @@ void KeepaliveCli::keepalive() {
         }
 
         // enable send operations on new stack
-        ready = true;
+        notify();
 
         // destroy old stack
         MLOG(MDEBUG) << this << ": KACli: delete old cli " << tmp.get() << "\n";
