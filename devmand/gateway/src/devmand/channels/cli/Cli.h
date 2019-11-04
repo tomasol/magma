@@ -50,160 +50,96 @@ class EchoCli : public Cli {
   }
 };
 
-// TODO remove once not necessary (when the real CLI stack is implemented)
-
-class AsyncEchoCli : public Cli {
-public:
-    AsyncEchoCli(std::shared_ptr<folly::CPUThreadPoolExecutor> _executor,
-                 const unsigned int _timeout_in_seconds = 1) :
-                 executor(_executor),
-                 index(0)
-    {
-        durations = {_timeout_in_seconds};
-    }
-
-    AsyncEchoCli(std::vector<unsigned int> _durations) :
-            durations(_durations),
-            index(0),
-            quit(false)
-    {
-        executor = std::make_shared<folly::CPUThreadPoolExecutor>(1);
-    }
-
-    ~AsyncEchoCli() {
-        MLOG(MDEBUG) << this << ": AsyncEchoCli: desctructor begin (tasks " << executor->getPendingTaskCount() << ")\n";
-        quit = true;
-        executor->stop();
-        MLOG(MDEBUG) << this << ": AsyncEchoCli: desctructor after stop (tasks " << executor->getPendingTaskCount() << ")\n";
-        executor->join();
-        MLOG(MDEBUG) << this << ": AsyncEchoCli: desctructor after join (tasks " << executor->getPendingTaskCount() << ")\n";
-    }
-
-    folly::Future<std::string> executeAndRead(const Command& cmd) override {
-        MLOG(MDEBUG) << this << ": AsyncEchoCli:executeAndRead '" << cmd << "'\n";
-
-        folly::Promise<std::string> p;
-        folly::Future<std::string> f = p.getFuture()
-                .via(executor.get())
-                .thenValue([=](...) { return delay(cmd, durations[(index++)%durations.size()]); });
-        p.setValue("GOGOGO");
-        return f;
-    }
-
-    folly::Future<std::string> executeAndSwitchPrompt(
-            const Command& cmd) override {
-        MLOG(MDEBUG) << this << ": AsyncEchoCli:executeAndSwitchPrompt '" << cmd << "'\n";
-
-        folly::Promise<std::string> p;
-        folly::Future<std::string> f = p.getFuture()
-                .via(executor.get())
-                .thenValue([=](...) { return delay(cmd, durations[(index++)%durations.size()]); });
-        p.setValue("GOGOGO");
-        return f;
-    }
-
-protected:
-    std::shared_ptr<folly::CPUThreadPoolExecutor> executor;
-    std::vector<unsigned int> durations;
-    unsigned int index;
-    bool quit;
-
-    folly::Future<std::string> delay(const Command& cmd, unsigned int tis) {
-        if (quit) {
-            MLOG(MDEBUG) << this << ": AsyncEchoCli: '" << cmd << "' ABORTED\n";
-            return folly::Future<std::string>(std::runtime_error(cmd.toString()));
-        }
-        MLOG(MDEBUG) << this << ": AsyncEchoCli: '" << cmd << "' busy for " << tis << " second(s) (tid " << std::this_thread::get_id() << ")\n";
-        std::this_thread::sleep_for(std::chrono::seconds(tis));
-
-        MLOG(MDEBUG) << this << ": AsyncEchoCli: '" << cmd << "' done\n";
-        return folly::Future<std::string>(cmd.toString());
-    }
-};
-
-// TODO remove once not necessary (when the real CLI stack is implemented)
-
 class ErrCli : public Cli {
 public:
     folly::Future<std::string> executeAndRead(const Command& cmd) override {
-        throw std::runtime_error("FAAAAAIL");
-        return folly::Future<std::string>(cmd.toString());
+        throw std::runtime_error(cmd.toString());
+        return folly::Future<std::string>(std::runtime_error(cmd.toString()));
     }
 
     folly::Future<std::string> executeAndSwitchPrompt(
             const Command& cmd) override {
-        throw std::runtime_error("FAAAAAIL");
-        return folly::Future<std::string>(cmd.toString());
-    }
-};
-
-class AsyncErrCli : public Cli {
-public:
-    AsyncErrCli(std::shared_ptr<folly::CPUThreadPoolExecutor> _executor,
-                const unsigned int _timeout_in_seconds = 1) :
-            executor(_executor),
-            index(0)
-    {
-        durations = {_timeout_in_seconds};
-    }
-
-    AsyncErrCli(std::vector<unsigned int> _durations) :
-            durations(_durations),
-            index(0),
-            quit(false)
-    {
-        executor = std::make_shared<folly::CPUThreadPoolExecutor>(1);
-    }
-
-    ~AsyncErrCli() {
-        MLOG(MDEBUG) << this << ": AsyncErrCli: desctructor begin\n";
-        quit = true;
-        executor->join();
-        MLOG(MDEBUG) << this << ": AsyncErrCli: desctructor end\n";
-    }
-
-    folly::Future<std::string> executeAndRead(const Command& cmd) override {
-        MLOG(MDEBUG) << this << ": AsyncErrCli:executeAndRead '" << cmd << "'\n";
-
-        folly::Promise<std::string> p;
-        folly::Future<std::string> f = p.getFuture()
-                .via(executor.get())
-                .thenValue([=](...) { return delay(cmd, durations[(index++)%durations.size()]); });
-        p.setValue("GOGOGO");
-        return f;
-    }
-
-    folly::Future<std::string> executeAndSwitchPrompt(
-            const Command& cmd) override {
-        MLOG(MDEBUG) << this << ": AsyncErrCli:executeAndSwitchPrompt '" << cmd << "'\n";
-
-        folly::Promise<std::string> p;
-        folly::Future<std::string> f = p.getFuture()
-                .via(executor.get())
-                .thenValue([=](...) { return delay(cmd, durations[(index++)%durations.size()]); });
-        p.setValue("GOGOGO");
-        return f;
-    }
-
-protected:
-    std::shared_ptr<folly::CPUThreadPoolExecutor> executor;
-    std::vector<unsigned int> durations;
-    unsigned int index;
-    bool quit;
-
-    folly::Future<std::string> delay(const Command& cmd, unsigned int tis) {
-        if (quit) {
-            MLOG(MDEBUG) << this << ": AsyncErrCli: '" << cmd << "' ABORTED\n";
-            return folly::Future<std::string>(std::runtime_error(cmd.toString()));
-        }
-        MLOG(MDEBUG) << this << ": AsyncErrCli: '" << cmd << "' busy for " << tis << " second(s) (tid " << std::this_thread::get_id() << ")\n";
-        std::this_thread::sleep_for(std::chrono::seconds(tis));
-
-        MLOG(MDEBUG) << this << ": AsyncErrCli: '" << cmd << "' done\n";
         throw std::runtime_error(cmd.toString());
         return folly::Future<std::string>(std::runtime_error(cmd.toString()));
     }
 };
+
+class AsyncCli : public Cli {
+public:
+    AsyncCli(
+            std::shared_ptr<Cli> _cli,
+            std::vector<unsigned int> _durations) :
+            cli(_cli),
+            durations(_durations),
+            index(0),
+            quit(false)
+    {
+        executor = std::make_shared<folly::CPUThreadPoolExecutor>(1);
+    }
+
+    ~AsyncCli() {
+        MLOG(MDEBUG) << this << ": AsyncCli: desctructor begin (tasks " << executor->getPendingTaskCount() << ")\n";
+        quit = true;
+        executor->stop();
+        MLOG(MDEBUG) << this << ": AsyncCli: desctructor after stop (tasks " << executor->getPendingTaskCount() << ")\n";
+        executor->join();
+        MLOG(MDEBUG) << this << ": AsyncCli: desctructor after join (tasks " << executor->getPendingTaskCount() << ")\n";
+    }
+
+    folly::Future<std::string> executeAndRead(const Command& cmd) override {
+        MLOG(MDEBUG) << this << ": AsyncCli:executeAndRead '" << cmd << "'\n";
+
+        folly::Promise<std::string> p;
+        folly::Future<std::string> f = p.getFuture()
+                .via(executor.get())
+                .thenValue([=](...) {
+                    unsigned int tis = durations[(index++)%durations.size()];
+                    if (quit) {
+                        MLOG(MDEBUG) << this << ": AsyncCli: '" << cmd << "' ABORTED\n";
+                        return folly::Future<std::string>(std::runtime_error(cmd.toString()));
+                    }
+                    MLOG(MDEBUG) << this << ": AsyncCli: '" << cmd << "' busy for " << tis << " second(s) (tid " << std::this_thread::get_id() << ")\n";
+                    std::this_thread::sleep_for(std::chrono::seconds(tis));
+
+                    MLOG(MDEBUG) << this << ": AsyncCli: '" << cmd << "' done\n";
+                    return cli->executeAndRead(cmd);
+                });
+        p.setValue("GOGOGO");
+        return f;
+    }
+
+    folly::Future<std::string> executeAndSwitchPrompt(
+            const Command& cmd) override {
+        MLOG(MDEBUG) << this << ": AsyncCli:executeAndSwitchPrompt '" << cmd << "'\n";
+
+        folly::Promise<std::string> p;
+        folly::Future<std::string> f = p.getFuture()
+                .via(executor.get())
+                .thenValue([=](...) {
+                    unsigned int tis = durations[(index++)%durations.size()];
+                    if (quit) {
+                        MLOG(MDEBUG) << this << ": AsyncCli: '" << cmd << "' ABORTED\n";
+                        return folly::Future<std::string>(std::runtime_error(cmd.toString()));
+                    }
+                    MLOG(MDEBUG) << this << ": AsyncCli: '" << cmd << "' busy for " << tis << " second(s) (tid " << std::this_thread::get_id() << ")\n";
+                    std::this_thread::sleep_for(std::chrono::seconds(tis));
+
+                    MLOG(MDEBUG) << this << ": AsyncCli: '" << cmd << "' done\n";
+                    return cli->executeAndSwitchPrompt(cmd);
+                });
+        p.setValue("GOGOGO");
+        return f;
+    }
+
+protected:
+    std::shared_ptr<Cli> cli;                 // underlying cli layers
+    std::shared_ptr<folly::CPUThreadPoolExecutor> executor;
+    std::vector<unsigned int> durations;
+    unsigned int index;
+    bool quit;
+};
+
+// TODO remove once not necessary (when the real CLI stack is implemented)
 
 } // namespace cli
 } // namespace channels
