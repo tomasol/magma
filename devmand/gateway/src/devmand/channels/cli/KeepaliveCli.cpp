@@ -31,6 +31,7 @@ KeepaliveCli::KeepaliveCli(
         quit(false)
 {
   executor = std::make_shared<folly::CPUThreadPoolExecutor>(1);
+  timekeeper = std::make_shared<folly::ThreadWheelTimekeeper>();
 
   // initialeze cli stack for the first time
   cli = func();
@@ -76,7 +77,7 @@ void KeepaliveCli::keepalive() {
 //        ss << "KA #" << ++cnt << std::endl;
 //        Command cmd = Command::makeReadCommand(ss.str());
     Command cmd = Command::makeReadCommand("\n");
-    MLOG(MDEBUG) << this << ": KACli: sending Keepalive (cli " << cli.get() << ") #" << cnt << " \n";
+    MLOG(MDEBUG) << this << ": KACli: sending Keepalive (cli " << cli.get() << ") #" << ++cnt << " \n";
 
     // create future chain (ExecuteAndRead(<ENTER>) + onTimeout(timeout)
     outstandingKas.push(folly::makeFuture("GOGOGO")
@@ -117,7 +118,7 @@ void KeepaliveCli::keepalive() {
         MLOG(MDEBUG) << this << ": KACli: delete old cli DONE\n";
 
         return folly::Future<std::string>(std::runtime_error("KA-TIMEOUT"));
-      })
+      }, timekeeper.get())
 //            .thenError(folly::tag_t<std::runtime_error>{}, [&](auto const&) {   // in case something went wrong
 //                return folly::Future<std::string>("KA-TIMEOUT");
 //            })

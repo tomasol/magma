@@ -10,6 +10,7 @@
 #include <devmand/channels/cli/Cli.h>
 #include <folly/executors/CPUThreadPoolExecutor.h>
 #include <folly/futures/Future.h>
+#include <folly/futures/ThreadWheelTimekeeper.h>
 
 namespace devmand {
 namespace channels {
@@ -25,6 +26,7 @@ class KeepaliveCli : public Cli {
   bool ready;                                   // prohibit cli operations when underlying stack is being reinitalized
   std::shared_ptr<folly::CPUThreadPoolExecutor> executor;   // runs keepalive loop in separate thread
   std::queue<folly::Future<std::string>> outstandingKas;    // list of sent keepalives
+  std::shared_ptr<folly::ThreadWheelTimekeeper> timekeeper;
 
  public:
   KeepaliveCli(
@@ -39,6 +41,28 @@ class KeepaliveCli : public Cli {
   folly::Future<std::string> executeAndSwitchPrompt(const Command& cmd) override;
 
   void keepalive();
+
+private:
+  void waitUntilCliReady() {     // waitUntilCliReady on conditional variable while blocked
+    std::unique_lock<std::mutex> lk(m);
+    cv.wait(lk, [this] { return ready; });
+  }
+
+  void block() {     // block conditional variable
+    std::unique_lock<std::mutex> lk(m);
+    ready = false;
+  }
+
+  void notify() {   // unblock threads waiting on conditional variable
+    {
+      std::lock_guard<std::mutex> lk(m);
+      ready = true;
+    }
+    cv.notify_all();
+  }
+
+  std::mutex m;
+  std::condition_variable cv;
 };
 
 } // namespace cli
