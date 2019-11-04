@@ -7,7 +7,6 @@
 
 #include <devmand/channels/cli/Command.h>
 #include <devmand/channels/cli/KeepaliveCli.h>
-#include <folly/futures/Promise.h>
 #include <magma_logging.h>
 
 #include <iostream>
@@ -89,8 +88,7 @@ void KeepaliveCli::keepalive() {
     MLOG(MDEBUG) << this << ": KACli: sending Keepalive (cli " << cli.get() << ") #" << cnt << " \n";
 
     // create future chain (ExecuteAndRead(<ENTER>) + onTimeout(timeout)
-    folly::Promise<std::string> p;
-    outstandingKas.push(p.getFuture()
+    outstandingKas.push(folly::makeFuture("GOGOGO")
       .thenValue([=](...) {
         return cli->executeAndRead(cmd);
       })
@@ -133,9 +131,6 @@ void KeepaliveCli::keepalive() {
 //                return folly::Future<std::string>("KA-TIMEOUT");
 //            })
     );
-
-    // trigger start Keeplaive chain execution
-    p.setValue("GOGOGO");
 
     // skip sleep when new stack has been created (send first keepalive as soon as possible)
     if (!skip) {
