@@ -1,6 +1,7 @@
 #pragma once
 
 #include <boost/algorithm/string.hpp>
+#include <folly/Optional.h>
 #include <ydk/types.hpp>
 #include <regex>
 #include <vector>
@@ -19,8 +20,48 @@ vector<T> parseKeys(
     const int& skipLines = 0,
     const function<T(string)>& postProcess = [](auto str) { return str; });
 
-// Implementation is in header since this is a template and we cant declare
-// all the variations
+template <typename T>
+vector<T> parseLineKeys(
+    const string& output,
+    const regex& pattern,
+    const function<T(string)>& postProcess = [](auto str) { return str; });
+
+folly::Optional<string> extractValue(
+    const string& output,
+    const regex& pattern,
+    const uint& groupToExtract);
+
+void parseValue(
+    const string& output,
+    const regex& pattern,
+    const uint& groupToExtract,
+    const std::function<void(string)>& setter);
+
+template <typename T>
+void parseLeaf(
+    const string& output,
+    const regex& pattern,
+    ydk::YLeaf& leaf,
+    const uint& groupToExtract = 1,
+    const function<T(string)>& postProcess = [](auto str) { return str; });
+
+extern function<ydk::uint64(string)> toUI64;
+extern function<ydk::uint16(string)> toUI16;
+
+// Templated functions implemented in header
+
+template <typename T>
+void parseLeaf(
+    const string& output,
+    const regex& pattern,
+    ydk::YLeaf& leaf,
+    const uint& groupToExtract,
+    const function<T(string)>& postProcess) {
+  parseValue(output, pattern, groupToExtract, [&postProcess, &leaf](string v) {
+    leaf = postProcess(v);
+  });
+}
+
 template <typename T>
 vector<T> parseKeys(
     const string& output,
@@ -40,9 +81,8 @@ vector<T> parseKeys(
     }
 
     boost::algorithm::trim(line);
-    std::smatch match;
-    if (std::regex_search(line, match, pattern) and
-        match.size() > groupToExtract) {
+    smatch match;
+    if (regex_search(line, match, pattern) and match.size() > groupToExtract) {
       T processed = postProcess(match[groupToExtract]);
       retval.push_back(processed);
     }
@@ -51,26 +91,22 @@ vector<T> parseKeys(
   return retval;
 }
 
-void parseValue(
-    const string& output,
-    const regex& pattern,
-    const uint& groupToExtract,
-    const std::function<void(string)>& setter);
-
 template <typename T>
-void parseLeaf(
+vector<T> parseLineKeys(
     const string& output,
     const regex& pattern,
-    ydk::YLeaf& leaf,
-    const uint& groupToExtract = 1,
-    const function<T(string)>& postProcess = [](auto str) { return str; }) {
-  parseValue(output, pattern, groupToExtract, [&postProcess, &leaf](string v) {
-    leaf = postProcess(v);
-  });
-}
+    const function<T(string)>& postProcess) {
+  vector<T> retval;
+  smatch match;
+  string currentOutput = output;
+  while (regex_search(currentOutput, match, pattern)) {
+    T processed = postProcess(match[0]);
+    retval.push_back(processed);
+    currentOutput = match.suffix().str();
+  }
 
-extern function<ydk::uint64(string)> toUI64;
-extern function<ydk::uint16(string)> toUI16;
+  return retval;
+}
 
 } // namespace cli
 } // namespace devices

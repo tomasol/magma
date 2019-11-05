@@ -15,6 +15,8 @@
 #include <folly/json.h>
 #include <ydk_ietf/iana_if_type.hpp>
 #include <ydk_openconfig/openconfig_interfaces.hpp>
+#include <ydk_openconfig/openconfig_network_instance.hpp>
+#include <ydk_openconfig/openconfig_vlan_types.hpp>
 #include <memory>
 #include <regex>
 #include <unordered_map>
@@ -30,14 +32,23 @@ using namespace std;
 // structured devices
 auto mreg = std::unique_ptr<ModelRegistry>(new ModelRegistry());
 
+using Nis = openconfig::openconfig_network_instance::NetworkInstances;
+using Ni = Nis::NetworkInstance;
+using Vlan = Ni::Vlans::Vlan;
+
 using Ifcs = openconfig::openconfig_interfaces::Interfaces;
 using Ifc = openconfig::openconfig_interfaces::Interfaces::Interface;
+using IfcType = ietf::iana_if_type::IanaInterfaceType;
 using AdminState = Ifc::State::AdminStatus;
 using OperState = Ifc::State::OperStatus;
+
+using VlanMode = openconfig::openconfig_vlan_types::VlanModeType;
 
 static const auto shutdown = regex("shutdown");
 static const auto description = regex(R"(description '?(.+?)'?)");
 static const auto mtu = regex(R"(mtu (.+))");
+static const auto type = regex(R"(interface\s+(.+))");
+static const auto ethernetIfc = regex(R"(\d+/\d+)");
 
 static void parseConfig(
     Channel& channel,
@@ -52,14 +63,19 @@ static void parseConfig(
   parseLeaf<string>(output, description, cfg->description);
   cfg->enabled = true;
   parseLeaf<bool>(output, shutdown, cfg->enabled, 0, [](auto str) {
-    return "shutdown" == str;
+    return "shutdown" != str;
   });
 
-  if (regex_match(ifcId, regex(R"(\d+/\d+)"))) {
-    cfg->type = ietf::iana_if_type::EthernetCsmacd();
-  } else {
-    cfg->type = ietf::iana_if_type::Other();
-  }
+  parseLeaf<IfcType>(output, type, cfg->type, 1, [&ifcId](auto str) -> IfcType {
+    if (str.find("lag") == 0) {
+      return ietf::iana_if_type::Ieee8023adLag();
+    } else if (str.find("vlan") == 0) {
+      return ietf::iana_if_type::L3ipvlan();
+    } else if (regex_match(ifcId, ethernetIfc)) {
+      return ietf::iana_if_type::EthernetCsmacd();
+    }
+    return ietf::iana_if_type::Other();
+  });
 }
 
 static const auto inOct =
@@ -85,11 +101,6 @@ static const auto counterReset =
 static void parseEthernetCounters(
     const string& output,
     shared_ptr<Ifc::State::Counters>& ctr) {
-  // FIXME there is a bug in YDK
-  // https://github.com/CiscoDevNet/ydk-cpp/blob/58f8dc4f6d078ec8c672c96bf8db7ecb84d14007/core/ydk/src/json_subtree_codec.cpp#L227
-  // they assume any number to be an int, bigger numbers such as uint64 below
-  // fail the encoding process
-
   parseLeaf(output, inOct, ctr->in_octets, 1, toUI64);
   parseLeaf(output, inUPkt, ctr->in_unicast_pkts, 1, toUI64);
   parseLeaf(output, inMPkt, ctr->in_multicast_pkts, 1, toUI64);
@@ -137,6 +148,8 @@ static void parseState(
       state->oper_status = OperState::UP;
     } else if ("Down" == value) {
       state->oper_status = OperState::DOWN;
+    } else {
+      state->oper_status = OperState::UNKNOWN;
     }
   });
 
@@ -149,24 +162,119 @@ static void parseState(
   }
 }
 
+static const auto vlanModeRegx = regex(R"(switchport mode (trunk|access).*)");
+static const auto accessVlanRegx = regex(R"(switchport access vlan (\d+))");
+static const auto trunkVlanRegx =
+    regex(R"(switchport trunk allowed vlan (.+))");
+static const auto vlanIdRegx = regex(R"(\d+)");
+
+static void parseEthernet(
+    Channel& channel,
+    const string& ifcId,
+    shared_ptr<Ifc::Ethernet>& eth) {
+  const Command cmd =
+      Command::makeReadCommand("show running-config interface " + ifcId);
+  string output = channel.executeAndRead(cmd).get();
+
+  parseValue(output, vlanModeRegx, 1, [&eth](auto str) {
+    if (str == "trunk") {
+      eth->switched_vlan->config->interface_mode = VlanMode::TRUNK;
+    } else {
+      eth->switched_vlan->config->interface_mode = VlanMode::ACCESS;
+    }
+  });
+
+  parseValue(output, accessVlanRegx, 1, [&eth](auto str) {
+    eth->switched_vlan->config->access_vlan = toUI16(str);
+    // Set mode again in case the mode command was missing
+    eth->switched_vlan->config->interface_mode = VlanMode::ACCESS;
+  });
+
+  parseValue(output, trunkVlanRegx, 1, [&eth](auto str) {
+    // FIXME support vlan ranges, "all" and "except"
+    for (auto vlan : parseLineKeys(str, vlanIdRegx, toUI16)) {
+      eth->switched_vlan->config->trunk_vlans.append(vlan);
+    }
+    // Set mode again in case the mode command was missing
+    eth->switched_vlan->config->interface_mode = VlanMode::TRUNK;
+  });
+}
+
 static shared_ptr<Ifc> parseInterface(Channel& channel, const string& ifcId) {
   auto ifc = make_shared<Ifc>();
   ifc->name = ifcId;
   parseConfig(channel, ifcId, ifc->config);
   parseState(channel, ifcId, ifc->state, ifc->config);
+  parseEthernet(channel, ifcId, ifc->ethernet);
   return ifc;
 }
+
+static const auto ifcIdRegex = regex(R"(^(\S+)\s+(\S+)\s+(\S+)\s*(.*))");
 
 static shared_ptr<Ifcs> parseIfcs(Channel& channel) {
   auto cmd = Command::makeReadCommand("show interfaces description");
   string output = channel.executeAndRead(cmd).get();
-  regex ifcIdRegex(R"(^(\S+)\s+(\S+)\s+(\S+)\s*(.*))");
 
   auto interfaces = make_shared<Ifcs>();
   for (auto& ifcId : parseKeys<string>(output, ifcIdRegex, 1, 4)) {
     interfaces->interface.append(parseInterface(channel, ifcId));
   }
   return interfaces;
+}
+
+static shared_ptr<Vlan> parseVlan(
+    Channel& channel,
+    ydk::uint16 vlanId,
+    const string& vlanCfgOut,
+    const string& vlanStateOut) {
+  (void)channel;
+  auto vlan = make_shared<Vlan>();
+  vlan->vlan_id = vlanId;
+
+  auto vlanNameRegx = regex("vlan name " + to_string(vlanId) + R"( \"(.+)\")");
+  parseLeaf<string>(vlanCfgOut, vlanNameRegx, vlan->config->name);
+  vlan->config->status = Vlan::Config::Status::ACTIVE;
+
+  auto vlanStateRegx = regex(to_string(vlanId) + R"(\s+(\S+)\s+(\S+).*)");
+  parseLeaf<string>(vlanStateOut, vlanStateRegx, vlan->state->name);
+  vlan->state->status = Vlan::Config::Status::ACTIVE;
+
+  return vlan;
+}
+
+static const auto vlanLineRegx = regex(R"(vlan ([\d,]+))");
+
+static shared_ptr<Ni> parseDefaultNetwork(Channel& channel) {
+  auto defaultNi = make_shared<Ni>();
+  defaultNi->name = "default";
+
+  auto cmd = Command::makeReadCommand(
+      "show running-config | section \"vlan database\"");
+  string output = channel.executeAndRead(cmd).get();
+  auto cmdState = Command::makeReadCommand("show vlan");
+  string outputState = channel.executeAndRead(cmdState).get();
+
+  auto vlanLineOpt = extractValue(output, vlanLineRegx, 1);
+  if (vlanLineOpt) {
+    auto configuredVlans =
+        parseLineKeys(vlanLineOpt.value(), vlanIdRegx, toUI16);
+    // Default vlan
+    configuredVlans.push_back(1);
+    for (auto vlanId : configuredVlans) {
+      defaultNi->vlans->vlan.append(
+          parseVlan(channel, vlanId, output, outputState));
+    }
+  }
+
+  return defaultNi;
+}
+
+static shared_ptr<Nis> parseNetworks(Channel& channel) {
+  (void)channel;
+  auto nis = make_shared<Nis>();
+  shared_ptr<Ni> defaultNi = parseDefaultNetwork(channel);
+  nis->network_instance.append(defaultNi);
+  return nis;
 }
 
 unique_ptr<devices::Device> StructuredUbntDevice::createDevice(
@@ -194,14 +302,21 @@ shared_ptr<State> StructuredUbntDevice::getState() {
   state->setStatus(true);
 
   auto& bundle = mreg->getBundle(Model::OPENCONFIG_0_1_6);
-  auto ifcs = parseIfcs(*channel);
 
   // TODO the conversion here is: Object -> Json -> folly:dynamic
   // the json step is unnecessary
+
+  auto ifcs = parseIfcs(*channel);
   string json = bundle.encode(*ifcs);
   folly::dynamic dynamicIfcs = folly::parseJson(json);
-  state->update([&dynamicIfcs](folly::dynamic& lockedState) {
+
+  auto networks = parseNetworks(*channel);
+  json = bundle.encode(*networks);
+  folly::dynamic dynamicNis = folly::parseJson(json);
+
+  state->update([&dynamicIfcs, &dynamicNis](folly::dynamic& lockedState) {
     lockedState.merge_patch(dynamicIfcs);
+    lockedState.merge_patch(dynamicNis);
   });
 
   return state;
