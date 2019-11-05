@@ -64,7 +64,7 @@ namespace devmand::channels::cli {
         session->setEvent(sessionEvent);
 
         // create caching cli
-        const shared_ptr<ReadCachingCli>& ccli = std::make_shared<ReadCachingCli>(cli, make_shared<EvictingCacheMap<string, string>>(200, 10));
+        const shared_ptr<ReadCachingCli>& ccli = std::make_shared<ReadCachingCli>(cli, ReadCachingCli::createCache());
 
         // create Queued cli
         return std::make_shared<QueuedCli>(ccli);
