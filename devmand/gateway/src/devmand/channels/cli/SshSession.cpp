@@ -48,6 +48,9 @@ void SshSession::openShell(
   ssh_options_set(sessionState.session, SSH_OPTIONS_HOST, ip.c_str());
   ssh_options_set(sessionState.session, SSH_OPTIONS_LOG_VERBOSITY, &verbosity);
   ssh_options_set(sessionState.session, SSH_OPTIONS_PORT, &port);
+  // Connection timeout in seconds
+  int timeout = 120;
+  ssh_options_set(sessionState.session, SSH_OPTIONS_TIMEOUT, &timeout);
 
   checkSuccess(ssh_connect(sessionState.session), SSH_OK);
 
@@ -130,6 +133,7 @@ void SshSession::write(const string& command) {
       sessionState.channel,
       data,
       (unsigned int)command.length() * sizeof(data[0]));
+
   if (bytes == SSH_ERROR) {
     LOG(ERROR) << "Error while executing command " << command;
     terminate();
@@ -142,7 +146,7 @@ SshSession::~SshSession() {
 
 SshSession::SshSession(int _verbosity) : verbosity(_verbosity) {}
 
-SshSession::SshSession() : verbosity(SSH_LOG_PROTOCOL) {}
+SshSession::SshSession() : verbosity(SSH_LOG_FUNCTIONS) {}
 
 string SshSession::read() {
     return read(-1);

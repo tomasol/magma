@@ -31,9 +31,6 @@ SshSessionAsync::SshSessionAsync(shared_ptr<IOThreadPoolExecutor> _executor)
     : executor(_executor), quit(false) {}
 
 SshSessionAsync::~SshSessionAsync() {
-  quit = true;
-  executor->join();
-
   if (this->sessionEvent != nullptr && event_get_base(this->sessionEvent) != nullptr) {
       event_free(this->sessionEvent);
   }
