@@ -20,11 +20,27 @@ using namespace folly;
 class QueuedCli2 : public Cli {
  private:
   shared_ptr<Cli> cli;
-  Executor::KeepAlive<SerialExecutor> serialExecutorKeepAlive;
+
+  Executor::KeepAlive<SerialExecutor> serialExecutorKeepAlive; // maintain consumer thread
+
+  struct QueueEntry {
+    function<Future<string>()> obtainFutureFromCli;
+    shared_ptr<Promise<string>> promise;
+    string command;
+    string loggingPrefix;
+  };
+
+  /**
+   * Unbounded multi producer single consumer queue where consumer is not blocked
+   * on dequeue.
+   */
+  UnboundedQueue<QueueEntry, false, true, false> queue;
+
+  bool isProcessing = false; // only accessed from consumer thread
 
  public:
 
-  QueuedCli2(shared_ptr<Cli> _cli, const shared_ptr<Executor>& _parentExecutor);
+  QueuedCli2(shared_ptr<Cli> _cli, const shared_ptr<Executor> &_parentExecutor);
 
   QueuedCli2() = delete;
 
@@ -35,6 +51,10 @@ class QueuedCli2 : public Cli {
   Future<string> executeAndSwitchPrompt(const Command &cmd) override;
 
  private:
-  Future<string> executeSomething(const string &prefix, const Command &cmd, const function<Future<string>()>& innerFunc);
+
+  Future<string> executeSomething(const Command &cmd, const string &prefix,
+                                  function<Future<string>()> innerFunc);
+
+  void triggerDequeue();
 };
 }
