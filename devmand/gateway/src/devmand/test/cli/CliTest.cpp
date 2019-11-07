@@ -11,6 +11,7 @@
 #include <devmand/channels/cli/PromptAwareCli.h>
 #include <devmand/channels/cli/QueuedCli.h>
 #include <devmand/channels/cli/KeepaliveCli.h>
+#include <devmand/channels/cli/SshSession.h>
 #include <devmand/channels/cli/SshSessionAsync.h>
 #include <folly/executors/IOThreadPoolExecutor.h>
 #include <folly/executors/CPUThreadPoolExecutor.h>
@@ -34,6 +35,7 @@ using devmand::cartography::ChannelConfig;
 using devmand::devices::Device;
 using devmand::devices::State;
 using devmand::devices::cli::PlaintextCliDevice;
+using devmand::devices::cli::sshsession::SshSession;
 using devmand::Application;
 using devmand::channels::cli::sshsession::SshSessionAsync;
 
@@ -110,6 +112,13 @@ TEST_F(CliTest, queuedCliMT) {
   for (auto v : values) {
     EXPECT_EQ(boost::algorithm::trim_copy(v.value()), "hello");
   }
+}
+
+TEST_F(CliTest, sshSessionTest) {
+  SshSession session;
+  session.openShell("localhost", 22, "root", "root");
+  session.write("echo test123\n");
+  session.close();
 }
 
 TEST_F(CliTest, queuedCliMTLimit) {
