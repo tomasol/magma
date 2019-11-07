@@ -128,9 +128,7 @@ add_library(devman_channel_cli
   ${PROJECT_SOURCE_DIR}/src/devmand/channels/cli/IoConfigurationBuilder.cpp
   ${PROJECT_SOURCE_DIR}/src/devmand/channels/cli/ReadCachingCli.cpp
   ${PROJECT_SOURCE_DIR}/src/devmand/channels/cli/SshSocketReader.cpp
-  ${PROJECT_SOURCE_DIR}/src/devmand/channels/cli/QueuedCli2.cpp
-  ${PROJECT_SOURCE_DIR}/src/devmand/channels/cli/QueuedCli2.h)
-
+        )
 target_link_libraries(devman_channel_cli
   devman)
 

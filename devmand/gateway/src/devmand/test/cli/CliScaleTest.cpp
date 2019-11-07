@@ -79,8 +79,7 @@ TEST_F(CliScaleTest, scale) {
     const std::shared_ptr<SshSessionAsync>& session =
         std::make_shared<SshSessionAsync>(executor);
 
-//    session->openShell("172.8.0.1", port, "cisco", "cisco").get();
-    session->openShell("10.19.0.3", port, "cisco", "cisco").get();
+    session->openShell("172.8.0.100", port, "cisco", "cisco").get();
 
     shared_ptr<CliFlavour> cl = CliFlavour::create("ubiquiti");
 
@@ -94,7 +93,7 @@ TEST_F(CliScaleTest, scale) {
     MLOG(MWARNING) << "Connecting device at port" << port
                    << " at FD: " << session->getSshFd();
     session->setEvent(sessionEvent);
-    return std::make_shared<QueuedCli>(cli);
+    return std::make_shared<QueuedCli>(cli, executor);
   };
   const Command& cmd = Command::makeReadCommand("show running-config");
 

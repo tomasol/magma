@@ -5,121 +5,73 @@
 // LICENSE file in the root directory of this source tree. An additional grant
 // of patent rights can be found in the PATENTS file in the same directory.
 
-#include <devmand/channels/cli/Command.h>
 #include <devmand/channels/cli/QueuedCli.h>
-#include <folly/executors/IOThreadPoolExecutor.h>
-#include <folly/futures/Promise.h>
 
-#include <iostream>
-#include <regex>
+namespace devmand::channels::cli {
+using namespace std;
+using namespace folly;
 
-using devmand::channels::cli::Command;
-using devmand::channels::cli::QueuedCli;
-using std::string;
+QueuedCli::QueuedCli(shared_ptr<Cli> _cli, const shared_ptr<Executor> &_parentExecutor) :
+        cli(_cli),
+        serialExecutorKeepAlive(
+                SerialExecutor::create(Executor::getKeepAliveToken(_parentExecutor.get()))) {
+}
 
-namespace devmand {
-namespace channels {
-namespace cli {
+Future<string> QueuedCli::executeAndRead(const Command &cmd) {
+  return executeSomething(cmd, "QCli.executeAndRead",
+                          [=]() { return cli->executeAndRead(cmd); });
+}
 
-QueuedCli::QueuedCli(
-    std::shared_ptr<Cli> _cli,
-    unsigned int _hi_limit,
-    unsigned int _lo_limit)
-    : cli(_cli),
-    ready(true),
-    hi_limit(_hi_limit),
-    lo_limit(_lo_limit),
-    quit(false) {}
+Future<string> QueuedCli::executeAndSwitchPrompt(const Command &cmd) {
+  return executeSomething(cmd, "QCli.executeAndSwitchPrompt",
+                          [=]() { return cli->executeAndSwitchPrompt(cmd); });
+}
 
-QueuedCli::~QueuedCli() {
-  quit = true;
-  MLOG(MDEBUG) << this << ": QCli: destructor begin (queue size " << outstandingCmds.size() << ")\n";
-  while (!outstandingCmds.empty()) {
-    MLOG(MDEBUG) << this << ": Qli: removing residues (" << outstandingCmds.front().isFulfilled() << ")\n";
-    if (!outstandingCmds.front().isFulfilled()) {
-      outstandingCmds.front().setException(std::runtime_error("CANCELLED"));
+Future<string> QueuedCli::executeSomething(
+        const Command &cmd,
+        const string &prefix,
+        function<Future<string>()> innerFunc) {
+
+  MLOG(MDEBUG) << "[" << this_thread::get_id() << "] " << prefix << "('" << cmd << "') called";
+  shared_ptr<Promise<string>> promise = std::make_shared<Promise<string>>();
+  QueueEntry queueEntry;
+  queueEntry.obtainFutureFromCli = move(innerFunc);
+  queueEntry.promise = promise;
+  queueEntry.command = cmd.toString();
+  queueEntry.loggingPrefix = prefix;
+  queue.enqueue(move(queueEntry));
+  triggerDequeue();
+  return promise->getFuture(); // TODO: check lifetime
+}
+
+/*
+ * Start queue reading on consumer thread if queue contains new items.
+ * It is safe to call this method anytime, it is thread safe.
+ */
+void QueuedCli::triggerDequeue() {
+  // switch to consumer thread
+  via(serialExecutorKeepAlive, [=]() {
+    MLOG(MDEBUG) << "[" << this_thread::get_id() << "] " << "isProcessing:" << this->isProcessing;
+    // do nothing if still waiting for remote device to respond
+    if (!this->isProcessing) {
+      QueueEntry queueEntry;
+      if (queue.try_dequeue(queueEntry)) {
+        isProcessing = true;
+        Future<string> cliFuture = queueEntry.obtainFutureFromCli();
+        MLOG(MDEBUG) << "[" << this_thread::get_id() << "] " << queueEntry.loggingPrefix
+                     << "('" << queueEntry.command << "') dequeued and cli future obtained";
+        move(cliFuture).then(
+                serialExecutorKeepAlive,
+                [this, queueEntry](std::string result) {
+                  // after cliFuture completes, finish processing on consumer thread
+                  MLOG(MDEBUG) << "[" << this_thread::get_id() << "] " << queueEntry.loggingPrefix << "('"
+                               << queueEntry.command << "') finished with result '" << result << "'";
+                  queueEntry.promise->setValue(result);
+                  isProcessing = false;
+                  triggerDequeue();
+                });
+      }
     }
-    outstandingCmds.pop();
-  }
-  MLOG(MDEBUG) << this << ": QCli: destructor end\n";
-}
-
-folly::Future<string> QueuedCli::executeAndRead(const Command& cmd) {
-  bool empty = false;
-  MLOG(MDEBUG) << this << ": QCli: executeAndRead: '" << cmd.toString() << "' ready ("
-            << ready << ")\n";
-
-  if (outstandingCmds.size() >= hi_limit) {
-    MLOG(MDEBUG) << this << ": QCli: queue size (" << outstandingCmds.size()
-              << ") reached HI-limit -> WAIT\n";
-    wait();
-  }
-
-  MLOG(MDEBUG) << this << ": QCli: Enqueued '" << cmd
-            << "' (queue size: " << outstandingCmds.size() << ")...\n";
-
-  folly::Promise<std::string> p;
-  p.setInterruptHandler([&](const folly::exception_wrapper& e) {
-    MLOG(MDEBUG) << this << ": QCli: '" << cmd << "' setInterruptHandler " << e << "\n";
   });
-  auto future_exec = p.getFuture();
-  folly::Future<std::string> f =
-      std::move(future_exec)
-          .thenValue([=](...) { return cli->executeAndRead(cmd); })
-          .thenValue(
-              [=](std::string result) {
-                  MLOG(MERROR) << ": QCli: on Value '" << result << "'\n";
-                  return returnAndExecNext(result);
-              })
-          .thenError(folly::tag_t<std::runtime_error>{}, /*[&](auto const&)*/ [this](std::exception const& e) {
-              MLOG(MERROR) << ": QCli: on ERROR '" << e.what() << "'\n";
-              returnAndExecNext(e.what());
-              return folly::Future<std::string>(std::runtime_error(e.what()));
-          })
-              ;
-
-  { // synchronized insert block
-    std::lock_guard<std::mutex> lock(mutex);
-    empty = outstandingCmds.empty();
-    outstandingCmds.push(std::move(p));
-  }
-
-  if (empty) {
-    MLOG(MDEBUG) << this << ": QCli: Executing...\n";
-    outstandingCmds.front().setValue("GOGOGO");
-  } else {
-    MLOG(MDEBUG) << this << ": QCli: Enqueued (queue size: " << outstandingCmds.size()
-              << ")...\n";
-  }
-
-  return f;
 }
-
-// THREAD SAFETY: there should only one command being processed at time, so
-// there should be no race on returnAndExecNext
-folly::Future<string> QueuedCli::returnAndExecNext(std::string result) {
-  MLOG(MDEBUG) << this << ": QCli: returnAndExecNext '" << result << "'\n";
-  if (quit) {
-    MLOG(MDEBUG) << this << ": QCli: EXPIRED\n";
-//    return folly::Future<std::string>(result);
-    return folly::Future<std::string>(std::runtime_error("EXPIRED"));
-  }
-
-  outstandingCmds.pop();
-  if (!ready && outstandingCmds.size() <= lo_limit) {
-    MLOG(MDEBUG) << this << ": QCli: queue size reached LO-limit(" << lo_limit
-              << ") -> RELEASE\n";
-    notify();
-  }
-
-  if (outstandingCmds.empty()) {
-    MLOG(MDEBUG) << this << ": QCli: Queue empty\n";
-  } else {
-    MLOG(MDEBUG) << this << ": QCli: Executing Next...\n";
-    outstandingCmds.front().setValue("GOGOGO");
-  }
-  return folly::Future<std::string>(result);
-}
-} // namespace cli
-} // namespace channels
 }

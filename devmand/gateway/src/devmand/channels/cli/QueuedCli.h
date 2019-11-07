@@ -9,63 +9,52 @@
 
 #include <devmand/channels/cli/Cli.h>
 #include <folly/futures/Future.h>
-#include <magma_logging.h>
-#include <mutex>
-#include <queue>
+#include <folly/Executor.h>
+#include <folly/executors/SerialExecutor.h>
 
-namespace devmand {
-namespace channels {
-namespace cli {
+namespace devmand::channels::cli {
+
+using namespace std;
+using namespace folly;
 
 class QueuedCli : public Cli {
  private:
-  std::shared_ptr<Cli> cli;                 // underlying cli layers
-  std::queue<folly::Promise<std::string>>
-      outstandingCmds;                      // queue of commands waiting for processing
-  std::mutex mutex;                         // blocking lock when queue size limit reached
+  shared_ptr<Cli> cli;
+
+  Executor::KeepAlive<SerialExecutor> serialExecutorKeepAlive; // maintain consumer thread
+
+  struct QueueEntry {
+    function<Future<string>()> obtainFutureFromCli;
+    shared_ptr<Promise<string>> promise;
+    string command;
+    string loggingPrefix;
+  };
+
+  /**
+   * Unbounded multi producer single consumer queue where consumer is not blocked
+   * on dequeue.
+   */
+  UnboundedQueue<QueueEntry, false, true, false> queue;
+
+  bool isProcessing = false; // only accessed from consumer thread
 
  public:
-  QueuedCli(
-      std::shared_ptr<Cli> cli,
-      unsigned int hi_limit = 1000,         // default queue block size limit
-      unsigned int lo_limit = 900);         // default queue release block size
 
-  ~QueuedCli();
+  QueuedCli(shared_ptr<Cli> _cli, const shared_ptr<Executor> &_parentExecutor);
 
-  folly::Future<std::string> executeAndRead(const Command& cmd) override;
+  QueuedCli() = delete;
 
-  folly::Future<std::string> executeAndSwitchPrompt(
-      const Command& cmd) override {
-    MLOG(MERROR) << "[" << this << "] "
-               << "Not Implemented\n";
-    return folly::Future<std::string>(cmd.toString());
-  }
+  QueuedCli(const QueuedCli &) = delete;
 
-  folly::Future<std::string> returnAndExecNext(std::string result);     // get next from queue when pending finished
+  Future<string> executeAndRead(const Command &cmd) override;
+
+  Future<string> executeAndSwitchPrompt(const Command &cmd) override;
 
  private:
-  void wait() {     // blocking wait on conditional variable when queue full
-    ready = false;
-    std::unique_lock<std::mutex> lk(m);
-    cv.wait(lk, [this] { return ready; });
-  }
 
-  void notify() {   // unblock threads waiting on conditional variable
-    {
-      std::lock_guard<std::mutex> lk(m);
-      ready = true;
-    }
-    cv.notify_all();
-  }
+  Future<string> executeSomething(const Command &cmd, const string &prefix,
+                                  function<Future<string>()> innerFunc);
 
- private:
-  std::mutex m;
-  std::condition_variable cv;
-  bool ready{false};
-  unsigned int hi_limit, lo_limit;
-  bool quit;       // do not process next when
+  void triggerDequeue();
 };
-
-} // namespace cli
-} // namespace channels
-} // namespace devmand
+}

@@ -50,8 +50,9 @@ class CliTest : public ::testing::Test {
 };
 
 TEST_F(CliTest, queuedCli) {
+  shared_ptr<CPUThreadPoolExecutor> executor = std::make_shared<CPUThreadPoolExecutor>(8);
   std::vector<unsigned int> durations = {2};
-  QueuedCli cli(std::make_shared<AsyncCli>(std::make_shared<EchoCli>(), durations), 3, 1);
+  QueuedCli cli(std::make_shared<AsyncCli>(std::make_shared<EchoCli>(), durations), executor);
 
   std::vector<std::string> results;
   results.push_back("one");
@@ -87,18 +88,18 @@ TEST_F(CliTest, queuedCli) {
 }
 
 TEST_F(CliTest, queuedCliMT) {
+  shared_ptr<CPUThreadPoolExecutor> executor = std::make_shared<CPUThreadPoolExecutor>(8);
   const int loopcount = 10;
   std::vector<unsigned int> durations = {1};
-  folly::CPUThreadPoolExecutor executor(8);
 
-  QueuedCli cli(std::make_shared<AsyncCli>(std::make_shared<EchoCli>(), durations));
+  QueuedCli cli(std::make_shared<AsyncCli>(std::make_shared<EchoCli>(), durations), executor);
 
   // create requests
   std::vector<folly::Future<std::string>> futures;
   Command cmd = Command::makeReadCommand("hello");
   for (int i = 0; i < loopcount; ++i) {
     MLOG(MDEBUG) << "test exec '" << cmd << "'\n";
-    futures.push_back(folly::via(&executor, [&]() {
+    futures.push_back(folly::via(executor.get(), [&]() {
       return cli.executeAndRead(cmd);
     }));
   }
@@ -122,11 +123,11 @@ TEST_F(CliTest, sshSessionTest) {
 }
 
 TEST_F(CliTest, queuedCliMTLimit) {
+  shared_ptr<CPUThreadPoolExecutor> executor = std::make_shared<CPUThreadPoolExecutor>(8);
     const int loopcount = 10;
     std::vector<unsigned int> durations = {1};
-    folly::CPUThreadPoolExecutor executor(8);
 
-    QueuedCli cli(std::make_shared<AsyncCli>(std::make_shared<EchoCli>(), durations), 3, 1);
+    QueuedCli cli(std::make_shared<AsyncCli>(std::make_shared<EchoCli>(), durations), executor);
 
     // create requests
     std::vector<folly::Future<std::string>> futures;
@@ -136,7 +137,7 @@ TEST_F(CliTest, queuedCliMTLimit) {
 //        ss << "hello #" << i;
 //        Command cmd = Command::makeReadCommand(ss.str());
         MLOG(MDEBUG) << "test exec '" << cmd << "'\n";
-        futures.push_back(folly::via(&executor, [&]() { return cli.executeAndRead(cmd); }));
+        futures.push_back(folly::via(executor.get(), [&]() { return cli.executeAndRead(cmd); }));
     }
 
     // collect values

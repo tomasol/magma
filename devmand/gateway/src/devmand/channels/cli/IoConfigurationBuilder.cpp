@@ -8,7 +8,6 @@
 #include <devmand/channels/cli/IoConfigurationBuilder.h>
 #include <devmand/channels/cli/PromptAwareCli.h>
 #include <devmand/channels/cli/QueuedCli.h>
-#include <devmand/channels/cli/QueuedCli2.h>
 #include <devmand/channels/cli/ReadCachingCli.h>
 #include <devmand/channels/cli/SshSessionAsync.h>
 #include <devmand/channels/cli/SshSession.h>
@@ -68,6 +67,6 @@ namespace devmand::channels::cli {
         const shared_ptr<ReadCachingCli>& ccli = std::make_shared<ReadCachingCli>(cli, ReadCachingCli::createCache());
 
         // create Queued cli
-        return std::make_shared<QueuedCli>(ccli);
+        return std::make_shared<QueuedCli>(ccli, executor);
     }
 }
