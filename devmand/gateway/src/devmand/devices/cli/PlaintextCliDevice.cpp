@@ -29,15 +29,7 @@ std::unique_ptr<devices::Device> PlaintextCliDevice::createDevice(
     const cartography::DeviceConfig& deviceConfig) {
 
   IoConfigurationBuilder ioConfigurationBuilder(deviceConfig);
-  const std::shared_ptr<Channel>& channel = std::make_shared<Channel>(
-
-          std::make_shared<KeepaliveCli>(
-            [&] {
-                return ioConfigurationBuilder.getIo();
-            },
-            5,
-            3)
-          );
+  const std::shared_ptr<Channel>& channel = std::make_shared<Channel>(ioConfigurationBuilder.getIo());
   return std::make_unique<devices::cli::PlaintextCliDevice>(
       app,
       deviceConfig.id,
