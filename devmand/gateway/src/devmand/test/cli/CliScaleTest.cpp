@@ -13,12 +13,12 @@
 #include <folly/executors/IOThreadPoolExecutor.h>
 #include <folly/futures/Future.h>
 #include <gtest/gtest.h>
-#include <magma_logging.h>
-#include <chrono>
-#include <thread>
 #include <libssh/callbacks.h>
 #include <libssh/libssh.h>
+#include <magma_logging.h>
+#include <chrono>
 #include <ctime>
+#include <thread>
 
 namespace devmand {
 namespace test {
@@ -33,14 +33,11 @@ using devmand::channels::cli::sshsession::SshSessionAsync;
 using folly::IOThreadPoolExecutor;
 
 class CliScaleTest : public ::testing::Test {
- public:
-  CliScaleTest() = default;
-  virtual ~CliScaleTest() = default;
 };
 
-shared_ptr<IOThreadPoolExecutor> executor =
+static const shared_ptr<IOThreadPoolExecutor> executor =
     std::make_shared<IOThreadPoolExecutor>(8);
-shared_ptr<IOThreadPoolExecutor> testExecutor =
+static const shared_ptr<IOThreadPoolExecutor> testExecutor =
     std::make_shared<IOThreadPoolExecutor>(20);
 
 const static int DEVICES = 10;
@@ -71,7 +68,7 @@ const static int REQUESTS = 10;
  * This will run 10 IOS like SSH servers.
  */
 
-TEST_F(CliScaleTest, scale) {
+TEST_F(CliScaleTest, DISABLED_scale) {
   ssh_threads_set_callbacks(ssh_threads_get_pthread());
   ssh_init();
 
@@ -98,7 +95,8 @@ TEST_F(CliScaleTest, scale) {
   const Command& cmd = Command::makeReadCommand("show running-config");
 
   {
-    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+    std::chrono::steady_clock::time_point begin =
+        std::chrono::steady_clock::now();
     vector<Future<shared_ptr<QueuedCli>>> connects;
     for (int cPort = START_PORT; cPort < DEVICES + START_PORT;
          cPort = cPort + 1) {
@@ -117,7 +115,9 @@ TEST_F(CliScaleTest, scale) {
     chrono::steady_clock::time_point end = chrono::steady_clock::now();
 
     MLOG(MWARNING) << "Connected devices count: " << clis.size();
-    MLOG(MWARNING) << "Connected devices time: " << chrono::duration_cast<chrono::seconds>(end - begin).count();
+    MLOG(MWARNING)
+        << "Connected devices time: "
+        << chrono::duration_cast<chrono::seconds>(end - begin).count();
     this_thread::sleep_for(chrono::seconds(10));
 
     vector<Future<string>> requests;
@@ -138,6 +138,7 @@ TEST_F(CliScaleTest, scale) {
   }
 
   MLOG(MWARNING) << "Now everything should be closed";
+  ssh_finalize();
 }
 
 } // namespace cli

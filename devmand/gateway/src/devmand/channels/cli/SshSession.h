@@ -7,6 +7,8 @@
 
 #pragma once
 
+#define LOG_WITH_GLOG
+
 #include <devmand/channels/Channel.h>
 #include <devmand/channels/cli/Cli.h>
 #include <libssh/libssh.h>
@@ -27,8 +29,8 @@ class SshSession {
     int port;
     string username;
     string password;
-    ssh_channel channel = nullptr;
-    ssh_session session = nullptr;
+    std::atomic<ssh_channel> channel;
+    std::atomic<ssh_session> session;
   } sessionState;
   int verbosity;
   bool checkSuccess(int return_code, int OK_RETURN_CODE);
@@ -45,6 +47,7 @@ class SshSession {
       const string& username,
       const string& password);
   void close();
+  bool isOpen();
   void write(const string& command);
   string read(int timeoutMillis);
   string read();

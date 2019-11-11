@@ -7,6 +7,8 @@
 
 #pragma once
 
+#define LOG_WITH_GLOG
+
 #include <devmand/channels/cli/Command.h>
 #include <devmand/channels/cli/SshSession.h>
 #include <folly/executors/IOThreadPoolExecutor.h>
@@ -43,7 +45,7 @@ class SshSessionAsync {
   spsc_queue<string, capacity<200>> readQueue;
   mutex mutex1;
   condition_variable condition;
-  bool quit;
+  std::atomic_bool reading;
 public:
   explicit SshSessionAsync(shared_ptr<IOThreadPoolExecutor> _executor);
   Future<Unit> openShell(
@@ -54,7 +56,6 @@ public:
   Future<Unit> write(const string& command);
   Future<string> read(int timeoutMillis); //for clearing ssh channel and prompt resolving
   Future<string> readUntilOutput(const string& lastOutput);
-  Future<Unit> close();
   void setEvent(event *);
   void readToBuffer();
   socket_t getSshFd();

@@ -7,8 +7,8 @@
 
 #include <devmand/channels/cli/SshSession.h>
 #include <libssh/libssh.h>
-#include <experimental/optional>
 #include <magma_logging.h>
+#include <experimental/optional>
 
 namespace devmand {
 namespace channels {
@@ -18,20 +18,33 @@ namespace sshsession {
 using std::string;
 
 void SshSession::close() {
-  if (sessionState.channel != nullptr) {
-    if (ssh_channel_is_open(sessionState.channel) != 0) {
-      ssh_channel_close(sessionState.channel);
+  auto chnl = sessionState.channel.load();
+  auto sess = sessionState.session.load();
+
+  if (chnl != nullptr) {
+    MLOG(MINFO) << "Disconnecting from host: " << sessionState.ip
+                << " port: " << sessionState.port;
+
+    if (ssh_channel_is_open(chnl) != 0) {
+      ssh_channel_close(chnl);
     }
-    ssh_channel_free(sessionState.channel);
+    ssh_channel_free(chnl);
   }
-  if (sessionState.session != nullptr) {
-    if (ssh_is_connected(sessionState.session) == 1) {
-      ssh_disconnect(sessionState.session);
+
+  if (sess != nullptr) {
+    if (ssh_is_connected(sess) == 1) {
+      ssh_disconnect(sess);
     }
-    ssh_free(sessionState.session);
+    ssh_free(sess);
   }
-  sessionState.channel = nullptr;
-  sessionState.session = nullptr;
+
+  sessionState.channel.store(nullptr);
+  sessionState.session.store(nullptr);
+}
+
+bool SshSession::isOpen() {
+  return sessionState.session.load() != nullptr &&
+      ssh_is_connected(sessionState.session.load());
 }
 
 void SshSession::openShell(
@@ -39,12 +52,12 @@ void SshSession::openShell(
     int port,
     const string& username,
     const string& password) {
-  LOG(INFO) << "Connecting to host: " << ip << " port: " << port;
+  MLOG(MINFO) << "Connecting to host: " << ip << " port: " << port;
   sessionState.ip = ip;
   sessionState.port = port;
   sessionState.username = username;
   sessionState.username = password;
-  sessionState.session = ssh_new();
+  sessionState.session.store(ssh_new());
   ssh_options_set(sessionState.session, SSH_OPTIONS_HOST, ip.c_str());
   ssh_options_set(sessionState.session, SSH_OPTIONS_LOG_VERBOSITY, &verbosity);
   ssh_options_set(sessionState.session, SSH_OPTIONS_PORT, &port);
@@ -58,7 +71,7 @@ void SshSession::openShell(
       sessionState.session, username.c_str(), password.c_str());
   checkSuccess(rc, SSH_AUTH_SUCCESS);
 
-  sessionState.channel = ssh_channel_new(sessionState.session);
+  sessionState.channel.store(ssh_channel_new(sessionState.session));
   if (sessionState.channel == nullptr) {
     terminate();
   }
@@ -88,8 +101,8 @@ void SshSession::terminate() {
   const char* error_message = sessionState.session != nullptr
       ? ssh_get_error(sessionState.session)
       : "unknown";
-  MLOG(MERROR) << "Error in SSH connection to host:  " << sessionState.ip
-             << " port: " << sessionState.port;
+  MLOG(MERROR) << "Error in SSH connection to host: " << sessionState.ip
+               << " port: " << sessionState.port;
   string error = "Error with SSH: ";
   throw std::runtime_error(error + error_message);
 }
@@ -98,20 +111,21 @@ string SshSession::read(int timeoutMillis) {
   char buffer[2048];
   string result;
 
-  while (ssh_channel_is_open(sessionState.channel) &&
-         !ssh_channel_is_eof(sessionState.channel)) {
-      int bytes_read;
-      if (timeoutMillis == -1) {
-          bytes_read = ssh_channel_read_nonblocking(
-          sessionState.channel, buffer, sizeof(buffer), 0);
-      } else {
-          bytes_read = ssh_channel_read_timeout(
-          sessionState.channel, buffer, sizeof(buffer), 0, timeoutMillis);
-      }
+  auto chnl = sessionState.channel.load();
+
+  while (ssh_channel_is_open(chnl) && !ssh_channel_is_eof(chnl)) {
+    int bytes_read;
+    if (timeoutMillis == -1) {
+      bytes_read =
+          ssh_channel_read_nonblocking(chnl, buffer, sizeof(buffer), 0);
+    } else {
+      bytes_read = ssh_channel_read_timeout(
+          chnl, buffer, sizeof(buffer), 0, timeoutMillis);
+    }
 
     if (bytes_read < 0) {
       MLOG(MERROR) << "Error reading data from SSH connection, read bytes: "
-                 << bytes_read;
+                   << bytes_read;
       terminate();
     } else if (bytes_read == 0) {
       return result;
@@ -125,17 +139,18 @@ string SshSession::read(int timeoutMillis) {
 
 void SshSession::write(const string& command) {
   if (command.empty()) {
-      MLOG(MERROR) << "Command for execution for host: " << getHost() << " is empty, this should not happen";
-      return;
+    MLOG(MERROR) << "Command for execution for host: " << getHost()
+                 << " is empty, this should not happen";
+    return;
   }
   const char* data = command.c_str();
   int bytes = ssh_channel_write(
-      sessionState.channel,
+      sessionState.channel.load(),
       data,
       (unsigned int)command.length() * sizeof(data[0]));
 
   if (bytes == SSH_ERROR) {
-    LOG(ERROR) << "Error while executing command " << command;
+    MLOG(MERROR) << "Error while executing command " << command;
     terminate();
   }
 }
@@ -146,18 +161,18 @@ SshSession::~SshSession() {
 
 SshSession::SshSession(int _verbosity) : verbosity(_verbosity) {}
 
-SshSession::SshSession() : verbosity(SSH_LOG_FUNCTIONS) {}
+SshSession::SshSession() : verbosity(SSH_LOG_WARNING) {}
 
 string SshSession::read() {
-    return read(-1);
+  return read(-1);
 }
 
 socket_t SshSession::getSshFd() {
-    return ssh_get_fd(sessionState.session);
+  return ssh_get_fd(sessionState.session.load());
 }
 
 string SshSession::getHost() {
-    return sessionState.ip;
+  return sessionState.ip;
 }
 
 } // namespace sshsession
