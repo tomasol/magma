@@ -161,7 +161,10 @@ SshSession::~SshSession() {
 
 SshSession::SshSession(int _verbosity) : verbosity(_verbosity) {}
 
-SshSession::SshSession() : verbosity(SSH_LOG_WARNING) {}
+SshSession::SshSession() : verbosity(SSH_LOG_WARNING) {
+    sessionState.channel.store(nullptr);
+    sessionState.session.store(nullptr);
+}
 
 string SshSession::read() {
   return read(-1);
