@@ -7,6 +7,9 @@
 
 #pragma once
 
+#define LOG_WITH_GLOG
+#include <magma_logging.h>
+
 #include <devmand/channels/cli/Command.h>
 #include <folly/futures/Future.h>
 #include <folly/futures/Promise.h>

@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include <devmand/channels/Channel.h>
 #include <devmand/channels/cli/Cli.h>
+#include <devmand/channels/Channel.h>
 
 namespace devmand {
 namespace channels {

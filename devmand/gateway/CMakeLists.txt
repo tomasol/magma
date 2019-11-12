@@ -112,6 +112,7 @@ target_link_libraries(devman_channel_snmp
 
 add_library(devman_channel_cli
   ${PROJECT_SOURCE_DIR}/src/devmand/channels/cli/Command.cpp
+  ${PROJECT_SOURCE_DIR}/src/devmand/channels/cli/engine/Engine.cpp
   ${PROJECT_SOURCE_DIR}/src/devmand/channels/cli/SshSession.cpp
   ${PROJECT_SOURCE_DIR}/src/devmand/channels/cli/Channel.cpp
   ${PROJECT_SOURCE_DIR}/src/devmand/channels/cli/PromptAwareCli.cpp

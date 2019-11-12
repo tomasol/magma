@@ -26,19 +26,8 @@
 #include <devmand/devices/mikrotik/Device.h>
 #include <devmand/magma/DevConf.h>
 #include <devmand/magma/Service.h>
-#include <libssh/callbacks.h>
-#include <libssh/libssh.h>
-
-static void log_callback(int priority, const char *function, const char *buffer, void *userData) {
-  (void) priority;
-  (void) userData;
-  DLOG(INFO) << function << ": " << buffer;
-}
 
 int main(int argc, char* argv[]) {
-  ssh_set_log_callback(log_callback);
-  ssh_threads_set_callbacks(ssh_threads_get_pthread());
-  ssh_init();
   // TODO Work around for magma issue. Get rid of this...
   std::this_thread::sleep_for(std::chrono::seconds(10));
 
@@ -82,6 +71,5 @@ int main(int argc, char* argv[]) {
       app.getEventBase(), devmand::FLAGS_device_configuration_file));
 
   app.run();
-  ssh_finalize();
   return app.status();
 }

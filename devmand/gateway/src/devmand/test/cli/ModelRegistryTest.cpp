@@ -5,10 +5,6 @@
 // LICENSE file in the root directory of this source tree. An additional grant
 // of patent rights can be found in the PATENTS file in the same directory.
 
-#include <boost/algorithm/string/classification.hpp>
-#include <boost/algorithm/string/join.hpp>
-#include <boost/algorithm/string/replace.hpp>
-#include <boost/algorithm/string/split.hpp>
 #include <folly/executors/CPUThreadPoolExecutor.h>
 #include <folly/futures/Future.h>
 #include <gtest/gtest.h>
@@ -17,6 +13,7 @@
 #include <ydk_ietf/iana_if_type.hpp>
 #include <ydk_openconfig/openconfig_interfaces.hpp>
 #include <devmand/test/cli/utils/Json.h>
+#include <devmand/test/cli/utils/Log.h>
 
 namespace devmand {
 namespace test {
@@ -31,12 +28,7 @@ using OpenconfigInterface = OpenconfigInterfaces::Interface;
 class ModelRegistryTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    // Enable ydk logging
-    auto ydk = spdlog::stdout_color_mt("ydk");
-    spdlog::set_level(spdlog::level::level_enum::info);
-  }
-  void TearDown() override {
-    spdlog::drop("ydk");
+    devmand::test::utils::log::initLog();
   }
 
  protected:

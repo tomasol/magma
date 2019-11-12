@@ -21,7 +21,7 @@ using devmand::channels::cli::EmptyInitializer;
 using devmand::channels::cli::UbiquitiInitializer;
 using devmand::channels::cli::DefaultPromptResolver;
 
-static const int DEFAULT_MILLIS = 1000; // TODO value?
+static const int DEFAULT_MILLIS = 1000;
 
 void EmptyInitializer::initialize(shared_ptr<SshSessionAsync> session) {
     (void) session;

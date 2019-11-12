@@ -5,6 +5,7 @@
 // LICENSE file in the root directory of this source tree. An additional grant
 // of patent rights can be found in the PATENTS file in the same directory.
 
+#include <devmand/channels/cli/engine/Engine.h>
 #include "devmand/test/cli/utils/Log.h"
 
 namespace devmand {
@@ -13,6 +14,7 @@ namespace utils {
 namespace log {
 
 using namespace std;
+using namespace devmand::channels::cli;
 
 atomic_bool loggingInitialized(false);
 
@@ -20,9 +22,7 @@ void initLog() {
   if (loggingInitialized.load()) {
     return;
   }
-  MLOG(MDEBUG) << "Initializing logging for test";
-  magma::init_logging("DevmandCliTesting");
-  magma::set_verbosity(MDEBUG);
+  Engine::initLogging(MDEBUG);
   loggingInitialized.store(true);
   MLOG(MDEBUG) << "Logging for test initialized";
 }

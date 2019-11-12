@@ -8,7 +8,6 @@
 #include <devmand/channels/cli/SshSession.h>
 #include <libssh/libssh.h>
 #include <magma_logging.h>
-#include <experimental/optional>
 
 namespace devmand {
 namespace channels {
@@ -66,7 +65,7 @@ void SshSession::openShell(
   ssh_options_set(sessionState.session, SSH_OPTIONS_LOG_VERBOSITY, &verbosity);
   ssh_options_set(sessionState.session, SSH_OPTIONS_PORT, &port);
   // Connection timeout in seconds
-  int timeout = 120;
+  long timeout = 120;
   ssh_options_set(sessionState.session, SSH_OPTIONS_TIMEOUT, &timeout);
 
   checkSuccess(ssh_connect(sessionState.session), SSH_OK);
@@ -106,7 +105,8 @@ void SshSession::terminate() {
       ? ssh_get_error(sessionState.session)
       : "unknown";
   MLOG(MERROR) << "Error in SSH connection to host: " << sessionState.ip
-               << " port: " << sessionState.port;
+               << " port: " << sessionState.port
+               << " with error: " << error_message;
   string error = "Error with SSH: ";
   throw std::runtime_error(error + error_message);
 }
@@ -165,7 +165,7 @@ SshSession::~SshSession() {
 
 SshSession::SshSession(int _verbosity) : verbosity(_verbosity) {}
 
-SshSession::SshSession() : verbosity(SSH_LOG_WARNING) {
+SshSession::SshSession() : verbosity(SSH_LOG_NOLOG) {
     sessionState.channel.store(nullptr);
     sessionState.session.store(nullptr);
 }

@@ -7,6 +7,9 @@
 
 #pragma once
 
+#define LOG_WITH_GLOG
+
+#include <magma_logging.h>
 #include <devmand/channels/cli/SshSessionAsync.h>
 
 using devmand::channels::cli::sshsession::SshSessionAsync;
@@ -16,17 +19,19 @@ namespace channels {
 namespace cli {
 
 class SshSocketReader {
-private:
-    struct event_base *base;
-public:
-    static SshSocketReader& getInstance(); //singleton
-    SshSocketReader();
-    SshSocketReader(SshSocketReader const&) = delete;// singleton
-    void operator=(SshSocketReader const&) = delete; // singleton
-    virtual ~SshSocketReader();
-    struct event * addSshReader(event_callback_fn callbackFn, socket_t fd, void *ptr);
+ private:
+  struct event_base* base;
+
+ public:
+  static SshSocketReader& getInstance(); // singleton
+  SshSocketReader();
+  SshSocketReader(SshSocketReader const&) = delete; // singleton
+  void operator=(SshSocketReader const&) = delete; // singleton
+  virtual ~SshSocketReader();
+  struct event*
+  addSshReader(event_callback_fn callbackFn, socket_t fd, void* ptr);
 };
 
-}
-}
+} // namespace cli
+} // namespace channels
 }

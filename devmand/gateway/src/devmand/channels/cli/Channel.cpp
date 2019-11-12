@@ -16,17 +16,17 @@ Channel::Channel(const std::shared_ptr<devmand::channels::cli::Cli> _cli)
 Channel::~Channel() {}
 
 folly::Future<std::string> Channel::executeAndRead(const Command& cmd) {
-  LOG(INFO) << "[" << this << "] "
-            << "Executing command: "
-            << "\"" << cmd << "\"";
+  MLOG(MDEBUG) << "[" << this << "] "
+               << "Executing command: "
+               << "\"" << cmd << "\"";
 
   return cli->executeAndRead(cmd);
 }
 
 folly::Future<std::string> Channel::executeAndSwitchPrompt(const Command& cmd) {
-  LOG(INFO) << "[" << this << "]"
-            << "Executing command and switching prompt: "
-            << "\"" << cmd << "\"";
+  MLOG(MDEBUG) << "[" << this << "]"
+               << "Executing command and switching prompt: "
+               << "\"" << cmd << "\"";
 
   return cli->executeAndSwitchPrompt(cmd);
 }

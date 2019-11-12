@@ -5,8 +5,9 @@
 // LICENSE file in the root directory of this source tree. An additional grant
 // of patent rights can be found in the PATENTS file in the same directory.
 
+#define LOG_WITH_GLOG
+#include <magma_logging.h>
 #include <devmand/channels/cli/Spd2Glog.h>
-#include <glog/logging.h>
 #include <spdlog/details/log_msg.h>
 
 void devmand::channels::cli::Spd2Glog::_sink_it(
@@ -17,11 +18,11 @@ void devmand::channels::cli::Spd2Glog::_sink_it(
 void devmand::channels::cli::Spd2Glog::toGlog(
     const spdlog::details::log_msg& msg) {
   if (msg.level == trace || msg.level == debug) {
-    DLOG(INFO) << msg.formatted.str();
+    MLOG(MDEBUG) << msg.formatted.str();
   } else if (msg.level == info || msg.level == warn) {
-    LOG(INFO) << msg.formatted.str();
+    MLOG(MINFO) << msg.formatted.str();
   } else {
-    LOG(ERROR) << msg.formatted.str();
+    MLOG(MERROR) << msg.formatted.str();
   }
 }
 

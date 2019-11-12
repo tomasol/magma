@@ -7,10 +7,8 @@
 
 #pragma once
 
-#define LOG_WITH_GLOG
-
-#include <devmand/channels/Channel.h>
 #include <devmand/channels/cli/Cli.h>
+#include <devmand/channels/Channel.h>
 #include <libssh/libssh.h>
 
 namespace devmand {
@@ -20,7 +18,6 @@ namespace sshsession {
 
 using std::runtime_error;
 using std::string;
-
 
 class SshSession {
  private:
@@ -35,6 +32,7 @@ class SshSession {
   int verbosity;
   bool checkSuccess(int return_code, int OK_RETURN_CODE);
   void terminate();
+
  public:
   explicit SshSession(int verbosity);
   socket_t getSshFd();

@@ -42,7 +42,6 @@ class SshSessionTest : public ::testing::Test {
  protected:
   shared_ptr<server> ssh;
 
- protected:
   void SetUp() override {
     devmand::test::utils::log::initLog();
     devmand::test::utils::ssh::initSsh();

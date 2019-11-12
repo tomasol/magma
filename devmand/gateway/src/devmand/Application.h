@@ -25,6 +25,7 @@
 #include <devmand/channels/packet/Engine.h>
 #include <devmand/channels/ping/Engine.h>
 #include <devmand/channels/snmp/Engine.h>
+#include <devmand/channels/cli/engine/Engine.h>
 #include <devmand/devices/Device.h>
 #include <devmand/devices/Factory.h>
 
@@ -132,6 +133,7 @@ class Application final : public MetricSink {
   ChannelEngines channelEngines;
   channels::snmp::Engine* snmpEngine;
   channels::ping::Engine* pingEngine;
+  channels::cli::Engine* cliEngine;
 
   /*
    * A config writer for dhcpd.

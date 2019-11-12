@@ -38,6 +38,7 @@ Application::Application()
           }) {
   ErrorHandler::executeWithCatch(
       [this]() -> void {
+        cliEngine = addEngine<channels::cli::Engine>();
         snmpEngine = addEngine<channels::snmp::Engine>(eventBase, name);
         pingEngine = addEngine<channels::ping::Engine>(eventBase);
       },

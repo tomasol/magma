@@ -5,7 +5,8 @@
 // LICENSE file in the root directory of this source tree. An additional grant
 // of patent rights can be found in the PATENTS file in the same directory.
 
-#include "devmand/test/cli/utils/Ssh.h"
+#include <devmand/channels/cli/engine/Engine.h>
+#include <devmand/test/cli/utils/Ssh.h>
 #include <folly/futures/Future.h>
 #include <regex>
 
@@ -15,6 +16,7 @@ namespace utils {
 namespace ssh {
 
 using namespace std;
+using namespace devmand::channels::cli;
 
 atomic_bool sshInitialized(false);
 
@@ -22,9 +24,9 @@ void initSsh() {
   if (sshInitialized.load()) {
     return;
   }
-  ssh_threads_set_callbacks(ssh_threads_get_pthread());
-  ssh_init();
+  Engine::initSsh();
   sshInitialized.store(true);
+  MLOG(MDEBUG) << "Ssh for test initialized";
 }
 
 static const auto sleep = regex(R"(sleep (\d+))");

@@ -7,10 +7,8 @@
 
 #pragma once
 
-#define LOG_WITH_GLOG
-
-#include <devmand/channels/cli/Command.h>
 #include <devmand/channels/cli/SshSession.h>
+#include <devmand/channels/cli/Command.h>
 #include <folly/executors/IOThreadPoolExecutor.h>
 #include <folly/futures/Future.h>
 #include <event2/event.h>
