@@ -25,10 +25,12 @@ void SshSession::close() {
     MLOG(MINFO) << "Disconnecting from host: " << sessionState.ip
                 << " port: " << sessionState.port;
 
-    if (ssh_channel_is_open(chnl) != 0) {
-      ssh_channel_close(chnl);
+    if (ssh_channel_is_eof(chnl) != 0) {
+       ssh_channel_close(chnl);
     }
-    ssh_channel_free(chnl);
+    if (ssh_channel_is_open(chnl) != 0) {
+        ssh_channel_free(chnl);
+    }
   }
 
   if (sess != nullptr) {
@@ -58,6 +60,8 @@ void SshSession::openShell(
   sessionState.username = username;
   sessionState.username = password;
   sessionState.session.store(ssh_new());
+  ssh_options_set(sessionState.session, SSH_OPTIONS_USER, username.c_str());
+  //ssh_options_set(sessionState.session, SSH_OPTIONS_SSH_DIR, "%s/.ssh");
   ssh_options_set(sessionState.session, SSH_OPTIONS_HOST, ip.c_str());
   ssh_options_set(sessionState.session, SSH_OPTIONS_LOG_VERBOSITY, &verbosity);
   ssh_options_set(sessionState.session, SSH_OPTIONS_PORT, &port);
