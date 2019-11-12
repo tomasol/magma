@@ -23,10 +23,10 @@ namespace cli {
 struct Command {
  public:
   Command() = delete;
-  static Command makeReadCommand(const std::string& cmd);
+  static Command makeReadCommand(const std::string& cmd, bool skipCache = false);
 
  private:
-  explicit Command(std::string _command);
+  explicit Command(std::string _command, bool skipCache);
 
  public:
   bool isMultiCommand();
@@ -36,17 +36,22 @@ struct Command {
     return command;
   }
 
+  bool skipCache() const {
+    return skipCache_;
+  }
+
   friend std::ostream& operator<<(std::ostream& _stream, Command const& c) {
     _stream << c.toString();
     return _stream;
   }
 
  Command operator=(Command other) {
-     return Command(other.toString());
+     return Command(other.toString()); //TODO skipCache equality
  }
 
  private:
   const string command;
+  const bool skipCache_;
 };
 
 } // namespace cli

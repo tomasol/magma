@@ -17,6 +17,9 @@ namespace devmand::channels::cli {
 using namespace std;
 using namespace folly;
 
+/*
+ * TODO: throw exception when queue is full
+ */
 class QueuedCli : public Cli {
  private:
   shared_ptr<Cli> cli;

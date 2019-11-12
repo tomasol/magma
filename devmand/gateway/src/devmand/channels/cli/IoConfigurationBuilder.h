@@ -10,19 +10,25 @@
 #include <devmand/channels/cli/Cli.h>
 #include <devmand/channels/cli/CliFlavour.h>
 #include <devmand/cartography/DeviceConfig.h>
+#include <folly/executors/IOThreadPoolExecutor.h>
+
+namespace devmand::channels::cli {
 
 using devmand::channels::cli::Cli;
 using devmand::channels::cli::CliFlavour;
 using devmand::cartography::DeviceConfig;
 using std::shared_ptr;
+using folly::IOThreadPoolExecutor;
 
-namespace devmand::channels::cli {
 class IoConfigurationBuilder {
-private:
-    DeviceConfig deviceConfig;
-public:
-    IoConfigurationBuilder(const DeviceConfig &deviceConfig);
+ private:
 
-    shared_ptr<Cli> getIo();
+  shared_ptr<IOThreadPoolExecutor> executor; //TODO executor?
+ public:
+  IoConfigurationBuilder();
+
+  shared_ptr<Cli> createSSH(const DeviceConfig &deviceConfig);
+
+  shared_ptr<Cli> getIo(shared_ptr<Cli> underlyingCliLayer);
 };
 }

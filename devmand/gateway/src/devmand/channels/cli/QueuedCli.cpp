@@ -62,7 +62,7 @@ Future<string> QueuedCli::executeSomething(
   queueEntry.loggingPrefix = prefix;
   queue.enqueue(move(queueEntry));
   triggerDequeue();
-  return promise->getFuture(); // TODO: check lifetime
+  return promise->getFuture();
 }
 
 /*

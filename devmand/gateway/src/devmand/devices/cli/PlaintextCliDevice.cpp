@@ -11,7 +11,6 @@
 #include <folly/Format.h>
 
 #include <devmand/channels/cli/Channel.h>
-#include <devmand/channels/cli/KeepaliveCli.h>
 #include <devmand/channels/cli/IoConfigurationBuilder.h>
 #include <devmand/channels/cli/Cli.h>
 #include <devmand/devices/State.h>
@@ -28,8 +27,9 @@ std::unique_ptr<devices::Device> PlaintextCliDevice::createDevice(
     Application& app,
     const cartography::DeviceConfig& deviceConfig) {
 
-  IoConfigurationBuilder ioConfigurationBuilder(deviceConfig);
-  const std::shared_ptr<Channel>& channel = std::make_shared<Channel>(ioConfigurationBuilder.getIo());
+  IoConfigurationBuilder ioConfigurationBuilder;
+  const std::shared_ptr<Channel>& channel = std::make_shared<Channel>(ioConfigurationBuilder.getIo(
+          ioConfigurationBuilder.createSSH(deviceConfig)));
   return std::make_unique<devices::cli::PlaintextCliDevice>(
       app,
       deviceConfig.id,

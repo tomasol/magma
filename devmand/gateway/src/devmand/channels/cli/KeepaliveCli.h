@@ -8,63 +8,44 @@
 #pragma once
 
 #include <devmand/channels/cli/Cli.h>
-#include <folly/executors/CPUThreadPoolExecutor.h>
+#include <folly/Executor.h>
 #include <folly/futures/Future.h>
 #include <folly/futures/ThreadWheelTimekeeper.h>
+#include <folly/executors/SerialExecutor.h>
 
-namespace devmand {
-namespace channels {
-namespace cli {
+namespace devmand::channels::cli {
+using namespace std;
+using devmand::channels::cli::Command;
 
+// CLI layer that should be above QueuedCli. Periodically schedules keepalive command to prevent dropping
+// of inactive connection.
 class KeepaliveCli : public Cli {
- private:
-  std::shared_ptr<Cli> cli;                     // underlying cli layer
-  std::function<std::shared_ptr<Cli>()> func;   // underlying initializator
-  unsigned int delay;                           // how often to send keepalives
-  unsigned int timeout;                         // how long does it take to expire a keepalalive
-  bool quit;                                    // shut the infinite keepalive loop down, when cli gets destroyed
-  bool ready;                                   // prohibit cli operations when underlying stack is being reinitalized
-  std::shared_ptr<folly::CPUThreadPoolExecutor> executor;   // runs keepalive loop in separate thread
-  std::queue<folly::Future<std::string>> outstandingKas;    // list of sent keepalives
-  std::shared_ptr<folly::ThreadWheelTimekeeper> timekeeper;
-
  public:
   KeepaliveCli(
-      std::function<std::shared_ptr<Cli>()> func,
-      unsigned int delay = 1,
-      unsigned int timeout = 60);
+          shared_ptr <Cli> _cli,
+          shared_ptr <folly::Executor> parentExecutor,
+          shared_ptr<folly::ThreadWheelTimekeeper> _timekeeper,
+          Command &&keepAliveCommand = Command::makeReadCommand("\n", true),
+          std::chrono::milliseconds heartbeatInterval = std::chrono::milliseconds(60 * 1000));
 
-  ~KeepaliveCli();
+  ~KeepaliveCli() override;
 
-  folly::Future<std::string> executeAndRead(const Command& cmd) override;
+  folly::Future<string> executeAndRead(const Command &cmd) override;
 
-  folly::Future<std::string> execute(const Command& cmd) override;
+  folly::Future<string> execute(const Command &cmd) override;
 
-  void keepalive();
+ private:
+  const shared_ptr <Cli> cli; // underlying cli layer
+  const folly::Executor::KeepAlive<folly::SerialExecutor> serialExecutorKeepAlive;
+  shared_ptr<folly::ThreadWheelTimekeeper> timekeeper;
+  const Command keepAliveCommand;
+  const chrono::milliseconds heartbeatInterval;
 
-private:
-  void waitUntilCliReady() {     // waitUntilCliReady on conditional variable while blocked
-    std::unique_lock<std::mutex> lk(m);
-    cv.wait(lk, [this] { return ready; });
-  }
+  folly::Future<folly::Unit> sleepFuture; // only accessed from single thread
 
-  void block() {     // block conditional variable
-    std::unique_lock<std::mutex> lk(m);
-    ready = false;
-  }
 
-  void notify() {   // unblock threads waiting on conditional variable
-    {
-      std::lock_guard<std::mutex> lk(m);
-      ready = true;
-    }
-    cv.notify_all();
-  }
+  void scheduleNextPing(folly::Future<string> keepAliveCmdFuture);
 
-  std::mutex m;
-  std::condition_variable cv;
+  void sendKeepAliveCommand();
 };
-
-} // namespace cli
-} // namespace channels
-} // namespace devmand
+}

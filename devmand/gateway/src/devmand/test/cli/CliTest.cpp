@@ -24,6 +24,7 @@
 #include <devmand/Application.h>
 #include <chrono>
 #include <magma_logging.h>
+#include <devmand/channels/cli/IoConfigurationBuilder.h>
 
 namespace devmand {
 namespace test {
@@ -39,6 +40,7 @@ using devmand::devices::cli::sshsession::SshSession;
 using devmand::Application;
 using devmand::channels::cli::sshsession::SshSessionAsync;
 
+
 class CliTest : public ::testing::Test {
  public:
   CliTest() = default;
@@ -47,7 +49,19 @@ class CliTest : public ::testing::Test {
   CliTest& operator=(const CliTest&) = delete;
   CliTest(CliTest&&) = delete;
   CliTest& operator=(CliTest&&) = delete;
+
+  shared_ptr<Cli> createCliStack(const std::vector<unsigned int>& durations);
+
+ private:
+  IoConfigurationBuilder ioConfigurationBuilder;
 };
+
+shared_ptr<Cli> CliTest::createCliStack(const std::vector<unsigned int>& durations) {
+  return ioConfigurationBuilder.getIo(
+          std::make_shared<AsyncCli>(std::make_shared<EchoCli>(), durations)
+          );
+}
+
 
 TEST_F(CliTest, commandtest) {
     Command command = Command::makeReadCommand("aaa\nbbbb ccc\n1111");
@@ -59,7 +73,7 @@ TEST_F(CliTest, commandtest) {
 TEST_F(CliTest, queuedCli) {
   shared_ptr<CPUThreadPoolExecutor> executor = std::make_shared<CPUThreadPoolExecutor>(8);
   std::vector<unsigned int> durations = {2};
-  QueuedCli cli(std::make_shared<AsyncCli>(std::make_shared<EchoCli>(), durations), executor);
+  shared_ptr<Cli> cli = createCliStack(durations);
 
   std::vector<std::string> results;
   results.push_back("one");
@@ -80,7 +94,7 @@ TEST_F(CliTest, queuedCli) {
   std::vector<folly::Future<std::string>> futures;
   for (const auto& cmd : cmds) {
     MLOG(MDEBUG) << "test exec '" << cmd << "'\n";
-    futures.push_back(cli.executeAndRead(cmd));
+    futures.push_back(cli->executeAndRead(cmd));
   }
 
   // collect values
@@ -99,7 +113,7 @@ TEST_F(CliTest, queuedCliMT) {
   const int loopcount = 10;
   std::vector<unsigned int> durations = {1};
 
-  QueuedCli cli(std::make_shared<AsyncCli>(std::make_shared<EchoCli>(), durations), executor);
+  shared_ptr<Cli> cli = createCliStack(durations);
 
   // create requests
   std::vector<folly::Future<std::string>> futures;
@@ -107,7 +121,7 @@ TEST_F(CliTest, queuedCliMT) {
   for (int i = 0; i < loopcount; ++i) {
     MLOG(MDEBUG) << "test exec '" << cmd << "'\n";
     futures.push_back(folly::via(executor.get(), [&]() {
-      return cli.executeAndRead(cmd);
+      return cli->executeAndRead(cmd);
     }));
   }
 
@@ -130,11 +144,11 @@ TEST_F(CliTest, sshSessionTest) {
 }
 
 TEST_F(CliTest, queuedCliMTLimit) {
-  shared_ptr<CPUThreadPoolExecutor> executor = std::make_shared<CPUThreadPoolExecutor>(8);
+    shared_ptr<CPUThreadPoolExecutor> executor = std::make_shared<CPUThreadPoolExecutor>(8);
     const int loopcount = 10;
     std::vector<unsigned int> durations = {1};
 
-    QueuedCli cli(std::make_shared<AsyncCli>(std::make_shared<EchoCli>(), durations), executor);
+    shared_ptr<Cli> cli = createCliStack(durations);
 
     // create requests
     std::vector<folly::Future<std::string>> futures;
@@ -144,7 +158,7 @@ TEST_F(CliTest, queuedCliMTLimit) {
 //        ss << "hello #" << i;
 //        Command cmd = Command::makeReadCommand(ss.str());
         MLOG(MDEBUG) << "test exec '" << cmd << "'\n";
-        futures.push_back(folly::via(executor.get(), [&]() { return cli.executeAndRead(cmd); }));
+        futures.push_back(folly::via(executor.get(), [&]() { return cli->executeAndRead(cmd); }));
     }
 
     // collect values
@@ -158,26 +172,19 @@ TEST_F(CliTest, queuedCliMTLimit) {
     }
 }
 
+
 // TODO: KA test to pass through standard commands   (EchoCli)
 TEST_F(CliTest, keepaliveCliPass) {
     const int loopcount = 10;
     std::vector<unsigned int> durations = {1};
-
-    KeepaliveCli cli(
-            [&] {
-                auto ret = std::make_shared<AsyncCli>(std::make_shared<EchoCli>(), durations);
-                MLOG(MDEBUG) << ": KACli: created new CLi stack (" << ret.get() << ")\n";
-                return ret;
-            },
-            5,
-            10);
+    shared_ptr<Cli> cli = createCliStack(durations);
 
     // create requests
     Command cmd = Command::makeReadCommand("hello");
     std::vector<folly::Future<std::string>> futures;
     for (int i = 0; i < loopcount; ++i) {
         MLOG(MDEBUG) << "test exec '" << cmd << "'\n";
-        futures.push_back(cli.executeAndRead(cmd));
+        futures.push_back(cli->executeAndRead(cmd));
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 
@@ -217,21 +224,14 @@ TEST_F(CliTest, keepaliveCliTimeout) {
     const int loopcount = 10;
     std::vector<unsigned int> durations = {4};
 
-    KeepaliveCli cli(
-            [&] {
-                auto ret = std::make_shared<AsyncCli>(std::make_shared<EchoCli>(), durations);
-                MLOG(MDEBUG) << ": KACli: created new CLi stack (" << ret.get() << ")\n";
-                return ret;
-            },
-            5,
-            5);
+    shared_ptr<Cli> cli = createCliStack(durations);
 
     // create requests
     Command cmd = Command::makeReadCommand("hello");
     std::vector<folly::Future<std::string>> futures;
     for (int i = 0; i < loopcount; ++i) {
         MLOG(MDEBUG) << "test exec '" << cmd << "'\n";
-        futures.push_back(cli.executeAndRead(cmd));
+        futures.push_back(cli->executeAndRead(cmd));
         std::this_thread::sleep_for(std::chrono::seconds(2));
     }
 
@@ -261,21 +261,14 @@ TEST_F(CliTest, keepaliveCliErr) {
     const int loopcount = 10;
     std::vector<unsigned int> durations = {1};
 
-    KeepaliveCli cli(
-            [&] {
-                auto ret = std::make_shared<AsyncCli>(std::make_shared<ErrCli>(), durations);
-                MLOG(MDEBUG) << ": KACli: created new CLi stack (" << ret.get() << ")\n";
-                return ret;
-            },
-            5,
-            5);
+    shared_ptr<Cli> cli = createCliStack(durations);
 
     // create requests
     Command cmd = Command::makeReadCommand("hello");
     std::vector<folly::Future<std::string>> futures;
     for (int i = 0; i < loopcount; ++i) {
         MLOG(MDEBUG) << "test exec '" << cmd << "'\n";
-        futures.push_back(cli.executeAndRead(cmd));
+        futures.push_back(cli->executeAndRead(cmd));
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 
