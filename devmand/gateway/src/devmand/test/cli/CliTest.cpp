@@ -25,12 +25,14 @@
 #include <chrono>
 #include <magma_logging.h>
 #include <devmand/channels/cli/IoConfigurationBuilder.h>
+#include <devmand/test/cli/utils/Log.h>
 
 namespace devmand {
 namespace test {
 namespace cli {
 
 using namespace devmand::channels::cli;
+using namespace std;
 using devmand::cartography::DeviceConfig;
 using devmand::cartography::ChannelConfig;
 using devmand::devices::Device;
@@ -50,15 +52,20 @@ class CliTest : public ::testing::Test {
   CliTest(CliTest&&) = delete;
   CliTest& operator=(CliTest&&) = delete;
 
-  shared_ptr<Cli> createCliStack(const std::vector<unsigned int>& durations);
+  shared_ptr<Cli> createCliStack(const std::vector<unsigned int>& durations, shared_ptr<Cli> innerCli = make_shared<EchoCli>());
+
+ protected:
+  void SetUp() override {
+    devmand::test::utils::log::initLog();
+  }
 
  private:
   IoConfigurationBuilder ioConfigurationBuilder;
 };
 
-shared_ptr<Cli> CliTest::createCliStack(const std::vector<unsigned int>& durations) {
+shared_ptr<Cli> CliTest::createCliStack(const std::vector<unsigned int>& durations, shared_ptr<Cli> innerCli) {
   return ioConfigurationBuilder.getIo(
-          std::make_shared<AsyncCli>(std::make_shared<EchoCli>(), durations)
+          std::make_shared<AsyncCli>(innerCli, durations)
           );
 }
 
@@ -222,12 +229,12 @@ TEST_F(CliTest, keepaliveCliPass) {
 // TODO: KA to send periodical requests with timeout -> restart cli stack
 TEST_F(CliTest, keepaliveCliTimeout) {
     const int loopcount = 10;
-    std::vector<unsigned int> durations = {4};
+    std::vector<unsigned int> durations = {6, 1};
 
     shared_ptr<Cli> cli = createCliStack(durations);
 
     // create requests
-    Command cmd = Command::makeReadCommand("hello");
+    Command cmd = Command::makeReadCommand("hello", true);
     std::vector<folly::Future<std::string>> futures;
     for (int i = 0; i < loopcount; ++i) {
         MLOG(MDEBUG) << "test exec '" << cmd << "'\n";
@@ -252,8 +259,8 @@ TEST_F(CliTest, keepaliveCliTimeout) {
             res_value++;
         }
     }
-    EXPECT_EQ(res_value > 3, true);
-    EXPECT_EQ(res_failed > 3, true);
+    EXPECT_GT(res_value, 3);
+    EXPECT_GT(res_failed, 3);
 }
 
 // TODO: KA to send periodical requests with error -> restart cli stack
@@ -261,7 +268,7 @@ TEST_F(CliTest, keepaliveCliErr) {
     const int loopcount = 10;
     std::vector<unsigned int> durations = {1};
 
-    shared_ptr<Cli> cli = createCliStack(durations);
+    shared_ptr<Cli> cli = createCliStack(durations, make_shared<ErrCli>());
 
     // create requests
     Command cmd = Command::makeReadCommand("hello");

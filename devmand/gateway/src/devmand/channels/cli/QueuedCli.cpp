@@ -16,6 +16,13 @@ QueuedCli::QueuedCli(shared_ptr<Cli> _cli, const shared_ptr<Executor> &_parentEx
         cli(_cli),
         serialExecutorKeepAlive(
                 SerialExecutor::create(Executor::getKeepAliveToken(_parentExecutor.get()))) {
+  isProcessing = false;
+  shutdown = false;
+}
+
+QueuedCli::~QueuedCli() {
+  MLOG(MDEBUG) << "~QueuedCli";
+  shutdown = true;
 }
 
 Future<string> QueuedCli::executeAndRead(const Command &cmd) {
@@ -53,7 +60,7 @@ Future<string> QueuedCli::executeSomething(
         const string &prefix,
         function<Future<string>()> innerFunc) {
 
-  MLOG(MDEBUG) << "[" << this_thread::get_id() << "] " << prefix << "('" << cmd << "') called";
+  MLOG(MDEBUG) <<  prefix << " adding to queue ('" << cmd << "')";
   shared_ptr<Promise<string>> promise = std::make_shared<Promise<string>>();
   QueueEntry queueEntry;
   queueEntry.obtainFutureFromCli = move(innerFunc);
@@ -61,7 +68,9 @@ Future<string> QueuedCli::executeSomething(
   queueEntry.command = cmd.toString();
   queueEntry.loggingPrefix = prefix;
   queue.enqueue(move(queueEntry));
-  triggerDequeue();
+  if (!isProcessing) {
+    triggerDequeue();
+  }
   return promise->getFuture();
 }
 
@@ -70,26 +79,36 @@ Future<string> QueuedCli::executeSomething(
  * It is safe to call this method anytime, it is thread safe.
  */
 void QueuedCli::triggerDequeue() {
+  if (shutdown) return;
   // switch to consumer thread
   via(serialExecutorKeepAlive, [=]() {
-    MLOG(MDEBUG) << "[" << this_thread::get_id() << "] " << "isProcessing:" << this->isProcessing;
+    MLOG(MDEBUG) <<  "QCli.isProcessing:" << this->isProcessing
+      << ", queue size:" << queue.size();
     // do nothing if still waiting for remote device to respond
     if (!this->isProcessing) {
       QueueEntry queueEntry;
       if (queue.try_dequeue(queueEntry)) {
         isProcessing = true;
         Future<string> cliFuture = queueEntry.obtainFutureFromCli();
-        MLOG(MDEBUG) << "[" << this_thread::get_id() << "] " << queueEntry.loggingPrefix
-                     << "('" << queueEntry.command << "') dequeued and cli future obtained";
-        move(cliFuture).then(
-                serialExecutorKeepAlive,
-                [this, queueEntry](std::string result) {
+        MLOG(MDEBUG) <<  queueEntry.loggingPrefix << " dequeued ('"
+                      << queueEntry.command << "') and cli future obtained";
+        if (shutdown) return;
+        move(cliFuture).via(serialExecutorKeepAlive).then(serialExecutorKeepAlive,
+                [this, queueEntry](std::string result) -> Future<Unit> {
                   // after cliFuture completes, finish processing on consumer thread
-                  MLOG(MDEBUG) << "[" << this_thread::get_id() << "] " << queueEntry.loggingPrefix << "('"
-                               << queueEntry.command << "') finished with result '" << result << "'";
-                  queueEntry.promise->setValue(result);
+                  MLOG(MDEBUG) <<  queueEntry.loggingPrefix << " finished ('"
+                               << queueEntry.command << "') with result '" << result << "'";
                   isProcessing = false;
+                  queueEntry.promise->setValue(result);
                   triggerDequeue();
+                  return Unit{};
+                }).thenError(folly::tag_t<std::exception>{}, [this, queueEntry] (std::exception const& e) -> Future<Unit> {
+                  MLOG(MDEBUG) <<  queueEntry.loggingPrefix << " failed ('"
+                               << queueEntry.command << "')  with exception '" << e.what() << "'";
+                  isProcessing = false;
+                  queueEntry.promise->setException(move(e));
+                  triggerDequeue();
+                  return Unit{};
                 });
       }
     }

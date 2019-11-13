@@ -26,7 +26,9 @@ class KeepaliveCli : public Cli {
           shared_ptr <folly::Executor> parentExecutor,
           shared_ptr<folly::ThreadWheelTimekeeper> _timekeeper,
           Command &&keepAliveCommand = Command::makeReadCommand("\n", true),
-          std::chrono::milliseconds heartbeatInterval = std::chrono::milliseconds(60 * 1000));
+          chrono::milliseconds heartbeatInterval = chrono::seconds(10),
+          chrono::milliseconds backoffAfterKeepaliveTimeout = chrono::seconds(5)
+          );
 
   ~KeepaliveCli() override;
 
@@ -37,12 +39,12 @@ class KeepaliveCli : public Cli {
  private:
   const shared_ptr <Cli> cli; // underlying cli layer
   const folly::Executor::KeepAlive<folly::SerialExecutor> serialExecutorKeepAlive;
-  shared_ptr<folly::ThreadWheelTimekeeper> timekeeper;
+  const shared_ptr<folly::ThreadWheelTimekeeper> timekeeper;
   const Command keepAliveCommand;
   const chrono::milliseconds heartbeatInterval;
+  const chrono::milliseconds backoffAfterKeepaliveTimeout;
 
-  folly::Future<folly::Unit> sleepFuture; // only accessed from single thread
-
+  atomic<bool> shutdown;
 
   void scheduleNextPing(folly::Future<string> keepAliveCmdFuture);
 

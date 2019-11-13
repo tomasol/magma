@@ -18,30 +18,38 @@ using devmand::channels::cli::Command;
 TimeoutTrackingCli::TimeoutTrackingCli(
         shared_ptr<Cli> _cli,
         shared_ptr<folly::ThreadWheelTimekeeper> _timekeeper,
+        shared_ptr<folly::Executor> _executor,
         std::chrono::milliseconds _timeoutInterval) :
         cli(_cli),
         timekeeper(_timekeeper),
-        timeoutInterval(_timeoutInterval) {}
+        executor(_executor),
+        timeoutInterval(_timeoutInterval) {
+  shutdown = false;
+}
+
+TimeoutTrackingCli::~TimeoutTrackingCli() {
+  MLOG(MDEBUG) << "~TimeoutTrackingCli";
+  shutdown = true;
+}
 
 Future<string> TimeoutTrackingCli::executeAndRead(const Command &cmd) {
   return executeSomething(cmd, "TTCli.executeAndRead",
                           [=]() { return cli->executeAndRead(cmd); });
 }
 
-Future<string> TimeoutTrackingCli::executeAndSwitchPrompt(const Command &cmd) {
-  return executeSomething(cmd, "TTCli.executeAndSwitchPrompt",
-                          [=]() { return cli->executeAndSwitchPrompt(cmd); });
+Future<string> TimeoutTrackingCli::execute(const Command &cmd) {
+  return executeSomething(cmd, "TTCli.execute",
+                          [=]() { return cli->execute(cmd); });
 }
 
 Future<string> TimeoutTrackingCli::executeSomething(const Command &cmd, const string &loggingPrefix,
                                                     const function<Future<string>()>& innerFunc) {
   MLOG(MDEBUG) << loggingPrefix << "('" << cmd << "') called";
   Future <string> inner = innerFunc(); // we expect that this method does not block
-  return move(inner).onTimeout(timeoutInterval, [=](...) {
+  if (shutdown) throw runtime_error("TTCli Shutting down 1");
+  return move(inner).via(executor.get()).onTimeout(timeoutInterval, [=](...) -> Future<string> {
     MLOG(MDEBUG) << loggingPrefix << "('" << cmd << "') timing out";
-    return makeFuture().thenValue([](...) -> string {
-      throw FutureTimeout();
-    });
+    throw FutureTimeout();
   }, timekeeper.get());
 }
 

@@ -37,9 +37,11 @@ class QueuedCli : public Cli {
    * Unbounded multi producer single consumer queue where consumer is not blocked
    * on dequeue.
    */
-  UnboundedQueue<QueueEntry, false, true, false> queue;
+  UnboundedQueue<QueueEntry, false, true, false> queue; // TODO: investigate priority queue for keepalive commands
 
-  bool isProcessing = false; // only accessed from consumer thread
+  atomic<bool> isProcessing;
+
+  atomic<bool> shutdown;
 
  public:
 
@@ -48,6 +50,8 @@ class QueuedCli : public Cli {
   QueuedCli() = delete;
 
   QueuedCli(const QueuedCli &) = delete;
+
+  ~QueuedCli() override;
 
   Future<string> executeAndRead(const Command &cmd) override;
 

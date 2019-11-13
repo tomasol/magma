@@ -32,7 +32,11 @@ using std::make_shared;
 
 
 IoConfigurationBuilder::IoConfigurationBuilder() :
-        executor(std::make_shared<IOThreadPoolExecutor>(10)) {}
+        executor(std::make_shared<IOThreadPoolExecutor>(10)),
+        timekeeper(std::make_shared<ThreadWheelTimekeeper>() // TODO: set to nullptr when running with folly to use singleton
+                ) {
+
+}
 
 shared_ptr<Cli> IoConfigurationBuilder::createSSH(const DeviceConfig &deviceConfig) {
   MLOG(MDEBUG) << "Creating CLI ssh device for " << deviceConfig.id << " (host: " << deviceConfig.ip << ")";
@@ -52,7 +56,7 @@ shared_ptr<Cli> IoConfigurationBuilder::createSSH(const DeviceConfig &deviceConf
                               ? CliFlavour::create(plaintextCliKv.at("flavour")) : CliFlavour::create("");
 
   // TODO create CLI - how to create a CLI stack?
-  const shared_ptr<PromptAwareCli> &cli = std::make_shared<PromptAwareCli>(session, cl);
+  shared_ptr<PromptAwareCli> cli = std::make_shared<PromptAwareCli>(session, cl);
 
   // TODO initialize CLI
   cli->initializeCli();
@@ -65,11 +69,11 @@ shared_ptr<Cli> IoConfigurationBuilder::createSSH(const DeviceConfig &deviceConf
 }
 
 shared_ptr<Cli> IoConfigurationBuilder::getIo(shared_ptr<Cli> underlyingCliLayer) {
-  shared_ptr<ThreadWheelTimekeeper> timekeeper = make_shared<ThreadWheelTimekeeper>();
+
   // create caching cli
   const shared_ptr<ReadCachingCli> &ccli = std::make_shared<ReadCachingCli>(underlyingCliLayer, ReadCachingCli::createCache());
   // create timeout tracker
-  const shared_ptr<TimeoutTrackingCli> &ttcli = std::make_shared<TimeoutTrackingCli>(ccli, timekeeper);
+  const shared_ptr<TimeoutTrackingCli> &ttcli = std::make_shared<TimeoutTrackingCli>(ccli, timekeeper, executor);
   // create Queued cli
   const shared_ptr<QueuedCli> &qcli = std::make_shared<QueuedCli>(ttcli, executor);
   // create keepalive cli

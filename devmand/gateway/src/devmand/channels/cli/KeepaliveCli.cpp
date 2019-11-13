@@ -19,44 +19,56 @@ KeepaliveCli::KeepaliveCli(shared_ptr<Cli> _cli,
                            shared_ptr<Executor> _parentExecutor,
                            shared_ptr<ThreadWheelTimekeeper> _timekeeper,
                            Command &&_keepAliveCommand,
-                           chrono::milliseconds _heartbeatInterval) :
+                           chrono::milliseconds _heartbeatInterval,
+                           chrono::milliseconds _backoffAfterKeepaliveTimeout) :
         cli(_cli),
         serialExecutorKeepAlive(
                 SerialExecutor::create(Executor::getKeepAliveToken(_parentExecutor.get()))),
         timekeeper(_timekeeper),
         keepAliveCommand(_keepAliveCommand),
-        heartbeatInterval(_heartbeatInterval) {
+        heartbeatInterval(_heartbeatInterval),
+        backoffAfterKeepaliveTimeout(_backoffAfterKeepaliveTimeout) {
+
   assert(_keepAliveCommand.skipCache());
+  shutdown = false;
+
   sendKeepAliveCommand();
 }
 
+KeepaliveCli::~KeepaliveCli() {
+  MLOG(MDEBUG) << "KACli: ~KeepaliveCli";
+  shutdown = true;
+}
+
 void KeepaliveCli::sendKeepAliveCommand() {
-  MLOG(MDEBUG) << "sendKeepAliveCommand()";
+  if (shutdown) return;
+  MLOG(MDEBUG) << "KACli: sendKeepAliveCommand()";
   Future<string> result = via(serialExecutorKeepAlive).thenValue(
           [=](auto) {
-            MLOG(MDEBUG) << "sendKeepAliveCommand executing keepalive command";
+            MLOG(MDEBUG) << "KACli: sendKeepAliveCommand executing keepalive command";
             return this->executeAndRead(this->keepAliveCommand); });
 
   scheduleNextPing(move(result));
 }
 
 void KeepaliveCli::scheduleNextPing(Future<string> keepAliveCmdFuture) {
-  sleepFuture = move(keepAliveCmdFuture).via(serialExecutorKeepAlive)
-          .thenValue([=](auto) {
-            MLOG(MDEBUG) << "Creating sleep future";
+  if (shutdown) return;
+  move(keepAliveCmdFuture).via(serialExecutorKeepAlive)
+          .thenValue([=](auto) -> SemiFuture<Unit> {
+            MLOG(MDEBUG) << "KACli: Creating sleep future";
             return futures::sleep(this->heartbeatInterval, timekeeper.get());
-          }).thenValue([=](auto) {
-            MLOG(MDEBUG) << "Woke up after sleep";
+          }).thenValue([=](auto) -> Unit {
+            MLOG(MDEBUG) << "KACli: Woke up after sleep";
+            this->sendKeepAliveCommand();
+            return Unit{};
+          }).thenError(folly::tag_t<std::exception>{}, [&] (std::exception const& e) -> Future<Unit> {
+            LOG(INFO) << "KACli: Got error running keepalive, backing off " << e.what(); // FIXME: real exception is not propagated here
+            if (shutdown) return Unit{}; // sleep might hang
+            std::this_thread::sleep_for(backoffAfterKeepaliveTimeout); // TODO: sleep via futures if possible
+            MLOG(MDEBUG) << "KACli: Woke up after backing off";
+            this->sendKeepAliveCommand();
+            return Unit{};
           });
-  // FIXME: moving sleepFuture
-  move(sleepFuture).thenValue([=](auto) {
-    this->sendKeepAliveCommand();
-  });
-}
-
-KeepaliveCli::~KeepaliveCli() {
-  MLOG(MDEBUG) << "~KeepaliveCli: Cancelling future keepalive";
-  sleepFuture.cancel(); // if sleeping, wake up
 }
 
 Future<string> KeepaliveCli::executeAndRead(const Command &cmd) {

@@ -11,6 +11,7 @@
 #include <devmand/channels/cli/CliFlavour.h>
 #include <devmand/cartography/DeviceConfig.h>
 #include <folly/executors/IOThreadPoolExecutor.h>
+#include <folly/futures/ThreadWheelTimekeeper.h>
 
 namespace devmand::channels::cli {
 
@@ -24,6 +25,9 @@ class IoConfigurationBuilder {
  private:
 
   shared_ptr<IOThreadPoolExecutor> executor; //TODO executor?
+
+  shared_ptr<folly::ThreadWheelTimekeeper> timekeeper;
+
  public:
   IoConfigurationBuilder();
 

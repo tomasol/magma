@@ -46,7 +46,7 @@ struct Command {
   }
 
  Command operator=(Command other) {
-     return Command(other.toString()); //TODO skipCache equality
+     return Command(other.toString(), other.skipCache());
  }
 
  private:
