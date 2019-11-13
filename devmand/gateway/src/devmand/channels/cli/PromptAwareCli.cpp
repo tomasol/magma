@@ -30,10 +30,19 @@ void PromptAwareCli::initializeCli() {
 
 folly::Future<string> PromptAwareCli::executeAndRead(const Command& cmd) {
   const string& command = cmd.toString();
+
   return session->write(command)
       .thenValue([=](...) { return session->readUntilOutput(command); })
-      .thenValue([=](...) { return session->write(cliFlavour->newline); })
-      .thenValue([=](...) { return session->readUntilOutput(prompt); });
+      .thenValue([=](const string & output) {
+          auto returnOutputParameter = [output] (...) { return output; };
+          return session->write(cliFlavour->newline).thenValue(returnOutputParameter);
+      })
+      .thenValue([=](const string & output) {
+          auto concatOutputParameter =  [output] (const string & readUntilOutput) {
+              return output + readUntilOutput;
+          };
+          return session->readUntilOutput(prompt).thenValue(concatOutputParameter);
+      });
 }
 
 PromptAwareCli::PromptAwareCli(
@@ -53,9 +62,9 @@ folly::Future<std::string> PromptAwareCli::execute(const Command &cmd) {
   const string& command = cmd.toString();
   return session->write(command)
        .thenValue([=](...) { return session->readUntilOutput(command); })
-       .thenValue([=]( const string & output) {
+       .thenValue([=](const string & output) {
            return session->write(cliFlavour->newline)
-                   .thenValue([output] (...) { return output; });
+                   .thenValue([output, command] (...) { return output + command; });
        });
 }
 } // namespace cli

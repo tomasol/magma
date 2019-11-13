@@ -87,7 +87,9 @@ void SshSessionAsync::readToBuffer() {
     std::lock_guard<mutex> guard(mutex1);
     ErrorHandler::executeWithCatch([this]() {
       const string& output = this->session.read();
-      readQueue.push(output);
+      if (!output.empty()) {
+        readQueue.push(output);
+      }
     });
   }
   condition.notify_one();

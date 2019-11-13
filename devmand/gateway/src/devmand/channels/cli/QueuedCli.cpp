@@ -6,6 +6,7 @@
 // of patent rights can be found in the PATENTS file in the same directory.
 
 #include <devmand/channels/cli/QueuedCli.h>
+#include <boost/range/size_type.hpp>
 
 namespace devmand::channels::cli {
 using namespace std;
@@ -23,8 +24,28 @@ Future<string> QueuedCli::executeAndRead(const Command &cmd) {
 }
 
 Future<string> QueuedCli::execute(const Command &cmd) {
-  return executeSomething(cmd, "QCli.execute",
-                          [=]() { return cli->execute(cmd); });
+  Command command = cmd;
+  if (!command.isMultiCommand()) {
+      MLOG(MWARNING) << "Called execute with a single command " << cmd << ", executeAndRead() should have been used";
+      return executeAndRead(command);
+  }
+
+  const vector<Command> &commands = command.splitMultiCommand();
+  vector<Future<string>> commmandsFutures;
+
+  for (unsigned long i = 0; i < (commands.size() - 1); i++) {
+      commmandsFutures.emplace_back(
+              executeSomething(commands.at(i), "QCli.execute", [=]() { return cli->execute(commands.at(i)); }));
+  }
+
+  commmandsFutures.emplace_back(executeAndRead(commands.back()));
+  Future<string> future = reduce(
+            commmandsFutures.begin(),
+            commmandsFutures.end(),
+            string(""),
+            [](string s1, string s2) { return s1 + s2; });
+
+  return future;
 }
 
 Future<string> QueuedCli::executeSomething(
