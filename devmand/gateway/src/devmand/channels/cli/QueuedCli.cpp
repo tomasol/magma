@@ -22,9 +22,9 @@ Future<string> QueuedCli::executeAndRead(const Command &cmd) {
                           [=]() { return cli->executeAndRead(cmd); });
 }
 
-Future<string> QueuedCli::executeAndSwitchPrompt(const Command &cmd) {
-  return executeSomething(cmd, "QCli.executeAndSwitchPrompt",
-                          [=]() { return cli->executeAndSwitchPrompt(cmd); });
+Future<string> QueuedCli::execute(const Command &cmd) {
+  return executeSomething(cmd, "QCli.execute",
+                          [=]() { return cli->execute(cmd); });
 }
 
 Future<string> QueuedCli::executeSomething(

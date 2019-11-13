@@ -23,12 +23,13 @@ folly::Future<std::string> Channel::executeAndRead(const Command& cmd) {
   return cli->executeAndRead(cmd);
 }
 
-folly::Future<std::string> Channel::executeAndSwitchPrompt(const Command& cmd) {
-  MLOG(MDEBUG) << "[" << this << "]"
-               << "Executing command and switching prompt: "
-               << "\"" << cmd << "\"";
 
-  return cli->executeAndSwitchPrompt(cmd);
+folly::Future<std::string> Channel::execute(const Command& cmd) {
+ MLOG(MDEBUG) << "[" << this << "]"
+              << "Executing command and switching prompt: "
+              << "\"" << cmd << "\"";
+
+  return cli->execute(cmd);
 }
 
 } // namespace cli

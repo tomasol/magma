@@ -42,9 +42,7 @@ class PromptAwareCli : public Cli {
   void initializeCli();
   folly::Future<std::string> executeAndRead(const Command& cmd);
 
-  folly::Future<std::string> executeAndSwitchPrompt(const Command& cmd) {
-    return folly::Future<std::string>(cmd.toString());
-  }
+  folly::Future<std::string> execute(const Command& cmd);
 };
 
 } // namespace cli

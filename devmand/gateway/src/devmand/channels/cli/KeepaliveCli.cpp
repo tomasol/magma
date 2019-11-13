@@ -58,11 +58,11 @@ folly::Future<string> KeepaliveCli::executeAndRead(const Command& cmd) {
   return cli->executeAndRead(cmd);
 }
 
-folly::Future<string> KeepaliveCli::executeAndSwitchPrompt(const Command& cmd) {
+folly::Future<string> KeepaliveCli::execute(const Command& cmd) {
   waitUntilCliReady();
-  MLOG(MDEBUG) << this << ": KACli executeAndSwitchPrompt: (cli " << cli.get() << ") '" << cmd << "\n";
+  MLOG(MDEBUG) << this << ": KACli execute: (cli " << cli.get() << ") '" << cmd << "\n";
 
-  return cli->executeAndSwitchPrompt(cmd);
+  return cli->execute(cmd);
 }
 
 void KeepaliveCli::keepalive() {

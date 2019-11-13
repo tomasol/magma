@@ -124,7 +124,7 @@ class UbntFakeCli : public Cli {
     return "";
   }
 
-  folly::Future<string> executeAndSwitchPrompt(const Command& cmd) override {
+  folly::Future<string> execute(const Command& cmd) override {
     (void)cmd;
     return folly::Future<string>("");
   }

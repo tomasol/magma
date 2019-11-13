@@ -49,6 +49,13 @@ class CliTest : public ::testing::Test {
   CliTest& operator=(CliTest&&) = delete;
 };
 
+TEST_F(CliTest, commandtest) {
+    Command command = Command::makeReadCommand("aaa\nbbbb ccc\n1111");
+    const vector<Command> &vector = command.splitMultiCommand();
+    EXPECT_EQ(true, command.isMultiCommand());
+    EXPECT_EQ(vector.size(), 3);
+}
+
 TEST_F(CliTest, queuedCli) {
   shared_ptr<CPUThreadPoolExecutor> executor = std::make_shared<CPUThreadPoolExecutor>(8);
   std::vector<unsigned int> durations = {2};

@@ -38,7 +38,7 @@ class KeepaliveCli : public Cli {
 
   folly::Future<std::string> executeAndRead(const Command& cmd) override;
 
-  folly::Future<std::string> executeAndSwitchPrompt(const Command& cmd) override;
+  folly::Future<std::string> execute(const Command& cmd) override;
 
   void keepalive();
 

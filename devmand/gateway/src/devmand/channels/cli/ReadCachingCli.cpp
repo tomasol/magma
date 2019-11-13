@@ -46,8 +46,8 @@ devmand::channels::cli::ReadCachingCli::ReadCachingCli(
         const std::shared_ptr<Cli> &_cli,
         const shared_ptr <CliCache> &_cache) : cli(_cli), cache(_cache) {}
 
-Future<string> devmand::channels::cli::ReadCachingCli::executeAndSwitchPrompt(const Command &cmd) {
-    return Future<string>(cmd.toString());
+Future<string> devmand::channels::cli::ReadCachingCli::execute(const Command &cmd) {
+    return cli->execute(cmd);
 }
 
 shared_ptr<CliCache> devmand::channels::cli::ReadCachingCli::createCache() {

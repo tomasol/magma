@@ -10,6 +10,10 @@
 #include <folly/futures/Future.h>
 #include <iostream>
 
+
+using std::vector;
+using std::string;
+
 namespace devmand {
 namespace channels {
 namespace cli {
@@ -25,6 +29,9 @@ struct Command {
   explicit Command(std::string _command);
 
  public:
+  bool isMultiCommand();
+  vector<Command> splitMultiCommand();
+
   std::string toString() const {
     return command;
   }
@@ -34,8 +41,12 @@ struct Command {
     return _stream;
   }
 
+ Command operator=(Command other) {
+     return Command(other.toString());
+ }
+
  private:
-  const std::string command;
+  const string command;
 };
 
 } // namespace cli

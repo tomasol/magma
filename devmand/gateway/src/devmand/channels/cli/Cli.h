@@ -35,7 +35,7 @@ class Cli {
  public:
   virtual folly::Future<std::string> executeAndRead(const Command& cmd) = 0;
 
-  virtual folly::Future<std::string> executeAndSwitchPrompt(
+  virtual folly::Future<std::string> execute(
       const Command& cmd) = 0;
 };
 
@@ -47,7 +47,7 @@ class EchoCli : public Cli {
     return folly::Future<std::string>(cmd.toString());
   }
 
-  folly::Future<std::string> executeAndSwitchPrompt(
+  folly::Future<std::string> execute(
       const Command& cmd) override {
     return folly::Future<std::string>(cmd.toString());
   }
@@ -60,7 +60,7 @@ public:
         return folly::Future<std::string>(std::runtime_error(cmd.toString()));
     }
 
-    folly::Future<std::string> executeAndSwitchPrompt(
+    folly::Future<std::string> execute(
             const Command& cmd) override {
         throw std::runtime_error(cmd.toString());
         return folly::Future<std::string>(std::runtime_error(cmd.toString()));
@@ -111,9 +111,9 @@ public:
         return f;
     }
 
-    folly::Future<std::string> executeAndSwitchPrompt(
+    folly::Future<std::string> execute(
             const Command& cmd) override {
-        MLOG(MDEBUG) << this << ": AsyncCli:executeAndSwitchPrompt '" << cmd << "'\n";
+        MLOG(MDEBUG) << this << ": AsyncCli:execute '" << cmd << "'\n";
 
         folly::Promise<std::string> p;
         folly::Future<std::string> f = p.getFuture()
@@ -128,7 +128,7 @@ public:
                     std::this_thread::sleep_for(std::chrono::seconds(tis));
 
                     MLOG(MDEBUG) << this << ": AsyncCli: '" << cmd << "' done\n";
-                    return cli->executeAndSwitchPrompt(cmd);
+                    return cli->execute(cmd);
                 });
         p.setValue("GOGOGO");
         return f;

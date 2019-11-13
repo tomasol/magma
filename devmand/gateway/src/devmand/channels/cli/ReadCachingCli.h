@@ -28,6 +28,6 @@ public:
     ReadCachingCli(const shared_ptr<Cli> &cli, const shared_ptr <CliCache> &cache);
     static shared_ptr <CliCache> createCache();
     Future<string> executeAndRead(const Command& cmd) override;
-    Future<string> executeAndSwitchPrompt(const Command &cmd) override;
+    Future<string> execute(const Command &cmd) override;
 };
 }

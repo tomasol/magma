@@ -48,6 +48,16 @@ void PromptAwareCli::init( //TODO remove
     const string password) {
   session->openShell(hostname, port, username, password).get();
 }
+
+folly::Future<std::string> PromptAwareCli::execute(const Command &cmd) {
+  const string& command = cmd.toString();
+  return session->write(command)
+       .thenValue([=](...) { return session->readUntilOutput(command); })
+       .thenValue([=]( const string & output) {
+           return session->write(cliFlavour->newline)
+                   .thenValue([output] (...) { return output; });
+       });
+}
 } // namespace cli
 } // namespace channels
 }

@@ -48,7 +48,7 @@ class QueuedCli : public Cli {
 
   Future<string> executeAndRead(const Command &cmd) override;
 
-  Future<string> executeAndSwitchPrompt(const Command &cmd) override;
+  Future<string> execute(const Command &cmd) override;
 
  private:
 
