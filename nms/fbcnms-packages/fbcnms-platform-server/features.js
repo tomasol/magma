@@ -103,6 +103,11 @@ const arrayConfigs = [
     enabledByDefault: true,
   },
   {
+    id: 'alerts_experimental',
+    title: 'Alerts Experimental Features',
+    enabledByDefault: false,
+  },
+  {
     id: 'logs',
     title: 'Logs',
     enabledByDefault: false,
@@ -160,8 +165,12 @@ const arrayConfigs = [
   {
     id: 'multi_subject_reports',
     title: 'Multi Subject Reports',
+    enabledByDefault: true,
+  },
+  {
+    id: 'equipment_live_status',
+    title: 'Equipment Live Status',
     enabledByDefault: false,
-    rules: [AlwaysEnabledInTestEnvRule],
   },
 ];
 

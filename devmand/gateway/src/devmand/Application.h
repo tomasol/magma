@@ -34,6 +34,7 @@ namespace devmand {
 using Services = std::list<std::unique_ptr<Service>>;
 using ChannelEngines = std::set<std::unique_ptr<channels::Engine>>;
 using Devices = std::map<devices::Id, std::unique_ptr<devices::Device>>;
+using IPVersion = channels::ping::IPVersion;
 
 class Application : public MetricSink {
  public:
@@ -77,6 +78,11 @@ class Application : public MetricSink {
       std::function<void()> event,
       const std::chrono::seconds& seconds);
 
+  // TODO should these conversion types just be in metrics sink?
+  void setGauge(const std::string& key, int value);
+  void setGauge(const std::string& key, size_t value);
+  void setGauge(const std::string& key, unsigned int value);
+  void setGauge(const std::string& key, long long unsigned int value);
   void setGauge(const std::string& key, double value) override;
   void setGauge(
       const std::string& key,
@@ -87,7 +93,8 @@ class Application : public MetricSink {
   DhcpdConfig& getDhcpdConfig();
 
   channels::snmp::Engine& getSnmpEngine();
-  channels::ping::Engine& getPingEngine();
+  channels::ping::Engine& getPingEngine(IPVersion ipv = IPVersion::v4);
+  channels::ping::Engine& getPingEngine(folly::IPAddress ip);
 
  private:
   void pollDevices();
@@ -134,6 +141,7 @@ class Application : public MetricSink {
   ChannelEngines channelEngines;
   channels::snmp::Engine* snmpEngine;
   channels::ping::Engine* pingEngine;
+  channels::ping::Engine* pingEngineIpv6;
   channels::cli::Engine* cliEngine;
 
   /*

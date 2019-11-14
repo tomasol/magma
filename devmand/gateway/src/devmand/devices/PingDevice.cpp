@@ -30,7 +30,7 @@ PingDevice::PingDevice(
     Application& application,
     const Id& id_,
     const folly::IPAddress& ip_)
-    : Device(application, id_), channel(application.getPingEngine(), ip_) {}
+    : Device(application, id_), channel(application.getPingEngine(ip_), ip_) {}
 
 std::shared_ptr<State> PingDevice::getState() {
   auto state = State::make(app, getId());
@@ -44,6 +44,11 @@ std::shared_ptr<State> PingDevice::getState() {
       devmand::models::device::Model::addLatency(
           lockedState, "ping", "agent", "device", rtt);
     });
+
+    state->setGauge<unsigned long int>(
+        "/fbc-symphony-device:system/latencies/"
+        "latency[type=ping and src=agent and dst=device]/rtt",
+        rtt);
   }));
   return state;
 }

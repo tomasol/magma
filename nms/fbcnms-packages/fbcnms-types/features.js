@@ -21,6 +21,7 @@ export type FeatureID =
   | 'python_api'
   | 'site_survey'
   | 'alerts'
+  | 'alerts_experimental'
   | 'equipment_export'
   | 'import_exported_equipemnt'
   | 'file_categories'
@@ -31,4 +32,5 @@ export type FeatureID =
   | 'logs'
   | 'services'
   | 'planned_equipment'
-  | 'multi_subject_reports';
+  | 'multi_subject_reports'
+  | 'equipment_live_status';
