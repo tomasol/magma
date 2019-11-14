@@ -34,7 +34,7 @@ using devmand::devices::cli::PlaintextCliDevice;
 
 class RealCliDeviceTest : public ::testing::Test {};
 
-TEST_F(RealCliDeviceTest, DISABLE_ubiquiti) {
+TEST_F(RealCliDeviceTest, DISABLED_ubiquiti) {
   Application app;
   cartography::DeviceConfig deviceConfig;
   devmand::cartography::ChannelConfig chnlCfg;

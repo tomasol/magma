@@ -8,26 +8,32 @@
 #pragma once
 
 #include <devmand/channels/cli/Cli.h>
-#include <folly/container/EvictingCacheMap.h>
 #include <folly/Synchronized.h>
+#include <folly/container/EvictingCacheMap.h>
 
 namespace devmand::channels::cli {
 
 using folly::EvictingCacheMap;
-using folly::Synchronized;
-using std::string;
-using std::shared_ptr;
 using folly::Future;
+using folly::Synchronized;
+using std::shared_ptr;
+using std::string;
 using CliCache = Synchronized<EvictingCacheMap<string, string>>;
 
 class ReadCachingCli : public Cli {
-private:
-    shared_ptr <Cli> cli{};
-    shared_ptr <CliCache> cache;
-public:
-    ReadCachingCli(const shared_ptr<Cli> &cli, const shared_ptr <CliCache> &cache);
-    static shared_ptr <CliCache> createCache();
-    Future<string> executeAndRead(const Command& cmd) override;
-    Future<string> execute(const Command &cmd) override;
+ private:
+  string id;
+  shared_ptr<Cli> cli{};
+  shared_ptr<CliCache> cache;
+
+ public:
+  ReadCachingCli(
+      string _id,
+      const shared_ptr<Cli>& _cli,
+      const shared_ptr<CliCache>& _cache);
+
+  static shared_ptr<CliCache> createCache();
+  Future<string> executeAndRead(const Command& cmd) override;
+  Future<string> execute(const Command& cmd) override;
 };
 }

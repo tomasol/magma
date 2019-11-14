@@ -427,7 +427,7 @@ TEST_F(StructuredUbntDeviceTest, getState) {
   deviceConfig.channelConfigs.insert(std::make_pair("cli", chnlCfg));
 
   auto cli = make_shared<UbntFakeCli>();
-  auto channel = make_shared<Channel>(cli);
+  auto channel = make_shared<Channel>("ubntTest", cli);
   std::unique_ptr<devices::Device> dev =
       std::make_unique<StructuredUbntDevice>(app, deviceConfig.id, channel);
 

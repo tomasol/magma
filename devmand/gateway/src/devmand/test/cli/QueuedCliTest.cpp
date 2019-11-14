@@ -55,7 +55,7 @@ TEST_F(QueuedCliTest, queuedCli) {
   // send requests
   vector<folly::Future<string>> futures;
   for (const auto& cmd : cmds) {
-    MLOG(MDEBUG) << "Executing command '" << cmd << "'\n";
+    MLOG(MDEBUG) << "Executing command '" << cmd;
     futures.push_back(cli.executeAndRead(cmd));
   }
 
@@ -83,7 +83,7 @@ TEST_F(QueuedCliTest, queuedCliMT) {
   vector<folly::Future<string>> futures;
   Command cmd = Command::makeReadCommand("hello");
   for (int i = 0; i < loopcount; ++i) {
-    MLOG(MDEBUG) << "test exec '" << cmd << "'\n";
+    MLOG(MDEBUG) << "Executing command '" << cmd;
     futures.push_back(
         folly::via(executor.get(), [&]() { return cli.executeAndRead(cmd); }));
   }

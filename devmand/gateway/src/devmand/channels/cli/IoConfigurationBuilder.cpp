@@ -40,14 +40,16 @@ IoConfigurationBuilder::IoConfigurationBuilder(
     const DeviceConfig& _deviceConfig)
     : deviceConfig(_deviceConfig) {}
 
-shared_ptr<Cli> IoConfigurationBuilder::getIo() {
+shared_ptr<Cli> IoConfigurationBuilder::getIo(
+    shared_ptr<CliCache> commandCache) {
   MLOG(MDEBUG) << "Creating CLI ssh device for " << deviceConfig.id
                << " (host: " << deviceConfig.ip << ")";
+
   const auto& plaintextCliKv = deviceConfig.channelConfigs.at("cli").kvPairs;
   // crate session
   const std::shared_ptr<SshSessionAsync>& session =
       std::make_shared<SshSessionAsync>(deviceConfig.id, executor);
-  // TODO opening SSH connection
+  // opening SSH connection
   session
       ->openShell(
           deviceConfig.ip,
@@ -61,22 +63,22 @@ shared_ptr<Cli> IoConfigurationBuilder::getIo() {
       ? CliFlavour::create(plaintextCliKv.at("flavour"))
       : CliFlavour::create("");
 
-  // TODO create CLI - how to create a CLI stack?
+  // create CLI - how to create a CLI stack?
   const shared_ptr<PromptAwareCli>& cli =
       std::make_shared<PromptAwareCli>(session, cl);
 
-  // TODO initialize CLI
+  // initialize CLI
   cli->initializeCli();
-  // TODO resolve prompt needs to happen
+  // resolve prompt needs to happen
   cli->resolvePrompt();
-  // TODO create async data reader
+  // create async data reader
   event* sessionEvent = SshSocketReader::getInstance().addSshReader(
       readCallback, session->getSshFd(), session.get());
   session->setEvent(sessionEvent);
 
   // create caching cli
   const shared_ptr<ReadCachingCli>& ccli =
-      std::make_shared<ReadCachingCli>(cli, ReadCachingCli::createCache());
+      std::make_shared<ReadCachingCli>(deviceConfig.id, cli, commandCache);
 
   // create Queued cli
   return std::make_shared<QueuedCli>(deviceConfig.id, ccli, executor);

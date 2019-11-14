@@ -29,28 +29,35 @@ std::unique_ptr<devices::Device> PlaintextCliDevice::createDevice(
     const cartography::DeviceConfig& deviceConfig) {
   IoConfigurationBuilder ioConfigurationBuilder(deviceConfig);
 
+  auto cmdCache = ReadCachingCli::createCache();
   const std::shared_ptr<Channel>& channel = std::make_shared<Channel>(
-      deviceConfig.id, ioConfigurationBuilder.getIo());
+      deviceConfig.id, ioConfigurationBuilder.getIo(cmdCache));
 
   return std::make_unique<devices::cli::PlaintextCliDevice>(
       app,
       deviceConfig.id,
       deviceConfig.channelConfigs.at("cli").kvPairs.at("stateCommand"),
-      channel);
+      channel,
+      cmdCache);
 }
 
 PlaintextCliDevice::PlaintextCliDevice(
     Application& application,
-    const Id& id_,
-    const std::string& _stateCommand,
-    const std::shared_ptr<Channel>& _channel)
+    const Id id_,
+    const std::string _stateCommand,
+    const std::shared_ptr<Channel> _channel,
+    const std::shared_ptr<CliCache> _cmdCache)
     : Device(application, id_),
       channel(_channel),
-      stateCommand(Command::makeReadCommand(_stateCommand)) {}
+      stateCommand(Command::makeReadCommand(_stateCommand)),
+      cmdCache(_cmdCache) {}
 
 std::shared_ptr<State> PlaintextCliDevice::getState() {
   MLOG(MINFO) << "[" << id << "] "
               << "Retrieving state";
+
+  // Reset cache
+  cmdCache->wlock()->clear();
 
   auto state = State::make(*reinterpret_cast<MetricSink*>(&app), getId());
 

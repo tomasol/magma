@@ -56,7 +56,8 @@ TEST_F(PlaintextCliDeviceTest, checkEcho) {
   deviceConfig.channelConfigs.insert(std::make_pair("cli", chnlCfg));
 
   const std::shared_ptr<EchoCli>& echoCli = std::make_shared<EchoCli>();
-  const std::shared_ptr<Channel>& channel = std::make_shared<Channel>(echoCli);
+  const std::shared_ptr<Channel>& channel =
+      std::make_shared<Channel>("test", echoCli);
   std::unique_ptr<devices::Device> dev = std::make_unique<PlaintextCliDevice>(
       app, deviceConfig.id, "show interfaces brief", channel);
 

@@ -40,7 +40,7 @@ TEST_F(CommandTest, api) {
   folly::Future<std::string> future = mockCli->executeAndRead(cmd);
   EXPECT_EQ("foo", std::move(future).get());
 
-  Channel cliChannel(std::make_shared<EchoCli>());
+  Channel cliChannel("cmdTEst", std::make_shared<EchoCli>());
   folly::Future<std::string> futureFromChannel = cliChannel.executeAndRead(cmd);
   EXPECT_EQ("foo", std::move(futureFromChannel).get());
 }

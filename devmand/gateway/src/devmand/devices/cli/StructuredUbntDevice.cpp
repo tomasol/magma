@@ -281,22 +281,27 @@ unique_ptr<devices::Device> StructuredUbntDevice::createDevice(
     Application& app,
     const cartography::DeviceConfig& deviceConfig) {
   IoConfigurationBuilder ioConfigurationBuilder(deviceConfig);
+  auto cmdCache = ReadCachingCli::createCache();
   const std::shared_ptr<Channel>& channel = std::make_shared<Channel>(
-      deviceConfig.id, ioConfigurationBuilder.getIo());
+      deviceConfig.id, ioConfigurationBuilder.getIo(cmdCache));
 
   return unique_ptr<StructuredUbntDevice>(
-      new StructuredUbntDevice(app, deviceConfig.id, channel));
+      new StructuredUbntDevice(app, deviceConfig.id, channel, cmdCache));
 }
 
 StructuredUbntDevice::StructuredUbntDevice(
     Application& application,
-    const Id& id_,
-    const shared_ptr<Channel>& _channel)
-    : Device(application, id_), channel(_channel) {}
+    const Id id_,
+    const shared_ptr<Channel> _channel,
+    const shared_ptr<CliCache> _cmdCache)
+    : Device(application, id_), channel(_channel), cmdCache(_cmdCache) {}
 
 shared_ptr<State> StructuredUbntDevice::getState() {
   MLOG(MINFO) << "[" << id << "] "
               << "Retrieving state";
+
+  // Reset cache
+  cmdCache->wlock()->clear();
 
   auto state = State::make(*reinterpret_cast<MetricSink*>(&app), getId());
   state->setStatus(true);

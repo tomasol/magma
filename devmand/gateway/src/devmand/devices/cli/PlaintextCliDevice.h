@@ -12,6 +12,7 @@
 
 #include <devmand/channels/cli/Channel.h>
 #include <devmand/channels/cli/Command.h>
+#include <devmand/channels/cli/ReadCachingCli.h>
 #include <devmand/devices/Device.h>
 
 namespace devmand {
@@ -24,9 +25,10 @@ class PlaintextCliDevice : public Device {
  public:
   PlaintextCliDevice(
       Application& application,
-      const Id& id,
-      const std::string& stateCommand,
-      const std::shared_ptr<Channel>& channel);
+      const Id id,
+      const std::string stateCommand,
+      const std::shared_ptr<Channel> channel,
+      const std::shared_ptr<CliCache> cmdCache = ReadCachingCli::createCache());
   PlaintextCliDevice() = delete;
   virtual ~PlaintextCliDevice() = default;
   PlaintextCliDevice(const PlaintextCliDevice&) = delete;
@@ -44,12 +46,14 @@ class PlaintextCliDevice : public Device {
  protected:
   void setConfig(const folly::dynamic& config) override {
     (void)config;
-    LOG(ERROR) << "set config on unconfigurable device";
+    MLOG(MERROR) << "[" << id << "] "
+                 << "set config on unconfigurable device";
   }
 
  private:
   std::shared_ptr<Channel> channel;
   const Command stateCommand;
+  std::shared_ptr<CliCache> cmdCache;
 };
 
 } // namespace cli
