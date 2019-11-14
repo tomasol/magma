@@ -18,6 +18,9 @@ namespace ssh {
 using namespace std;
 using namespace devmand::channels::cli;
 
+shared_ptr<CPUThreadPoolExecutor> testExecutor =
+    make_shared<CPUThreadPoolExecutor>(2);
+
 atomic_bool sshInitialized(false);
 
 void initSsh() {
@@ -55,13 +58,14 @@ static void handleCommand(ssh_channel channel, stringstream& inputBuf) {
 }
 
 shared_ptr<server> startSshServer(
-    shared_ptr<IOThreadPoolExecutor> executor,
+    shared_ptr<CPUThreadPoolExecutor> executor,
     string address,
     uint port,
     string rsaKey,
     string prompt) {
   MLOG(MDEBUG) << "Opening server: " << address << ":" << port;
   ssh_bind sshbind = ssh_bind_new();
+  ssh_bind_set_blocking(sshbind, 0);
   ssh_session session = ssh_new();
 
   ssh_bind_options_set(sshbind, SSH_BIND_OPTIONS_RSAKEY, rsaKey.c_str());
@@ -75,25 +79,29 @@ shared_ptr<server> startSshServer(
   retVal->sshbind = sshbind;
   retVal->session = session;
 
+  // This flag makes this function return only after ssh server started listening
+  atomic_bool started;
+  started.store(false);
+
   if (ssh_bind_listen(retVal->sshbind) < 0) {
     MLOG(MERROR) << "Cannot open server (socket listen error): " << retVal->id;
+    retVal->close();
     throw runtime_error("Cannot open server");
   }
 
-  auto future = folly::via(executor.get(), [retVal, prompt]() mutable -> void {
+  Future<Unit> future = folly::via(executor.get(), [retVal, prompt, &started]() -> void {
     MLOG(MDEBUG) << "Waiting for session on: " << retVal->id;
+    started.store(true);
+
     int r = ssh_bind_accept(retVal->sshbind, retVal->session);
     if (r == SSH_ERROR) {
       MLOG(MERROR) << "Cannot accept connection on server: " << retVal->id;
-      ssh_bind_free(retVal->sshbind);
-      throw runtime_error("Cannot accept connection");
+      return;
     }
 
     if (ssh_handle_key_exchange(retVal->session)) {
       MLOG(MERROR) << "Cannot kex on server: " << retVal->id << " due to "
                    << ssh_get_error(retVal->session);
-      ssh_disconnect(retVal->session);
-      ssh_bind_free(retVal->sshbind);
       throw runtime_error("Cannot key exchange");
     }
 
@@ -130,8 +138,6 @@ shared_ptr<server> startSshServer(
     if (!auth) {
       MLOG(MERROR) << "User auth failed: " << ssh_message_auth_user(message)
                    << ":" << ssh_message_auth_password(message);
-      ssh_disconnect(retVal->session);
-      ssh_bind_free(retVal->sshbind);
       throw runtime_error("Cannot authenticate");
     }
 
@@ -154,8 +160,6 @@ shared_ptr<server> startSshServer(
     } while (message && !chan);
     if (!chan) {
       MLOG(MERROR) << "Channel open failed: " << ssh_get_error(retVal->session);
-      ssh_disconnect(retVal->session);
-      ssh_bind_free(retVal->sshbind);
       throw runtime_error("Cannot open channel");
     }
 
@@ -177,8 +181,6 @@ shared_ptr<server> startSshServer(
     } while (message && !pty);
     if (!pty) {
       MLOG(MERROR) << "PTY open failed: " << ssh_get_error(retVal->session);
-      ssh_disconnect(retVal->session);
-      ssh_bind_free(retVal->sshbind);
       throw runtime_error("Cannot open pty");
     }
 
@@ -200,8 +202,6 @@ shared_ptr<server> startSshServer(
     } while (message && !shell);
     if (!shell) {
       MLOG(MERROR) << "Shell open failed: " << ssh_get_error(retVal->session);
-      ssh_disconnect(retVal->session);
-      ssh_bind_free(retVal->sshbind);
       throw runtime_error("Cannot open shell");
     }
 
@@ -218,7 +218,6 @@ shared_ptr<server> startSshServer(
         allInput << received;
 
         if (buf[0] == '\r' || buf[0] == '\n') {
-
           if (wasEnter && buf[0] == '\n') {
             // Handle \r\n as enter, throw away the \n
             wasEnter = false;
@@ -234,8 +233,8 @@ shared_ptr<server> startSshServer(
         } else if (((int)buf[0]) == 3) {
           // CTRL C
           MLOG(MDEBUG) << "Quitting on ^C";
-          retVal->close();
-          break;
+          ssh_disconnect(retVal->session);
+          return;
         } else {
           wasEnter = false;
           ssh_channel_write(chan, buf, uint32_t(i));
@@ -243,6 +242,13 @@ shared_ptr<server> startSshServer(
       }
     } while (i > 0);
   });
+
+  retVal->serverFuture = move(future);
+
+  do {
+    this_thread::sleep_for(chrono::milliseconds(500));
+  } while (!started.load());
+
   return retVal;
 }
 

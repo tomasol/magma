@@ -180,10 +180,12 @@ add_executable(devmantest
   ${PROJECT_SOURCE_DIR}/src/devmand/test/cli/RealCliDeviceTest.cpp
   ${PROJECT_SOURCE_DIR}/src/devmand/test/cli/CliScaleTest.cpp
   ${PROJECT_SOURCE_DIR}/src/devmand/test/cli/SshSessionTest.cpp
+  ${PROJECT_SOURCE_DIR}/src/devmand/test/cli/QueuedCliTest.cpp
   ${PROJECT_SOURCE_DIR}/src/devmand/test/cli/utils/Json.cpp
   ${PROJECT_SOURCE_DIR}/src/devmand/test/cli/utils/Ssh.cpp
   ${PROJECT_SOURCE_DIR}/src/devmand/test/cli/utils/Log.cpp
-  ${PROJECT_SOURCE_DIR}/src/devmand/test/cli/CliTest.cpp
+  ${PROJECT_SOURCE_DIR}/src/devmand/test/cli/KeepaliveCliTest.cpp
+  ${PROJECT_SOURCE_DIR}/src/devmand/test/cli/CommandTest.cpp
   ${PROJECT_SOURCE_DIR}/src/devmand/test/cli/ModelRegistryTest.cpp
   ${PROJECT_SOURCE_DIR}/src/devmand/test/cli/PlaintextCliDeviceTest.cpp
   ${PROJECT_SOURCE_DIR}/src/devmand/test/cli/StructuredUbntDeviceTest.cpp

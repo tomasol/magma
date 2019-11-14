@@ -5,10 +5,14 @@
 // LICENSE file in the root directory of this source tree. An additional grant
 // of patent rights can be found in the PATENTS file in the same directory.
 
+#define LOG_WITH_GLOG
+#include <magma_logging.h>
+
 #include <devmand/channels/cli/PromptAwareCli.h>
 #include <devmand/channels/cli/QueuedCli.h>
 #include <devmand/channels/cli/SshSessionAsync.h>
 #include <devmand/channels/cli/SshSocketReader.h>
+#include <devmand/test/cli/utils/Log.h>
 #include <folly/Singleton.h>
 #include <folly/executors/IOThreadPoolExecutor.h>
 #include <folly/futures/Future.h>
@@ -33,6 +37,10 @@ using devmand::channels::cli::sshsession::SshSessionAsync;
 using folly::IOThreadPoolExecutor;
 
 class CliScaleTest : public ::testing::Test {
+ protected:
+  void SetUp() override {
+    devmand::test::utils::log::initLog();
+  }
 };
 
 static const shared_ptr<IOThreadPoolExecutor> executor =

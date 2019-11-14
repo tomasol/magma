@@ -22,7 +22,7 @@ void initLog() {
   if (loggingInitialized.load()) {
     return;
   }
-  Engine::initLogging(MDEBUG);
+  Engine::initLogging(MDEBUG, true);
   loggingInitialized.store(true);
   MLOG(MDEBUG) << "Logging for test initialized";
 }

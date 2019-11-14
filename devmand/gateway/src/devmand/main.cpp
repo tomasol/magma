@@ -34,6 +34,7 @@ int main(int argc, char* argv[]) {
   folly::init(&argc, &argv);
 
   devmand::Application app;
+  app.init();
 
   // Add services which export the shared view
   // FIXME uncomment and find out how to prevent this from blocking !!!

@@ -35,8 +35,6 @@ using folly::IOThreadPoolExecutor;
 
 static const shared_ptr<IOThreadPoolExecutor> executor =
     std::make_shared<IOThreadPoolExecutor>(2);
-static const shared_ptr<IOThreadPoolExecutor> testExecutor =
-    std::make_shared<IOThreadPoolExecutor>(2);
 
 class SshSessionTest : public ::testing::Test {
  protected:
@@ -45,7 +43,7 @@ class SshSessionTest : public ::testing::Test {
   void SetUp() override {
     devmand::test::utils::log::initLog();
     devmand::test::utils::ssh::initSsh();
-    ssh = startSshServer(testExecutor);
+    ssh = startSshServer();
   }
 
   void TearDown() override {

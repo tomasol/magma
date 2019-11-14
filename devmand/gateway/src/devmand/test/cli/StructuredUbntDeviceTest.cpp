@@ -5,12 +5,16 @@
 // LICENSE file in the root directory of this source tree. An additional grant
 // of patent rights can be found in the PATENTS file in the same directory.
 
+#define LOG_WITH_GLOG
+#include <magma_logging.h>
+
 #include <boost/algorithm/string/trim.hpp>
 #include <devmand/Application.h>
 #include <devmand/channels/cli/Cli.h>
 #include <devmand/devices/State.h>
 #include <devmand/devices/cli/StructuredUbntDevice.h>
 #include <devmand/test/cli/utils/Json.h>
+#include <devmand/test/cli/utils/Log.h>
 #include <folly/futures/Future.h>
 #include <folly/json.h>
 #include <gtest/gtest.h>
@@ -26,9 +30,10 @@ using namespace devmand::test::utils::json;
 using namespace std;
 
 class StructuredUbntDeviceTest : public testing::Test {
- public:
-  StructuredUbntDeviceTest() = default;
-  virtual ~StructuredUbntDeviceTest() = default;
+ protected:
+  void SetUp() override {
+    devmand::test::utils::log::initLog();
+  }
 };
 
 class UbntFakeCli : public Cli {

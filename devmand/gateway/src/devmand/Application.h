@@ -35,7 +35,7 @@ using Services = std::list<std::unique_ptr<Service>>;
 using ChannelEngines = std::set<std::unique_ptr<channels::Engine>>;
 using Devices = std::map<devices::Id, std::unique_ptr<devices::Device>>;
 
-class Application final : public MetricSink {
+class Application : public MetricSink {
  public:
   Application();
   virtual ~Application() = default;
@@ -45,6 +45,7 @@ class Application final : public MetricSink {
   Application& operator=(Application&&) = delete;
 
  public:
+  void init();
   void run();
   int status() const;
 
