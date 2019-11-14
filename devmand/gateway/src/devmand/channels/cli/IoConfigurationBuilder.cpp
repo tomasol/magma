@@ -17,6 +17,7 @@
 #include <folly/container/EvictingCacheMap.h>
 #include <devmand/channels/cli/KeepaliveCli.h>
 #include <devmand/channels/cli/TimeoutTrackingCli.h>
+#include <devmand/channels/cli/ReconnectingCli.h>
 
 namespace devmand::channels::cli {
 
@@ -36,6 +37,11 @@ IoConfigurationBuilder::IoConfigurationBuilder() :
         timekeeper(std::make_shared<ThreadWheelTimekeeper>() // TODO: set to nullptr when running with folly to use singleton
                 ) {
 
+}
+
+
+shared_ptr<Cli> IoConfigurationBuilder::createAll(const DeviceConfig &deviceConfig) {
+  return getIo(createSSH(deviceConfig));
 }
 
 shared_ptr<Cli> IoConfigurationBuilder::createSSH(const DeviceConfig &deviceConfig) {

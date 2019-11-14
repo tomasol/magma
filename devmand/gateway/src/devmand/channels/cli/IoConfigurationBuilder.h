@@ -31,8 +31,10 @@ class IoConfigurationBuilder {
  public:
   IoConfigurationBuilder();
 
-  shared_ptr<Cli> createSSH(const DeviceConfig &deviceConfig);
+  shared_ptr<Cli> createAll(const DeviceConfig &deviceConfig);
 
-  shared_ptr<Cli> getIo(shared_ptr<Cli> underlyingCliLayer);
+  shared_ptr<Cli> getIo(shared_ptr<Cli> underlyingCliLayer); // visible for testing
+ private:
+  shared_ptr<Cli> createSSH(const DeviceConfig &deviceConfig);
 };
 }

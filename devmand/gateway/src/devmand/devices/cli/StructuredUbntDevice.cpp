@@ -282,7 +282,7 @@ unique_ptr<devices::Device> StructuredUbntDevice::createDevice(
     const cartography::DeviceConfig& deviceConfig) {
   IoConfigurationBuilder ioConfigurationBuilder;
   const std::shared_ptr<Channel>& channel =
-      std::make_shared<Channel>(ioConfigurationBuilder.getIo(ioConfigurationBuilder.createSSH(deviceConfig)));
+      std::make_shared<Channel>(ioConfigurationBuilder.createAll(deviceConfig));
 
   return unique_ptr<StructuredUbntDevice>(
       new StructuredUbntDevice(app, deviceConfig.id, channel));
