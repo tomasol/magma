@@ -55,7 +55,7 @@ TEST_F(SshSessionTest, sessionStopReading) {
   atomic_bool exceptionCaught(false);
   {
     const std::shared_ptr<SshSessionAsync>& session =
-        std::make_shared<SshSessionAsync>(executor);
+        std::make_shared<SshSessionAsync>("testConn", executor);
 
     session->openShell("127.0.0.1", 9999, "cisco", "cisco").get();
 
@@ -88,7 +88,7 @@ TEST_F(SshSessionTest, sessionStopReading) {
 TEST_F(SshSessionTest, sessionReadingStopServer) {
   atomic_bool exceptionCaught(false);
   const std::shared_ptr<SshSessionAsync>& session =
-      std::make_shared<SshSessionAsync>(executor);
+      std::make_shared<SshSessionAsync>("testConn", executor);
 
   session->openShell("127.0.0.1", 9999, "cisco", "cisco").get();
 
@@ -123,7 +123,7 @@ TEST_F(SshSessionTest, sessionReadingStopServer) {
 
 TEST_F(SshSessionTest, sessionStop) {
   const std::shared_ptr<SshSessionAsync>& session =
-      std::make_shared<SshSessionAsync>(executor);
+      std::make_shared<SshSessionAsync>("testConn", executor);
 
   session->openShell("127.0.0.1", 9999, "cisco", "cisco").get();
 

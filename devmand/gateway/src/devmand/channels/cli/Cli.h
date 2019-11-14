@@ -11,7 +11,6 @@
 #include <magma_logging.h>
 
 #include <devmand/channels/cli/Command.h>
-#include <folly/executors/CPUThreadPoolExecutor.h>
 #include <folly/futures/Future.h>
 #include <folly/futures/Promise.h>
 #include <magma_logging.h>
@@ -35,8 +34,7 @@ class Cli {
  public:
   virtual folly::Future<std::string> executeAndRead(const Command& cmd) = 0;
 
-  virtual folly::Future<std::string> execute(
-      const Command& cmd) = 0;
+  virtual folly::Future<std::string> execute(const Command& cmd) = 0;
 };
 
 } // namespace cli

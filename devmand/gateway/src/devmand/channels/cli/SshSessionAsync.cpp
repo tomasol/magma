@@ -6,7 +6,6 @@
 // of patent rights can be found in the PATENTS file in the same directory.
 
 #include <ErrorHandler.h>
-#include <boost/lockfree/spsc_queue.hpp>
 #include <devmand/channels/cli/SshSession.h>
 #include <devmand/channels/cli/SshSessionAsync.h>
 #include <folly/executors/IOThreadPoolExecutor.h>
@@ -27,8 +26,8 @@ using devmand::channels::cli::sshsession::SshSessionAsync;
 using std::lock_guard;
 using std::unique_lock;
 
-SshSessionAsync::SshSessionAsync(shared_ptr<IOThreadPoolExecutor> _executor)
-    : executor(_executor), reading(false) {}
+SshSessionAsync::SshSessionAsync(string _id, shared_ptr<IOThreadPoolExecutor> _executor)
+    : executor(_executor), session(_id), reading(false) {}
 
 SshSessionAsync::~SshSessionAsync() {
   if (this->sessionEvent != nullptr &&
@@ -37,7 +36,7 @@ SshSessionAsync::~SshSessionAsync() {
   }
   this->session.close();
 
-  while(reading.load()) {
+  while (reading.load()) {
     // waiting for any pending read to run out
   }
 }
@@ -102,9 +101,8 @@ string SshSessionAsync::readUntilOutputBlocking(string lastOutput) {
   string result;
   while (this->session.isOpen()) {
     unique_lock<mutex> lck(mutex1);
-    bool satisfied = condition.wait_for(lck, 1000ms, [this] {
-      return this->readQueue.read_available() != 0;
-    });
+    bool satisfied = condition.wait_for(
+        lck, 1000ms, [this] { return this->readQueue.read_available() != 0; });
 
     if (!satisfied) {
       continue;

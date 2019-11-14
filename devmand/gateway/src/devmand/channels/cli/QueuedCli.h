@@ -8,9 +8,9 @@
 #pragma once
 
 #include <devmand/channels/cli/Cli.h>
-#include <folly/futures/Future.h>
 #include <folly/Executor.h>
 #include <folly/executors/SerialExecutor.h>
+#include <folly/futures/Future.h>
 
 namespace devmand::channels::cli {
 
@@ -19,9 +19,11 @@ using namespace folly;
 
 class QueuedCli : public Cli {
  private:
+  string id;
   shared_ptr<Cli> cli;
 
-  Executor::KeepAlive<SerialExecutor> serialExecutorKeepAlive; // maintain consumer thread
+  Executor::KeepAlive<SerialExecutor>
+      serialExecutorKeepAlive; // maintain consumer thread
 
   struct QueueEntry {
     function<Future<string>()> obtainFutureFromCli;
@@ -31,30 +33,29 @@ class QueuedCli : public Cli {
   };
 
   /**
-   * Unbounded multi producer single consumer queue where consumer is not blocked
-   * on dequeue.
+   * Unbounded multi producer single consumer queue where consumer is not
+   * blocked on dequeue.
    */
   UnboundedQueue<QueueEntry, false, true, false> queue;
-
   bool isProcessing = false; // only accessed from consumer thread
 
  public:
-
-  QueuedCli(shared_ptr<Cli> _cli, const shared_ptr<Executor> &_parentExecutor);
-
+  QueuedCli(
+      string _id,
+      shared_ptr<Cli> _cli,
+      const shared_ptr<Executor>& _parentExecutor);
   QueuedCli() = delete;
+  QueuedCli(const QueuedCli&) = delete;
 
-  QueuedCli(const QueuedCli &) = delete;
-
-  Future<string> executeAndRead(const Command &cmd) override;
-
-  Future<string> execute(const Command &cmd) override;
+  Future<string> executeAndRead(const Command& cmd) override;
+  Future<string> execute(const Command& cmd) override;
 
  private:
-
-  Future<string> executeSomething(const Command &cmd, const string &prefix,
-                                  function<Future<string>()> innerFunc);
+  Future<string> executeSomething(
+      const Command& cmd,
+      const string& prefix,
+      function<Future<string>()> innerFunc);
 
   void triggerDequeue();
 };
-}
+} // namespace devmand::channels::cli

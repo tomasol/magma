@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include <devmand/channels/cli/Cli.h>
 #include <devmand/channels/Channel.h>
+#include <devmand/channels/cli/Cli.h>
 #include <libssh/libssh.h>
 
 namespace devmand {
@@ -29,16 +29,17 @@ class SshSession {
     std::atomic<ssh_channel> channel;
     std::atomic<ssh_session> session;
   } sessionState;
+  string id;
   int verbosity;
+
   bool checkSuccess(int return_code, int OK_RETURN_CODE);
   void terminate();
 
  public:
-  explicit SshSession(int verbosity);
-  socket_t getSshFd();
-  SshSession();
-  string getHost();
+  SshSession(string _id);
   ~SshSession();
+
+  socket_t getSshFd();
   void openShell(
       const string& ip,
       int port,

@@ -11,9 +11,9 @@
 #include <folly/Format.h>
 
 #include <devmand/channels/cli/Channel.h>
-#include <devmand/channels/cli/KeepaliveCli.h>
-#include <devmand/channels/cli/IoConfigurationBuilder.h>
 #include <devmand/channels/cli/Cli.h>
+#include <devmand/channels/cli/IoConfigurationBuilder.h>
+#include <devmand/channels/cli/KeepaliveCli.h>
 #include <devmand/devices/State.h>
 #include <devmand/devices/cli/PlaintextCliDevice.h>
 
@@ -27,9 +27,11 @@ using namespace devmand::channels::cli::sshsession;
 std::unique_ptr<devices::Device> PlaintextCliDevice::createDevice(
     Application& app,
     const cartography::DeviceConfig& deviceConfig) {
-
   IoConfigurationBuilder ioConfigurationBuilder(deviceConfig);
-  const std::shared_ptr<Channel>& channel = std::make_shared<Channel>(ioConfigurationBuilder.getIo());
+
+  const std::shared_ptr<Channel>& channel = std::make_shared<Channel>(
+      deviceConfig.id, ioConfigurationBuilder.getIo());
+
   return std::make_unique<devices::cli::PlaintextCliDevice>(
       app,
       deviceConfig.id,
@@ -47,8 +49,8 @@ PlaintextCliDevice::PlaintextCliDevice(
       stateCommand(Command::makeReadCommand(_stateCommand)) {}
 
 std::shared_ptr<State> PlaintextCliDevice::getState() {
-  LOG(INFO) << "[" << this << "] "
-            << "Retrieving state";
+  MLOG(MINFO) << "[" << id << "] "
+              << "Retrieving state";
 
   auto state = State::make(*reinterpret_cast<MetricSink*>(&app), getId());
 

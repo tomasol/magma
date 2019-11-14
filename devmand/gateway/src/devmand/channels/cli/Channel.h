@@ -7,6 +7,9 @@
 
 #pragma once
 
+#define LOG_WITH_GLOG
+#include <magma_logging.h>
+
 #include <devmand/channels/cli/Cli.h>
 #include <devmand/channels/Channel.h>
 
@@ -16,7 +19,7 @@ namespace cli {
 
 class Channel : public channels::Channel, public devmand::channels::cli::Cli {
  public:
-  Channel(const std::shared_ptr<devmand::channels::cli::Cli> cli);
+  Channel(string _id, const std::shared_ptr<devmand::channels::cli::Cli> _cli);
   Channel() = delete;
   virtual ~Channel();
   Channel(const Channel&) = delete;
@@ -29,6 +32,7 @@ class Channel : public channels::Channel, public devmand::channels::cli::Cli {
       const Command& cmd) override;
 
  private:
+  string id;
   const std::shared_ptr<devmand::channels::cli::Cli> cli;
 };
 

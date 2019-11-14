@@ -21,14 +21,15 @@ void SshSession::close() {
   auto sess = sessionState.session.load();
 
   if (chnl != nullptr) {
-    MLOG(MINFO) << "Disconnecting from host: " << sessionState.ip
+    MLOG(MINFO) << "[" << id << "] "
+                << "Disconnecting from host: " << sessionState.ip
                 << " port: " << sessionState.port;
 
     if (ssh_channel_is_eof(chnl) != 0) {
-       ssh_channel_close(chnl);
+      ssh_channel_close(chnl);
     }
     if (ssh_channel_is_open(chnl) != 0) {
-        ssh_channel_free(chnl);
+      ssh_channel_free(chnl);
     }
   }
 
@@ -53,14 +54,15 @@ void SshSession::openShell(
     int port,
     const string& username,
     const string& password) {
-  MLOG(MINFO) << "Connecting to host: " << ip << " port: " << port;
+  MLOG(MINFO) << "[" << id << "] "
+              << "Connecting to host: " << ip << " port: " << port;
   sessionState.ip = ip;
   sessionState.port = port;
   sessionState.username = username;
   sessionState.username = password;
   sessionState.session.store(ssh_new());
   ssh_options_set(sessionState.session, SSH_OPTIONS_USER, username.c_str());
-  //ssh_options_set(sessionState.session, SSH_OPTIONS_SSH_DIR, "%s/.ssh");
+  // ssh_options_set(sessionState.session, SSH_OPTIONS_SSH_DIR, "%s/.ssh");
   ssh_options_set(sessionState.session, SSH_OPTIONS_HOST, ip.c_str());
   ssh_options_set(sessionState.session, SSH_OPTIONS_LOG_VERBOSITY, &verbosity);
   ssh_options_set(sessionState.session, SSH_OPTIONS_PORT, &port);
@@ -104,7 +106,8 @@ void SshSession::terminate() {
   const char* error_message = sessionState.session != nullptr
       ? ssh_get_error(sessionState.session)
       : "unknown";
-  MLOG(MERROR) << "Error in SSH connection to host: " << sessionState.ip
+  MLOG(MERROR) << "[" << id << "] "
+               << "Error in SSH connection to host: " << sessionState.ip
                << " port: " << sessionState.port
                << " with error: " << error_message;
   string error = "Error with SSH: ";
@@ -128,7 +131,8 @@ string SshSession::read(int timeoutMillis) {
     }
 
     if (bytes_read < 0) {
-      MLOG(MERROR) << "Error reading data from SSH connection, read bytes: "
+      MLOG(MERROR) << "[" << id << "] "
+                   << "Error reading data from SSH connection, read bytes: "
                    << bytes_read;
       terminate();
     } else if (bytes_read == 0) {
@@ -143,7 +147,8 @@ string SshSession::read(int timeoutMillis) {
 
 void SshSession::write(const string& command) {
   if (command.empty()) {
-    MLOG(MERROR) << "Command for execution for host: " << getHost()
+    MLOG(MERROR) << "[" << id << "] "
+                 << "Command for execution for host: " << sessionState.ip
                  << " is empty, this should not happen";
     return;
   }
@@ -154,7 +159,8 @@ void SshSession::write(const string& command) {
       (unsigned int)command.length() * sizeof(data[0]));
 
   if (bytes == SSH_ERROR) {
-    MLOG(MERROR) << "Error while executing command " << command;
+    MLOG(MERROR) << "[" << id << "] "
+                 << "Error while executing command " << command;
     terminate();
   }
 }
@@ -163,11 +169,9 @@ SshSession::~SshSession() {
   close();
 }
 
-SshSession::SshSession(int _verbosity) : verbosity(_verbosity) {}
-
-SshSession::SshSession() : verbosity(SSH_LOG_NOLOG) {
-    sessionState.channel.store(nullptr);
-    sessionState.session.store(nullptr);
+SshSession::SshSession(string _id) : id(_id), verbosity(SSH_LOG_NOLOG) {
+  sessionState.channel.store(nullptr);
+  sessionState.session.store(nullptr);
 }
 
 string SshSession::read() {
@@ -176,10 +180,6 @@ string SshSession::read() {
 
 socket_t SshSession::getSshFd() {
   return ssh_get_fd(sessionState.session.load());
-}
-
-string SshSession::getHost() {
-  return sessionState.ip;
 }
 
 } // namespace sshsession

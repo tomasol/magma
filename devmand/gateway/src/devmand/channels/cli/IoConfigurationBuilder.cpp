@@ -46,7 +46,7 @@ shared_ptr<Cli> IoConfigurationBuilder::getIo() {
   const auto& plaintextCliKv = deviceConfig.channelConfigs.at("cli").kvPairs;
   // crate session
   const std::shared_ptr<SshSessionAsync>& session =
-      std::make_shared<SshSessionAsync>(executor);
+      std::make_shared<SshSessionAsync>(deviceConfig.id, executor);
   // TODO opening SSH connection
   session
       ->openShell(
@@ -79,7 +79,7 @@ shared_ptr<Cli> IoConfigurationBuilder::getIo() {
       std::make_shared<ReadCachingCli>(cli, ReadCachingCli::createCache());
 
   // create Queued cli
-  return std::make_shared<QueuedCli>(ccli, executor);
+  return std::make_shared<QueuedCli>(deviceConfig.id, ccli, executor);
 }
 
 } // namespace cli

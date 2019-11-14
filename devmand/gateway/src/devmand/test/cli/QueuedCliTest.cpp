@@ -12,7 +12,6 @@
 #include <devmand/cartography/DeviceConfig.h>
 #include <devmand/channels/cli/Cli.h>
 #include <devmand/channels/cli/QueuedCli.h>
-#include <devmand/devices/State.h>
 #include <devmand/test/cli/utils/Log.h>
 #include <devmand/test/cli/utils/MockCli.h>
 #include <folly/executors/CPUThreadPoolExecutor.h>
@@ -41,6 +40,7 @@ class QueuedCliTest : public ::testing::Test {
 TEST_F(QueuedCliTest, queuedCli) {
   vector<unsigned int> durations = {2};
   QueuedCli cli(
+      "testConnection",
       make_shared<AsyncCli>(make_shared<EchoCli>(), executor, durations),
       executor);
 
@@ -75,6 +75,7 @@ TEST_F(QueuedCliTest, queuedCliMT) {
   vector<unsigned int> durations = {1};
 
   QueuedCli cli(
+      "testConnection",
       make_shared<AsyncCli>(make_shared<EchoCli>(), executor, durations),
       executor);
 

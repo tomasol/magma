@@ -7,6 +7,9 @@
 
 #pragma once
 
+#define LOG_WITH_GLOG
+#include <magma_logging.h>
+
 #include <devmand/channels/cli/Channel.h>
 #include <devmand/channels/cli/Command.h>
 #include <devmand/devices/Device.h>

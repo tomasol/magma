@@ -281,8 +281,8 @@ unique_ptr<devices::Device> StructuredUbntDevice::createDevice(
     Application& app,
     const cartography::DeviceConfig& deviceConfig) {
   IoConfigurationBuilder ioConfigurationBuilder(deviceConfig);
-  const std::shared_ptr<Channel>& channel =
-      std::make_shared<Channel>(ioConfigurationBuilder.getIo());
+  const std::shared_ptr<Channel>& channel = std::make_shared<Channel>(
+      deviceConfig.id, ioConfigurationBuilder.getIo());
 
   return unique_ptr<StructuredUbntDevice>(
       new StructuredUbntDevice(app, deviceConfig.id, channel));
@@ -295,8 +295,8 @@ StructuredUbntDevice::StructuredUbntDevice(
     : Device(application, id_), channel(_channel) {}
 
 shared_ptr<State> StructuredUbntDevice::getState() {
-  LOG(INFO) << "[" << this << "] "
-            << "Retrieving state";
+  MLOG(MINFO) << "[" << id << "] "
+              << "Retrieving state";
 
   auto state = State::make(*reinterpret_cast<MetricSink*>(&app), getId());
   state->setStatus(true);

@@ -8,8 +8,10 @@
 #pragma once
 
 #define LOG_WITH_GLOG
+#include <magma_logging.h>
 
 #include <devmand/channels/cli/Cli.h>
+#include <folly/executors/CPUThreadPoolExecutor.h>
 
 namespace devmand {
 namespace test {
@@ -25,7 +27,7 @@ class EchoCli : public Cli {
     return folly::Future<string>(cmd.toString());
   }
 
-  folly::Future<string> executeAndSwitchPrompt(const Command& cmd) override {
+  folly::Future<string> execute(const Command& cmd) override {
     return folly::Future<string>(cmd.toString());
   }
 };
@@ -37,7 +39,7 @@ class ErrCli : public Cli {
     return folly::Future<string>(runtime_error(cmd.toString()));
   }
 
-  folly::Future<string> executeAndSwitchPrompt(const Command& cmd) override {
+  folly::Future<string> execute(const Command& cmd) override {
     throw runtime_error(cmd.toString());
     return folly::Future<string>(runtime_error(cmd.toString()));
   }
@@ -61,7 +63,7 @@ class AsyncCli : public Cli {
     return f;
   }
 
-  folly::Future<string> executeAndSwitchPrompt(const Command& cmd) override {
+  folly::Future<string> execute(const Command& cmd) override {
     (void)cmd;
     return folly::Future<string>(runtime_error("Unsupported"));
   }

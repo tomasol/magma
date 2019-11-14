@@ -37,6 +37,16 @@ Application::Application()
             del(deviceConfig);
           }) {}
 
+void Application::init() {
+  ErrorHandler::executeWithCatch(
+      [this]() -> void {
+        snmpEngine = addEngine<channels::snmp::Engine>(eventBase, name);
+//        pingEngine = addEngine<channels::ping::Engine>(eventBase);
+        cliEngine = addEngine<channels::cli::Engine>();
+      },
+      [this]() { this->statusCode = EXIT_FAILURE; });
+}
+
 channels::snmp::Engine& Application::getSnmpEngine() {
   assert(snmpEngine != nullptr);
   return *snmpEngine;
@@ -111,16 +121,6 @@ void Application::scheduleIn(
 
     eventBase.scheduleAt(recurse, eventBase.now() + seconds);
   });
-}
-
-void Application::init() {
-  ErrorHandler::executeWithCatch(
-      [this]() -> void {
-        snmpEngine = addEngine<channels::snmp::Engine>(eventBase, name);
-        pingEngine = addEngine<channels::ping::Engine>(eventBase);
-        cliEngine = addEngine<channels::cli::Engine>();
-      },
-      [this]() { this->statusCode = EXIT_FAILURE; });
 }
 
 void Application::run() {

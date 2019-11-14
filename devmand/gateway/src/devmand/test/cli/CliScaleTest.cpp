@@ -82,7 +82,7 @@ TEST_F(CliScaleTest, DISABLED_scale) {
 
   function<shared_ptr<QueuedCli>(int)> connect = [](int port) {
     const std::shared_ptr<SshSessionAsync>& session =
-        std::make_shared<SshSessionAsync>(executor);
+        std::make_shared<SshSessionAsync>(to_string(port), executor);
 
     session->openShell("172.8.0.100", port, "cisco", "cisco").get();
 
@@ -98,7 +98,7 @@ TEST_F(CliScaleTest, DISABLED_scale) {
     MLOG(MWARNING) << "Connecting device at port" << port
                    << " at FD: " << session->getSshFd();
     session->setEvent(sessionEvent);
-    return std::make_shared<QueuedCli>(cli, executor);
+    return std::make_shared<QueuedCli>(to_string(port), cli, executor);
   };
   const Command& cmd = Command::makeReadCommand("show running-config");
 
