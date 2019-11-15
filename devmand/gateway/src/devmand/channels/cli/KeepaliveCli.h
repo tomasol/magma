@@ -37,9 +37,10 @@ class KeepaliveCli : public Cli {
   folly::Future<string> execute(const Command &cmd) override;
 
  private:
-  const shared_ptr <Cli> cli; // underlying cli layer
-  const folly::Executor::KeepAlive<folly::SerialExecutor> serialExecutorKeepAlive;
-  const shared_ptr<folly::ThreadWheelTimekeeper> timekeeper;
+  shared_ptr <Cli> cli; // underlying cli layer
+  shared_ptr<folly::ThreadWheelTimekeeper> timekeeper;
+  shared_ptr<folly::Executor> parentExecutor;
+  folly::Executor::KeepAlive<folly::SerialExecutor> serialExecutorKeepAlive;
   const Command keepAliveCommand;
   const chrono::milliseconds heartbeatInterval;
   const chrono::milliseconds backoffAfterKeepaliveTimeout;

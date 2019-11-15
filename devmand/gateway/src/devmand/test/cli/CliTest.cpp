@@ -42,7 +42,6 @@ using devmand::devices::cli::sshsession::SshSession;
 using devmand::Application;
 using devmand::channels::cli::sshsession::SshSessionAsync;
 
-
 class CliTest : public ::testing::Test {
  public:
   CliTest() = default;
@@ -64,11 +63,11 @@ class CliTest : public ::testing::Test {
 };
 
 shared_ptr<Cli> CliTest::createCliStack(const std::vector<unsigned int>& durations, shared_ptr<Cli> innerCli) {
-  return ioConfigurationBuilder.getIo(
-          std::make_shared<AsyncCli>(innerCli, durations)
-          );
+  return ioConfigurationBuilder.createAll(
+          [=](...) -> shared_ptr<Cli> {
+            return std::make_shared<AsyncCli>(innerCli, durations);
+          });
 }
-
 
 TEST_F(CliTest, commandtest) {
     Command command = Command::makeReadCommand("aaa\nbbbb ccc\n1111");
@@ -77,11 +76,17 @@ TEST_F(CliTest, commandtest) {
     EXPECT_EQ(vector.size(), 3);
 }
 
-TEST_F(CliTest, queuedCli) {
-  shared_ptr<CPUThreadPoolExecutor> executor = std::make_shared<CPUThreadPoolExecutor>(8);
+TEST_F(CliTest, cliStackInitialization) {
   std::vector<unsigned int> durations = {2};
   shared_ptr<Cli> cli = createCliStack(durations);
+  MLOG(MDEBUG) << "test initialized cli stack";
+}
 
+TEST_F(CliTest, queuedCli) {
+  shared_ptr<CPUThreadPoolExecutor> executor = std::make_shared<CPUThreadPoolExecutor>(8, std::make_shared<NamedThreadFactory>("test"));
+  std::vector<unsigned int> durations = {2};
+  shared_ptr<Cli> cli = createCliStack(durations);
+  MLOG(MDEBUG) << "test initialized cli stack";
   std::vector<std::string> results;
   results.push_back("one");
   results.push_back("two");
@@ -234,17 +239,18 @@ TEST_F(CliTest, keepaliveCliTimeout) {
     shared_ptr<Cli> cli = createCliStack(durations);
 
     // create requests
-    Command cmd = Command::makeReadCommand("hello", true);
     std::vector<folly::Future<std::string>> futures;
     for (int i = 0; i < loopcount; ++i) {
-        MLOG(MDEBUG) << "test exec '" << cmd << "'\n";
-        futures.push_back(cli->executeAndRead(cmd));
+        string concat("hello_");
+        concat.append(to_string(i));
+        futures.push_back(cli->executeAndRead(Command::makeReadCommand(move(concat), true)));
         std::this_thread::sleep_for(std::chrono::seconds(2));
     }
 
-    // collect values
+    MLOG(MDEBUG) << "test: collecting values";
     const std::vector<folly::Try<std::string>>& values =
             collectAll(futures.begin(), futures.end()).get();
+    MLOG(MDEBUG) << "test: values collected";
 
     // check values
     EXPECT_EQ(values.size(), loopcount);
@@ -259,8 +265,8 @@ TEST_F(CliTest, keepaliveCliTimeout) {
             res_value++;
         }
     }
-    EXPECT_GT(res_value, 3);
-    EXPECT_GT(res_failed, 3);
+    EXPECT_GT(res_value, 1);
+    EXPECT_GT(res_failed, 1);
 }
 
 // TODO: KA to send periodical requests with error -> restart cli stack

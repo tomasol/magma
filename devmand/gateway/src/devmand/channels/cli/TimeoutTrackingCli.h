@@ -28,7 +28,7 @@ class TimeoutTrackingCli : public Cli {
           shared_ptr<Cli> _cli,
           shared_ptr<folly::ThreadWheelTimekeeper> _timekeeper,
           shared_ptr<folly::Executor> _executor,
-          std::chrono::milliseconds _timeoutInterval = std::chrono::seconds(10));
+          std::chrono::milliseconds _timeoutInterval = std::chrono::seconds(5));
 
   ~TimeoutTrackingCli() override;
 
@@ -40,13 +40,13 @@ class TimeoutTrackingCli : public Cli {
   shared_ptr<Cli> cli; // underlying cli layer
   shared_ptr<folly::ThreadWheelTimekeeper> timekeeper;
   shared_ptr<folly::Executor> executor;
-  std::chrono::milliseconds timeoutInterval;
+  const std::chrono::milliseconds timeoutInterval;
 
   atomic<bool> shutdown;
 
   Future<string> executeSomething(
           const Command &cmd,
-          const string &loggingPrefix,
+          const string &&loggingPrefix,
           const function<Future<string>()>& innerFunc);
 
 };

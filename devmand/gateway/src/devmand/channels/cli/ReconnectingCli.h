@@ -24,19 +24,26 @@ using devmand::channels::cli::Command;
 class ReconnectingCli : public Cli {
 
  public:
-  explicit ReconnectingCli(function<shared_ptr<Cli>()> &&createCliStack);
+  explicit ReconnectingCli(shared_ptr<Executor> executor,
+          function<shared_ptr<Cli>()> &&createCliStack);
+
+  ~ReconnectingCli() override;
 
   folly::Future<std::string> executeAndRead(const Command &cmd) override;
 
   folly::Future<std::string> execute(const Command &cmd) override;
 
  private:
+
+  shared_ptr<Executor> executor;
+
   function<shared_ptr<devmand::channels::cli::Cli>()> createCliStack;
 
   shared_ptr<devmand::channels::cli::Cli> cli;
 
-  Future<string> executeSomething(const Command &cmd, const string &loggingPrefix,
-                                  const function<Future<string>()> &innerFunc);
+  Future<string> executeSomething(const string &&loggingPrefix,
+                                  const function<Future<string>()> &innerFunc,
+                                  const string &&loggingSuffix);
 
 };
 }

@@ -22,9 +22,10 @@ KeepaliveCli::KeepaliveCli(shared_ptr<Cli> _cli,
                            chrono::milliseconds _heartbeatInterval,
                            chrono::milliseconds _backoffAfterKeepaliveTimeout) :
         cli(_cli),
+        timekeeper(_timekeeper),
+        parentExecutor(_parentExecutor),
         serialExecutorKeepAlive(
                 SerialExecutor::create(Executor::getKeepAliveToken(_parentExecutor.get()))),
-        timekeeper(_timekeeper),
         keepAliveCommand(_keepAliveCommand),
         heartbeatInterval(_heartbeatInterval),
         backoffAfterKeepaliveTimeout(_backoffAfterKeepaliveTimeout) {
@@ -32,12 +33,18 @@ KeepaliveCli::KeepaliveCli(shared_ptr<Cli> _cli,
   assert(_keepAliveCommand.skipCache());
   shutdown = false;
 
-  sendKeepAliveCommand();
+//  sendKeepAliveCommand();
+  MLOG(MDEBUG) << "KACli initialized";
 }
 
 KeepaliveCli::~KeepaliveCli() {
-  MLOG(MDEBUG) << "KACli: ~KeepaliveCli";
+  MLOG(MDEBUG) << "~KACli";
   shutdown = true;
+  serialExecutorKeepAlive = nullptr;
+  parentExecutor = nullptr;
+  cli = nullptr;
+  timekeeper = nullptr;
+  MLOG(MDEBUG) << "~KACli done";
 }
 
 void KeepaliveCli::sendKeepAliveCommand() {
@@ -45,14 +52,17 @@ void KeepaliveCli::sendKeepAliveCommand() {
   MLOG(MDEBUG) << "KACli: sendKeepAliveCommand()";
   Future<string> result = via(serialExecutorKeepAlive).thenValue(
           [=](auto) {
+            if (shutdown) throw runtime_error("KACli: Shutting down");
             MLOG(MDEBUG) << "KACli: sendKeepAliveCommand executing keepalive command";
             return this->executeAndRead(this->keepAliveCommand); });
 
   scheduleNextPing(move(result));
+  MLOG(MDEBUG) << "KACli: sendKeepAliveCommand() done";
 }
 
 void KeepaliveCli::scheduleNextPing(Future<string> keepAliveCmdFuture) {
   if (shutdown) return;
+  MLOG(MDEBUG) << "KACli: scheduleNextPing";
   move(keepAliveCmdFuture).via(serialExecutorKeepAlive)
           .thenValue([=](auto) -> SemiFuture<Unit> {
             MLOG(MDEBUG) << "KACli: Creating sleep future";

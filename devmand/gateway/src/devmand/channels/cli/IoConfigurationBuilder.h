@@ -15,26 +15,25 @@
 
 namespace devmand::channels::cli {
 
+using namespace std;
 using devmand::channels::cli::Cli;
 using devmand::channels::cli::CliFlavour;
 using devmand::cartography::DeviceConfig;
-using std::shared_ptr;
-using folly::IOThreadPoolExecutor;
 
 class IoConfigurationBuilder {
- private:
-
-  shared_ptr<IOThreadPoolExecutor> executor; //TODO executor?
-
-  shared_ptr<folly::ThreadWheelTimekeeper> timekeeper;
-
  public:
-  IoConfigurationBuilder();
 
   shared_ptr<Cli> createAll(const DeviceConfig &deviceConfig);
 
-  shared_ptr<Cli> getIo(shared_ptr<Cli> underlyingCliLayer); // visible for testing
+  shared_ptr<Cli> createAll(
+          function<shared_ptr<Cli>(shared_ptr<folly::IOThreadPoolExecutor>)> underlyingCliLayerFactory); // visible for testing
+
  private:
-  shared_ptr<Cli> createSSH(const DeviceConfig &deviceConfig);
+  shared_ptr<Cli> createSSH(const DeviceConfig &deviceConfig, shared_ptr<folly::IOThreadPoolExecutor> executor);
+
+  shared_ptr<Cli> getIo(shared_ptr<Cli> underlyingCliLayer,
+                        shared_ptr<folly::ThreadWheelTimekeeper> timekeeper,
+                        shared_ptr<folly::IOThreadPoolExecutor> executor);
+
 };
 }

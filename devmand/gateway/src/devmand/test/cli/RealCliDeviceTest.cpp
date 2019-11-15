@@ -134,31 +134,6 @@ TEST_F(RealCliDeviceTest, kaPass) {
     EXPECT_EQ("123", boost::algorithm::trim_copy(buffer.str()));
 }
 
-TEST_F(RealCliDeviceTest, kaTimeout) {
-        devmand::Application app;
-        cartography::DeviceConfig deviceConfig;
-        devmand::cartography::ChannelConfig chnlCfg;
-        std::map<std::string, std::string> kvPairs;
-        kvPairs.insert(std::make_pair("stateCommand", "sleep 10 && echo 123"));
-        kvPairs.insert(std::make_pair("port", "22"));
-        kvPairs.insert(std::make_pair("username", "root"));
-        kvPairs.insert(std::make_pair("password", "root"));
-//        kvPairs.insert(std::make_pair("flavour", UBIQUITI));
-        chnlCfg.kvPairs = kvPairs;
-        deviceConfig.channelConfigs.insert(std::make_pair("cli", chnlCfg));
-        deviceConfig.ip = "localhost";
-        deviceConfig.id = "local-test-device";
-        std::unique_ptr<devices::Device> dev =
-                PlaintextCliDevice::createDevice(app, deviceConfig);
-
-        std::shared_ptr<State> state = dev->getState();
-        const folly::dynamic& stateResult = state->collect().get();
-
-        std::stringstream buffer;
-        buffer << stateResult[kvPairs.at("stateCommand")];
-        EXPECT_EQ("123", boost::algorithm::trim_copy(buffer.str()));
-}
-
 } // namespace cli
 } // namespace test
 } // namespace devmand

@@ -12,17 +12,28 @@ namespace devmand::channels::cli {
 using namespace std;
 using namespace folly;
 
-QueuedCli::QueuedCli(shared_ptr<Cli> _cli, const shared_ptr<Executor> &_parentExecutor) :
+QueuedCli::QueuedCli(shared_ptr<Cli> _cli, shared_ptr<Executor> _parentExecutor) :
         cli(_cli),
-        serialExecutorKeepAlive(
-                SerialExecutor::create(Executor::getKeepAliveToken(_parentExecutor.get()))) {
+        parentExecutor(_parentExecutor),
+        serialExecutorKeepAlive(SerialExecutor::create(Executor::getKeepAliveToken(_parentExecutor.get())))
+        {
   isProcessing = false;
   shutdown = false;
 }
 
 QueuedCli::~QueuedCli() {
-  MLOG(MDEBUG) << "~QueuedCli";
+  MLOG(MDEBUG) << "~QCli";
   shutdown = true;
+  isProcessing = true;
+  MLOG(MDEBUG) << "~QCli: dequeuing " << queue.size() << " items";
+  QueueEntry queueEntry;
+  while (queue.try_dequeue(queueEntry)) {
+    queueEntry.promise->setException(runtime_error("QCli: Shutting down"));
+  }
+  serialExecutorKeepAlive = nullptr;
+  parentExecutor = nullptr;
+  cli = nullptr;
+  MLOG(MDEBUG) << "~QCli done";
 }
 
 Future<string> QueuedCli::executeAndRead(const Command &cmd) {
@@ -105,8 +116,13 @@ void QueuedCli::triggerDequeue() {
                 }).thenError(folly::tag_t<std::exception>{}, [this, queueEntry] (std::exception const& e) -> Future<Unit> {
                   MLOG(MDEBUG) <<  queueEntry.loggingPrefix << " failed ('"
                                << queueEntry.command << "')  with exception '" << e.what() << "'";
-                  isProcessing = false;
-                  queueEntry.promise->setException(move(e));
+                  if (!shutdown) {
+                    isProcessing = false;
+                  }
+                  auto cpException = runtime_error(e.what());
+                  MLOG(MDEBUG) <<  queueEntry.loggingPrefix << " copied exception " << cpException.what();
+                  // TODO: exception type is not preserved, queueEntry.promise->setException(e) results in std::exception
+                  queueEntry.promise->setException(cpException);
                   triggerDequeue();
                   return Unit{};
                 });

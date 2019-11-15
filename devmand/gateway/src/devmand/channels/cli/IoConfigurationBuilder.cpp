@@ -26,25 +26,37 @@ using devmand::channels::cli::SshSocketReader;
 using devmand::channels::cli::sshsession::SshSession;
 using devmand::channels::cli::sshsession::SshSessionAsync;
 using devmand::channels::cli::sshsession::readCallback;
-using folly::IOThreadPoolExecutor;
-using folly::EvictingCacheMap;
-using std::string;
-using std::make_shared;
-
-
-IoConfigurationBuilder::IoConfigurationBuilder() :
-        executor(std::make_shared<IOThreadPoolExecutor>(10)),
-        timekeeper(std::make_shared<ThreadWheelTimekeeper>() // TODO: set to nullptr when running with folly to use singleton
-                ) {
-
-}
-
+using namespace folly;
 
 shared_ptr<Cli> IoConfigurationBuilder::createAll(const DeviceConfig &deviceConfig) {
-  return getIo(createSSH(deviceConfig));
+  return createAll([=](shared_ptr<IOThreadPoolExecutor> executor) -> shared_ptr<Cli> {
+    return createSSH(deviceConfig, executor);
+  });
 }
 
-shared_ptr<Cli> IoConfigurationBuilder::createSSH(const DeviceConfig &deviceConfig) {
+shared_ptr<Cli> IoConfigurationBuilder::createAll(function<shared_ptr<Cli>(shared_ptr<IOThreadPoolExecutor>)> underlyingCliLayerFactory) {
+  shared_ptr<folly::ThreadWheelTimekeeper> timekeeper = make_shared<folly::ThreadWheelTimekeeper>(); // TODO use singleton
+
+
+  function<shared_ptr<Cli>()> cliFactory = [=]() -> shared_ptr<Cli> {
+    shared_ptr<IOThreadPoolExecutor> executor = make_shared<IOThreadPoolExecutor>(10, std::make_shared<NamedThreadFactory>("persession")); // TODO cast to Executor
+    return getIo(underlyingCliLayerFactory(executor), timekeeper, executor);
+  };
+
+  // create reconnecting cli
+  shared_ptr<CPUThreadPoolExecutor> rExecutor =  std::make_shared<CPUThreadPoolExecutor>(2, std::make_shared<NamedThreadFactory>("rcli"));
+  shared_ptr<ReconnectingCli> rcli = make_shared<ReconnectingCli>(rExecutor, move(cliFactory));
+  // create keepalive cli
+  shared_ptr<CPUThreadPoolExecutor> kaExecutor =  std::make_shared<CPUThreadPoolExecutor>(2, std::make_shared<NamedThreadFactory>("kacli"));
+  return make_shared<KeepaliveCli>(rcli, kaExecutor, timekeeper);
+
+//// without rcli
+//  shared_ptr<IOThreadPoolExecutor> kaExecutor =  std::make_shared<IOThreadPoolExecutor>(8, std::make_shared<NamedThreadFactory>("kacli"));
+//  return make_shared<KeepaliveCli>(cliFactory(), kaExecutor, timekeeper);
+}
+
+shared_ptr<Cli> IoConfigurationBuilder::createSSH(const DeviceConfig &deviceConfig,
+                                                  shared_ptr<IOThreadPoolExecutor> executor) {
   MLOG(MDEBUG) << "Creating CLI ssh device for " << deviceConfig.id << " (host: " << deviceConfig.ip << ")";
   const auto &plaintextCliKv = deviceConfig.channelConfigs.at("cli").kvPairs;
   // crate session
@@ -74,16 +86,20 @@ shared_ptr<Cli> IoConfigurationBuilder::createSSH(const DeviceConfig &deviceConf
   return cli;
 }
 
-shared_ptr<Cli> IoConfigurationBuilder::getIo(shared_ptr<Cli> underlyingCliLayer) {
+shared_ptr<Cli> IoConfigurationBuilder::getIo(
+        shared_ptr<Cli> underlyingCliLayer,
+        shared_ptr<folly::ThreadWheelTimekeeper> timekeeper,
+        shared_ptr<IOThreadPoolExecutor> executor) {
+
+  (void) executor;
 
   // create caching cli
-  const shared_ptr<ReadCachingCli> &ccli = std::make_shared<ReadCachingCli>(underlyingCliLayer, ReadCachingCli::createCache());
+  const shared_ptr<ReadCachingCli> &ccli = std::make_shared<ReadCachingCli>(underlyingCliLayer,
+                                                                            ReadCachingCli::createCache());
   // create timeout tracker
-  const shared_ptr<TimeoutTrackingCli> &ttcli = std::make_shared<TimeoutTrackingCli>(ccli, timekeeper, executor);
+  const shared_ptr<TimeoutTrackingCli> &ttcli = std::make_shared<TimeoutTrackingCli>(ccli, timekeeper, std::make_shared<folly::CPUThreadPoolExecutor>(5, std::make_shared<NamedThreadFactory>("ttcli")));
   // create Queued cli
-  const shared_ptr<QueuedCli> &qcli = std::make_shared<QueuedCli>(ttcli, executor);
-  // create keepalive cli
-  const shared_ptr<KeepaliveCli> kacli = std::make_shared<KeepaliveCli>(qcli, executor, timekeeper);
-  return kacli;
+  shared_ptr<QueuedCli> qcli = std::make_shared<QueuedCli>(ttcli, std::make_shared<folly::CPUThreadPoolExecutor>(2, std::make_shared<NamedThreadFactory>("qcli")));
+  return qcli;
 }
 }

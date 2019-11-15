@@ -77,7 +77,7 @@ public:
             index(0),
             quit(false)
     {
-        executor = std::make_shared<folly::CPUThreadPoolExecutor>(1);
+        executor = std::make_shared<folly::CPUThreadPoolExecutor>(1, std::make_shared<folly::NamedThreadFactory>("acli"));
     }
 
     ~AsyncCli() {

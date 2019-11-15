@@ -24,6 +24,8 @@ class QueuedCli : public Cli {
  private:
   shared_ptr<Cli> cli;
 
+  shared_ptr<Executor> parentExecutor;
+
   Executor::KeepAlive<SerialExecutor> serialExecutorKeepAlive; // maintain consumer thread
 
   struct QueueEntry {
@@ -45,7 +47,7 @@ class QueuedCli : public Cli {
 
  public:
 
-  QueuedCli(shared_ptr<Cli> _cli, const shared_ptr<Executor> &_parentExecutor);
+  QueuedCli(shared_ptr<Cli> _cli, shared_ptr<Executor> _parentExecutor);
 
   QueuedCli() = delete;
 
