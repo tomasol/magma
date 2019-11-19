@@ -16,13 +16,15 @@ using namespace std;
 using namespace folly;
 
 KeepaliveCli::KeepaliveCli(
+    string _id,
     shared_ptr<Cli> _cli,
     shared_ptr<Executor> _parentExecutor,
     shared_ptr<ThreadWheelTimekeeper> _timekeeper,
-    Command&& _keepAliveCommand,
     chrono::milliseconds _heartbeatInterval,
+    Command&& _keepAliveCommand,
     chrono::milliseconds _backoffAfterKeepaliveTimeout)
-    : cli(_cli),
+    : id(_id),
+      cli(_cli),
       timekeeper(_timekeeper),
       parentExecutor(_parentExecutor),
       serialExecutorKeepAlive(SerialExecutor::create(
@@ -33,62 +35,72 @@ KeepaliveCli::KeepaliveCli(
   assert(_keepAliveCommand.skipCache());
   shutdown = false;
 
-  //  sendKeepAliveCommand();
-  MLOG(MDEBUG) << "KACli initialized";
+  MLOG(MDEBUG) << "[" << id << "] "
+               << "initialized";
 }
 
 KeepaliveCli::~KeepaliveCli() {
-  MLOG(MDEBUG) << "~KACli";
+  MLOG(MDEBUG) << "[" << id << "] "
+               << "Destructor started";
   shutdown = true;
   serialExecutorKeepAlive = nullptr;
   parentExecutor = nullptr;
   cli = nullptr;
   timekeeper = nullptr;
-  MLOG(MDEBUG) << "~KACli done";
+  MLOG(MDEBUG) << "[" << id << "] "
+               << "Destructor done";
 }
 
 void KeepaliveCli::sendKeepAliveCommand() {
   if (shutdown)
     return;
-  MLOG(MDEBUG) << "KACli: sendKeepAliveCommand()";
+  MLOG(MDEBUG) << "[" << id << "] "
+               << "sendKeepAliveCommand";
   Future<string> result = via(serialExecutorKeepAlive).thenValue([=](auto) {
     if (shutdown)
       throw runtime_error("KACli: Shutting down");
-    MLOG(MDEBUG) << "KACli: sendKeepAliveCommand executing keepalive command";
+    MLOG(MDEBUG) << "[" << id << "] "
+                 << "sendKeepAliveCommand executing keepalive command";
     return this->executeAndRead(this->keepAliveCommand);
   });
 
   scheduleNextPing(move(result));
-  MLOG(MDEBUG) << "KACli: sendKeepAliveCommand() done";
+  MLOG(MDEBUG) << "[" << id << "] "
+               << "sendKeepAliveCommand() done";
 }
 
 void KeepaliveCli::scheduleNextPing(Future<string> keepAliveCmdFuture) {
   if (shutdown)
     return;
-  MLOG(MDEBUG) << "KACli: scheduleNextPing";
+  MLOG(MDEBUG) << "[" << id << "] "
+               << "scheduleNextPing";
   move(keepAliveCmdFuture)
       .via(serialExecutorKeepAlive)
       .thenValue([=](auto) -> SemiFuture<Unit> {
-        MLOG(MDEBUG) << "KACli: Creating sleep future";
+        MLOG(MDEBUG) << "[" << id << "] "
+                     << "Creating sleep future";
         return futures::sleep(this->heartbeatInterval, timekeeper.get());
       })
       .thenValue([=](auto) -> Unit {
-        MLOG(MDEBUG) << "KACli: Woke up after sleep";
+        MLOG(MDEBUG) << "[" << id << "] "
+                     << "Woke up after sleep";
         this->sendKeepAliveCommand();
         return Unit{};
       })
       .thenError(
           folly::tag_t<std::exception>{},
           [&](std::exception const& e) -> Future<Unit> {
-            LOG(INFO)
-                << "KACli: Got error running keepalive, backing off "
+            MLOG(MINFO)
+                << "[" << id << "] "
+                << "Got error running keepalive, backing off "
                 << e.what(); // FIXME: real exception is not propagated here
             if (shutdown)
               return Unit{}; // sleep might hang
             std::this_thread::sleep_for(
                 backoffAfterKeepaliveTimeout); // TODO: sleep via futures if
                                                // possible
-            MLOG(MDEBUG) << "KACli: Woke up after backing off";
+            MLOG(MDEBUG) << "[" << id << "] "
+                         << "Woke up after backing off";
             this->sendKeepAliveCommand();
             return Unit{};
           });

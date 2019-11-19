@@ -99,6 +99,27 @@ TEST_F(QueuedCliTest, queuedCliMT) {
   }
 }
 
+TEST_F(QueuedCliTest, threadSafety) {
+  shared_ptr<CPUThreadPoolExecutor> testExec =
+      make_shared<CPUThreadPoolExecutor>(32, 1, 100000);
+
+  QueuedCli cli("testConnection", make_shared<EchoCli>(), executor);
+
+  vector<Future<string>> execs;
+  for (int i = 0; i < 100000; i++) {
+    Future<string> future = via(testExec.get(), [&cli, i]() {
+      return cli.executeAndRead(Command::makeReadCommand(to_string(i))).get();
+    });
+    execs.push_back(std::move(future));
+  }
+
+  for (uint i = 0; i < execs.size(); i++) {
+    const string& basicString = std::move(execs.at(i)).get();
+    MLOG(MDEBUG) << "received " << i;
+  }
+  MLOG(MDEBUG) << "done";
+}
+
 } // namespace cli
 } // namespace test
 } // namespace devmand
