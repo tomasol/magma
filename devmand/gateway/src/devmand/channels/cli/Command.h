@@ -34,7 +34,7 @@ struct Command {
   vector<Command> splitMultiCommand();
 
   std::string toString() const {
-    return command;
+    return command; // TODO serialize so that newlines are escaped
   }
 
   bool skipCache() const {

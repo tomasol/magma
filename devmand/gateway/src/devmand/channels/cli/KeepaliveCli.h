@@ -23,12 +23,14 @@ using devmand::channels::cli::Command;
 class KeepaliveCli : public Cli {
  public:
   KeepaliveCli(
+      string id,
       shared_ptr<Cli> _cli,
       shared_ptr<folly::Executor> parentExecutor,
       shared_ptr<folly::ThreadWheelTimekeeper> _timekeeper,
+      chrono::milliseconds heartbeatInterval = chrono::seconds(60),
       Command&& keepAliveCommand = Command::makeReadCommand("\n", true),
-      chrono::milliseconds heartbeatInterval = chrono::seconds(10),
-      chrono::milliseconds backoffAfterKeepaliveTimeout = chrono::seconds(5));
+      chrono::milliseconds backoffAfterKeepaliveTimeout =
+          chrono::seconds(5)); // TODO: remove
 
   ~KeepaliveCli() override;
 
@@ -37,6 +39,7 @@ class KeepaliveCli : public Cli {
   folly::Future<string> execute(const Command& cmd) override;
 
  private:
+  string id;
   shared_ptr<Cli> cli; // underlying cli layer
   shared_ptr<folly::ThreadWheelTimekeeper> timekeeper;
   shared_ptr<folly::Executor> parentExecutor;

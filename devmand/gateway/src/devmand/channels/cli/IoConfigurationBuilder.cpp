@@ -35,12 +35,11 @@ using devmand::channels::cli::sshsession::SshSessionAsync;
 using folly::CPUThreadPoolExecutor;
 using folly::EvictingCacheMap;
 using folly::IOThreadPoolExecutor;
-using std::make_shared;
-using std::string;
 
 IoConfigurationBuilder::IoConfigurationBuilder(
     const DeviceConfig& _deviceConfig)
-    : deviceConfig(_deviceConfig) {}
+    : deviceConfig(_deviceConfig),
+      plaintextCliKv(deviceConfig.channelConfigs.at("cli").kvPairs) {}
 
 shared_ptr<Cli> IoConfigurationBuilder::createAll(
     shared_ptr<CliCache> commandCache) {
@@ -56,29 +55,42 @@ shared_ptr<Cli> IoConfigurationBuilder::createAll(
         underlyingCliLayerFactory,
     shared_ptr<CliCache> commandCache) {
   shared_ptr<folly::ThreadWheelTimekeeper> timekeeper =
-      make_shared<folly::ThreadWheelTimekeeper>(); // TODO use singleton
+      make_shared<folly::ThreadWheelTimekeeper>(); // TODO use singleton when
+                                                   // folly is initialized
 
+  // TODO make Executor sharing configurable
   function<shared_ptr<Cli>()> cliFactory = [=]() -> shared_ptr<Cli> {
     shared_ptr<IOThreadPoolExecutor> executor =
         make_shared<IOThreadPoolExecutor>(
-            10,
-            std::make_shared<NamedThreadFactory>(
-                "persession")); // TODO cast to Executor
-    return getIo(
-        underlyingCliLayerFactory(executor), timekeeper, commandCache);
+            10, std::make_shared<NamedThreadFactory>("persession"));
+    return getIo(underlyingCliLayerFactory(executor), timekeeper, commandCache);
   };
 
   // create reconnecting cli
   shared_ptr<CPUThreadPoolExecutor> rExecutor =
       std::make_shared<CPUThreadPoolExecutor>(
           2, std::make_shared<NamedThreadFactory>("rcli"));
-  shared_ptr<ReconnectingCli> rcli =
-      make_shared<ReconnectingCli>(deviceConfig.id, rExecutor, move(cliFactory));
+  shared_ptr<ReconnectingCli> rcli = make_shared<ReconnectingCli>(
+      deviceConfig.id, rExecutor, move(cliFactory));
   // create keepalive cli
   shared_ptr<CPUThreadPoolExecutor> kaExecutor =
       std::make_shared<CPUThreadPoolExecutor>(
           2, std::make_shared<NamedThreadFactory>("kacli"));
-  return make_shared<KeepaliveCli>(rcli, kaExecutor, timekeeper);
+
+  shared_ptr<KeepaliveCli> kaCli;
+  if (plaintextCliKv.find(CONFIG_KEEP_ALIVE_INTERVAL) != plaintextCliKv.end()) {
+    kaCli = make_shared<KeepaliveCli>(
+        deviceConfig.id,
+        rcli,
+        kaExecutor,
+        timekeeper,
+        chrono::seconds(stoi(plaintextCliKv.at(CONFIG_KEEP_ALIVE_INTERVAL))));
+  } else {
+    kaCli = make_shared<KeepaliveCli>(
+        deviceConfig.id, rcli, kaExecutor, timekeeper);
+  }
+
+  return kaCli;
 
   //// without rcli
   //  shared_ptr<IOThreadPoolExecutor> kaExecutor =
@@ -89,9 +101,9 @@ shared_ptr<Cli> IoConfigurationBuilder::createAll(
 
 shared_ptr<Cli> IoConfigurationBuilder::createSSH(
     shared_ptr<IOThreadPoolExecutor> executor) {
-  MLOG(MDEBUG) << "Creating CLI ssh device for " << deviceConfig.id << " (host: " << deviceConfig.ip
-               << ")";
-  const auto& plaintextCliKv = deviceConfig.channelConfigs.at("cli").kvPairs;
+  MLOG(MDEBUG) << "Creating CLI ssh device for " << deviceConfig.id
+               << " (host: " << deviceConfig.ip << ")";
+
   // crate session
   const std::shared_ptr<SshSessionAsync>& session =
       std::make_shared<SshSessionAsync>(deviceConfig.id, executor);
@@ -129,8 +141,8 @@ shared_ptr<Cli> IoConfigurationBuilder::getIo(
     shared_ptr<folly::ThreadWheelTimekeeper> timekeeper,
     shared_ptr<CliCache> commandCache) {
   // create caching cli
-  const shared_ptr<ReadCachingCli>& ccli =
-      std::make_shared<ReadCachingCli>(deviceConfig.id, underlyingCliLayer, commandCache);
+  const shared_ptr<ReadCachingCli>& ccli = std::make_shared<ReadCachingCli>(
+      deviceConfig.id, underlyingCliLayer, commandCache);
   // create timeout tracker
   const shared_ptr<TimeoutTrackingCli>& ttcli =
       std::make_shared<TimeoutTrackingCli>(

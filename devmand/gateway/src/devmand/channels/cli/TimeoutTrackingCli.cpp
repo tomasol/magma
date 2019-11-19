@@ -54,7 +54,8 @@ Future<string> TimeoutTrackingCli::executeSomething(
     const Command& cmd,
     const string&& loggingPrefix,
     const function<Future<string>()>& innerFunc) {
-  MLOG(MDEBUG) << "[" << id << "] " << loggingPrefix << "('" << cmd
+  string cmdString = cmd.toString();
+  MLOG(MDEBUG) << "[" << id << "] " << loggingPrefix << "('" << cmdString
                << "') called";
   Future<string> inner =
       innerFunc(); // we expect that this method does not block
@@ -65,7 +66,8 @@ Future<string> TimeoutTrackingCli::executeSomething(
       .onTimeout(
           timeoutInterval,
           [=](...) -> Future<string> {
-            MLOG(MDEBUG) << "[" << id << "] " << loggingPrefix << " timing out";
+            MLOG(MDEBUG) << "[" << id << "] " << loggingPrefix << "('"
+                         << cmdString << "') timing out";
             throw FutureTimeout();
           },
           timekeeper.get());
