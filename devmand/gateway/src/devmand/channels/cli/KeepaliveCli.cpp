@@ -15,6 +15,24 @@ using devmand::channels::cli::Command;
 using namespace std;
 using namespace folly;
 
+shared_ptr<KeepaliveCli> KeepaliveCli::make(
+    string id,
+    shared_ptr<Cli> cli,
+    shared_ptr<folly::Executor> parentExecutor,
+    shared_ptr<folly::ThreadWheelTimekeeper> timekeeper,
+    chrono::milliseconds heartbeatInterval,
+    Command&& keepAliveCommand,
+    chrono::milliseconds backoffAfterKeepaliveTimeout) {
+  return shared_ptr<KeepaliveCli>(new KeepaliveCli(
+      id,
+      cli,
+      parentExecutor,
+      timekeeper,
+      heartbeatInterval,
+      move(keepAliveCommand),
+      backoffAfterKeepaliveTimeout));
+}
+
 KeepaliveCli::KeepaliveCli(
     string _id,
     shared_ptr<Cli> _cli,
@@ -56,13 +74,14 @@ void KeepaliveCli::sendKeepAliveCommand() {
     return;
   MLOG(MDEBUG) << "[" << id << "] "
                << "sendKeepAliveCommand";
-  Future<string> result = via(serialExecutorKeepAlive).thenValue([=](auto) {
-    if (shutdown)
-      throw runtime_error("KACli: Shutting down");
-    MLOG(MDEBUG) << "[" << id << "] "
-                 << "sendKeepAliveCommand executing keepalive command";
-    return this->executeAndRead(this->keepAliveCommand);
-  });
+  Future<string> result =
+      via(serialExecutorKeepAlive).thenValue([dis = shared_from_this()](auto) {
+        if (dis->shutdown)
+          throw runtime_error("KACli: Shutting down");
+        MLOG(MDEBUG) << "[" << dis->id << "] "
+                     << "sendKeepAliveCommand executing keepalive command";
+        return dis->executeAndRead(dis->keepAliveCommand);
+      });
 
   scheduleNextPing(move(result));
   MLOG(MDEBUG) << "[" << id << "] "
@@ -76,32 +95,32 @@ void KeepaliveCli::scheduleNextPing(Future<string> keepAliveCmdFuture) {
                << "scheduleNextPing";
   move(keepAliveCmdFuture)
       .via(serialExecutorKeepAlive)
-      .thenValue([=](auto) -> SemiFuture<Unit> {
-        MLOG(MDEBUG) << "[" << id << "] "
+      .thenValue([dis = shared_from_this()](auto) -> SemiFuture<Unit> {
+        MLOG(MDEBUG) << "[" << dis->id << "] "
                      << "Creating sleep future";
-        return futures::sleep(this->heartbeatInterval, timekeeper.get());
+        return futures::sleep(dis->heartbeatInterval, dis->timekeeper.get());
       })
-      .thenValue([=](auto) -> Unit {
-        MLOG(MDEBUG) << "[" << id << "] "
+      .thenValue([dis = shared_from_this()](auto) -> Unit {
+        MLOG(MDEBUG) << "[" << dis->id << "] "
                      << "Woke up after sleep";
-        this->sendKeepAliveCommand();
+        dis->sendKeepAliveCommand();
         return Unit{};
       })
       .thenError(
           folly::tag_t<std::exception>{},
-          [&](std::exception const& e) -> Future<Unit> {
+          [dis = shared_from_this()](std::exception const& e) -> Future<Unit> {
             MLOG(MINFO)
-                << "[" << id << "] "
+                << "[" << dis->id << "] "
                 << "Got error running keepalive, backing off "
                 << e.what(); // FIXME: real exception is not propagated here
-            if (shutdown)
+            if (dis->shutdown)
               return Unit{}; // sleep might hang
             std::this_thread::sleep_for(
-                backoffAfterKeepaliveTimeout); // TODO: sleep via futures if
-                                               // possible
-            MLOG(MDEBUG) << "[" << id << "] "
+                dis->backoffAfterKeepaliveTimeout); // TODO: sleep via futures
+                                                    // if possible
+            MLOG(MDEBUG) << "[" << dis->id << "] "
                          << "Woke up after backing off";
-            this->sendKeepAliveCommand();
+            dis->sendKeepAliveCommand();
             return Unit{};
           });
 }
@@ -113,4 +132,5 @@ Future<string> KeepaliveCli::executeAndRead(const Command& cmd) {
 Future<string> KeepaliveCli::execute(const Command& cmd) {
   return cli->execute(cmd);
 }
+
 } // namespace devmand::channels::cli

@@ -39,7 +39,7 @@ class QueuedCliTest : public ::testing::Test {
 
 TEST_F(QueuedCliTest, queuedCli) {
   vector<unsigned int> durations = {2};
-  QueuedCli cli(
+  shared_ptr<QueuedCli> cli = QueuedCli::make(
       "testConnection",
       make_shared<AsyncCli>(make_shared<EchoCli>(), executor, durations),
       executor);
@@ -56,7 +56,7 @@ TEST_F(QueuedCliTest, queuedCli) {
   vector<folly::Future<string>> futures;
   for (const auto& cmd : cmds) {
     MLOG(MDEBUG) << "Executing command '" << cmd;
-    futures.push_back(cli.executeAndRead(cmd));
+    futures.push_back(cli->executeAndRead(cmd));
   }
 
   // collect values
@@ -74,7 +74,7 @@ TEST_F(QueuedCliTest, queuedCliMT) {
   const int loopcount = 10;
   vector<unsigned int> durations = {1};
 
-  QueuedCli cli(
+  shared_ptr<QueuedCli> cli = QueuedCli::make(
       "testConnection",
       make_shared<AsyncCli>(make_shared<EchoCli>(), executor, durations),
       executor);
@@ -85,7 +85,7 @@ TEST_F(QueuedCliTest, queuedCliMT) {
   for (int i = 0; i < loopcount; ++i) {
     MLOG(MDEBUG) << "Executing command '" << cmd;
     futures.push_back(
-        folly::via(executor.get(), [&]() { return cli.executeAndRead(cmd); }));
+        folly::via(executor.get(), [&]() { return cli->executeAndRead(cmd); }));
   }
 
   // collect values
@@ -103,12 +103,13 @@ TEST_F(QueuedCliTest, threadSafety) {
   shared_ptr<CPUThreadPoolExecutor> testExec =
       make_shared<CPUThreadPoolExecutor>(32, 1, 100000);
 
-  QueuedCli cli("testConnection", make_shared<EchoCli>(), executor);
+  shared_ptr<QueuedCli> cli =
+      QueuedCli::make("testConnection", make_shared<EchoCli>(), executor);
 
   vector<Future<string>> execs;
   for (int i = 0; i < 100000; i++) {
-    Future<string> future = via(testExec.get(), [&cli, i]() {
-      return cli.executeAndRead(Command::makeReadCommand(to_string(i))).get();
+    Future<string> future = via(testExec.get(), [cli, i]() {
+      return cli->executeAndRead(Command::makeReadCommand(to_string(i))).get();
     });
     execs.push_back(std::move(future));
   }

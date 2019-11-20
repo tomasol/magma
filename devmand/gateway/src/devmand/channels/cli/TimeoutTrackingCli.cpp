@@ -15,6 +15,16 @@ using namespace std;
 using namespace folly;
 using devmand::channels::cli::Command;
 
+shared_ptr<TimeoutTrackingCli> TimeoutTrackingCli::make(
+    string id,
+    shared_ptr<Cli> cli,
+    shared_ptr<folly::ThreadWheelTimekeeper> timekeeper,
+    shared_ptr<folly::Executor> executor,
+    std::chrono::milliseconds timeoutInterval) {
+  return shared_ptr<TimeoutTrackingCli>(
+      new TimeoutTrackingCli(id, cli, timekeeper, executor, timeoutInterval));
+}
+
 TimeoutTrackingCli::TimeoutTrackingCli(
     string _id,
     shared_ptr<Cli> _cli,
@@ -41,13 +51,14 @@ TimeoutTrackingCli::~TimeoutTrackingCli() {
 }
 
 Future<string> TimeoutTrackingCli::executeAndRead(const Command& cmd) {
-  return executeSomething(
-      cmd, "TTCli.executeAndRead", [=]() { return cli->executeAndRead(cmd); });
+  return executeSomething(cmd, "TTCli.executeAndRead", [this, cmd]() {
+    return cli->executeAndRead(cmd);
+  });
 }
 
 Future<string> TimeoutTrackingCli::execute(const Command& cmd) {
   return executeSomething(
-      cmd, "TTCli.execute", [=]() { return cli->execute(cmd); });
+      cmd, "TTCli.execute", [this, cmd]() { return cli->execute(cmd); });
 }
 
 Future<string> TimeoutTrackingCli::executeSomething(
@@ -65,11 +76,12 @@ Future<string> TimeoutTrackingCli::executeSomething(
       .via(executor.get())
       .onTimeout(
           timeoutInterval,
-          [=](...) -> Future<string> {
+          [this, loggingPrefix, cmdString](...) -> Future<string> {
             MLOG(MDEBUG) << "[" << id << "] " << loggingPrefix << "('"
                          << cmdString << "') timing out";
             throw FutureTimeout();
           },
           timekeeper.get());
 }
+
 } // namespace devmand::channels::cli

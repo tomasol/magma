@@ -15,6 +15,14 @@ namespace cli {
 using namespace std;
 using namespace folly;
 
+shared_ptr<ReconnectingCli> ReconnectingCli::make(
+    string id,
+    shared_ptr<Executor> executor,
+    function<shared_ptr<Cli>()>&& createCliStack) {
+  return shared_ptr<ReconnectingCli>(
+      new ReconnectingCli(id, executor, move(createCliStack)));
+}
+
 ReconnectingCli::ReconnectingCli(
     string _id,
     shared_ptr<Executor> _executor,
@@ -34,15 +42,19 @@ ReconnectingCli::~ReconnectingCli() {
 }
 
 Future<string> ReconnectingCli::executeAndRead(const Command& cmd) {
+  // capturing this is ok here - lambda is evaluated synchronously
   return executeSomething(
       "RCli.executeAndRead",
-      [=]() { return cli->executeAndRead(cmd); },
+      [this, cmd]() { return cli->executeAndRead(cmd); },
       cmd.toString());
 }
 
 Future<string> ReconnectingCli::execute(const Command& cmd) {
+  // capturing this is ok here - lambda is evaluated synchronously
   return executeSomething(
-      "RCli.execute", [=]() { return cli->execute(cmd); }, cmd.toString());
+      "RCli.execute",
+      [this, cmd]() { return cli->execute(cmd); },
+      cmd.toString());
 }
 
 Future<string> ReconnectingCli::executeSomething(
@@ -51,30 +63,35 @@ Future<string> ReconnectingCli::executeSomething(
     const string&& loggingSuffix) {
   return innerFunc()
       .via(executor.get())
-      .thenValue([=](string result) -> string {
-        MLOG(MDEBUG) << "[" << id << "] " << loggingPrefix
-                     << " got result of running '" << loggingSuffix << "'";
-        return result;
-      })
+      .thenValue(
+          [dis = shared_from_this(), loggingPrefix, loggingSuffix](
+              string result) -> string {
+            // TODO: move this to deeper layer
+            MLOG(MDEBUG) << "[" << dis->id << "] " << loggingPrefix
+                         << " got result of running '" << loggingSuffix << "'";
+            return result;
+          })
       .thenError(
           // TODO: implement quiet period so that exeptions while reconnect is
           // in process are ignored
           folly::tag_t<std::exception>{},
-          [=](std::exception const& e) -> Future<string> {
-            MLOG(MDEBUG) << "[" << id << "] " << loggingPrefix
+          [dis = shared_from_this(), loggingPrefix, loggingSuffix](
+              std::exception const& e) -> Future<string> {
+            MLOG(MDEBUG) << "[" << dis->id << "] " << loggingPrefix
                          << " got error, recreating cli stack: " << e.what()
                          << " while running '" << loggingSuffix << "'";
-            cli = createCliStack();
-            MLOG(MDEBUG) << "[" << id << "] " << loggingPrefix
+            dis->cli = dis->createCliStack();
+            MLOG(MDEBUG) << "[" << dis->id << "] " << loggingPrefix
                          << " recreating cli stack done";
             auto cpException = runtime_error(e.what());
-            MLOG(MDEBUG) << "[" << id << "] " << loggingPrefix
+            MLOG(MDEBUG) << "[" << dis->id << "] " << loggingPrefix
                          << " copied exception " << cpException.what();
             // TODO: exception type is not preserved,
             // queueEntry.promise->setException(e) results in std::exception
             throw cpException;
           });
 }
+
 } // namespace cli
 } // namespace channels
 } // namespace devmand

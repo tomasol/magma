@@ -70,8 +70,8 @@ shared_ptr<Cli> IoConfigurationBuilder::createAll(
   shared_ptr<CPUThreadPoolExecutor> rExecutor =
       std::make_shared<CPUThreadPoolExecutor>(
           2, std::make_shared<NamedThreadFactory>("rcli"));
-  shared_ptr<ReconnectingCli> rcli = make_shared<ReconnectingCli>(
-      deviceConfig.id, rExecutor, move(cliFactory));
+  shared_ptr<ReconnectingCli> rcli =
+      ReconnectingCli::make(deviceConfig.id, rExecutor, move(cliFactory));
   // create keepalive cli
   shared_ptr<CPUThreadPoolExecutor> kaExecutor =
       std::make_shared<CPUThreadPoolExecutor>(
@@ -79,15 +79,14 @@ shared_ptr<Cli> IoConfigurationBuilder::createAll(
 
   shared_ptr<KeepaliveCli> kaCli;
   if (plaintextCliKv.find(CONFIG_KEEP_ALIVE_INTERVAL) != plaintextCliKv.end()) {
-    kaCli = make_shared<KeepaliveCli>(
+    kaCli = KeepaliveCli::make(
         deviceConfig.id,
         rcli,
         kaExecutor,
         timekeeper,
         chrono::seconds(stoi(plaintextCliKv.at(CONFIG_KEEP_ALIVE_INTERVAL))));
   } else {
-    kaCli = make_shared<KeepaliveCli>(
-        deviceConfig.id, rcli, kaExecutor, timekeeper);
+    kaCli = KeepaliveCli::make(deviceConfig.id, rcli, kaExecutor, timekeeper);
   }
 
   return kaCli;
@@ -144,15 +143,14 @@ shared_ptr<Cli> IoConfigurationBuilder::getIo(
   const shared_ptr<ReadCachingCli>& ccli = std::make_shared<ReadCachingCli>(
       deviceConfig.id, underlyingCliLayer, commandCache);
   // create timeout tracker
-  const shared_ptr<TimeoutTrackingCli>& ttcli =
-      std::make_shared<TimeoutTrackingCli>(
-          deviceConfig.id,
-          ccli,
-          timekeeper,
-          std::make_shared<folly::CPUThreadPoolExecutor>(
-              5, std::make_shared<NamedThreadFactory>("ttcli")));
+  shared_ptr<TimeoutTrackingCli> ttcli = TimeoutTrackingCli::make(
+      deviceConfig.id,
+      ccli,
+      timekeeper,
+      std::make_shared<folly::CPUThreadPoolExecutor>(
+          5, std::make_shared<NamedThreadFactory>("ttcli")));
   // create Queued cli
-  shared_ptr<QueuedCli> qcli = std::make_shared<QueuedCli>(
+  shared_ptr<QueuedCli> qcli = QueuedCli::make(
       deviceConfig.id,
       ttcli,
       std::make_shared<folly::CPUThreadPoolExecutor>(

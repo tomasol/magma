@@ -20,17 +20,17 @@ using devmand::channels::cli::Command;
 // CLI layer that should be above QueuedCli. Periodically schedules keepalive
 // command to prevent dropping
 // of inactive connection.
-class KeepaliveCli : public Cli {
+class KeepaliveCli : public Cli, public enable_shared_from_this<KeepaliveCli> {
  public:
-  KeepaliveCli(
+  static shared_ptr<KeepaliveCli> make(
       string id,
       shared_ptr<Cli> _cli,
       shared_ptr<folly::Executor> parentExecutor,
       shared_ptr<folly::ThreadWheelTimekeeper> _timekeeper,
       chrono::milliseconds heartbeatInterval = chrono::seconds(60),
       Command&& keepAliveCommand = Command::makeReadCommand("\n", true),
-      chrono::milliseconds backoffAfterKeepaliveTimeout =
-          chrono::seconds(5)); // TODO: remove
+      chrono::milliseconds backoffAfterKeepaliveTimeout = // TODO: remove
+      chrono::seconds(5));
 
   ~KeepaliveCli() override;
 
@@ -47,8 +47,17 @@ class KeepaliveCli : public Cli {
   const Command keepAliveCommand;
   const chrono::milliseconds heartbeatInterval;
   const chrono::milliseconds backoffAfterKeepaliveTimeout;
-
   atomic<bool> shutdown;
+
+  KeepaliveCli(
+      string id,
+      shared_ptr<Cli> _cli,
+      shared_ptr<folly::Executor> parentExecutor,
+      shared_ptr<folly::ThreadWheelTimekeeper> _timekeeper,
+      chrono::milliseconds heartbeatInterval,
+      Command&& keepAliveCommand,
+      chrono::milliseconds backoffAfterKeepaliveTimeout // TODO: remove
+  );
 
   void scheduleNextPing(folly::Future<string> keepAliveCmdFuture);
 
