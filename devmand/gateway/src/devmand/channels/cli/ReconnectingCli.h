@@ -22,9 +22,10 @@ using namespace std;
 using namespace folly;
 using devmand::channels::cli::Command;
 
-class ReconnectingCli : public Cli {
+class ReconnectingCli : public Cli,
+                        public enable_shared_from_this<ReconnectingCli> {
  public:
-  explicit ReconnectingCli(
+  static shared_ptr<ReconnectingCli> make(
       string id,
       shared_ptr<Executor> executor,
       function<shared_ptr<Cli>()>&& createCliStack);
@@ -43,6 +44,11 @@ class ReconnectingCli : public Cli {
   function<shared_ptr<devmand::channels::cli::Cli>()> createCliStack;
 
   shared_ptr<devmand::channels::cli::Cli> cli;
+
+  ReconnectingCli(
+      string id,
+      shared_ptr<Executor> executor,
+      function<shared_ptr<Cli>()>&& createCliStack);
 
   Future<string> executeSomething(
       const string&& loggingPrefix,

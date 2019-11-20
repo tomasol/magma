@@ -20,7 +20,7 @@ using namespace folly;
 /*
  * TODO: throw exception when queue is full
  */
-class QueuedCli : public Cli {
+class QueuedCli : public Cli, public enable_shared_from_this<QueuedCli> {
  private:
   string id;
   shared_ptr<Cli> cli;
@@ -48,6 +48,11 @@ class QueuedCli : public Cli {
 
   atomic<bool> shutdown;
 
+  QueuedCli(
+      string id,
+      shared_ptr<Cli> cli,
+      shared_ptr<Executor> parentExecutor);
+
   Future<string> executeSomething(
       const Command& cmd,
       const string& prefix,
@@ -56,10 +61,8 @@ class QueuedCli : public Cli {
   void triggerDequeue();
 
  public:
-  QueuedCli(
-      string _id,
-      shared_ptr<Cli> _cli,
-      shared_ptr<Executor> _parentExecutor);
+  static std::shared_ptr<QueuedCli>
+  make(string id, shared_ptr<Cli> cli, shared_ptr<Executor> parentExecutor);
 
   QueuedCli() = delete;
 

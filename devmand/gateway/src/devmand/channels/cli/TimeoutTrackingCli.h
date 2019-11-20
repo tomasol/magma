@@ -23,14 +23,15 @@ using devmand::channels::cli::Command;
 // FutureTimeout if Future returned by
 // underlying layer does not return result within specified time period
 // (timeout).
-class TimeoutTrackingCli : public Cli {
+class TimeoutTrackingCli : public Cli,
+                           public enable_shared_from_this<TimeoutTrackingCli> {
  public:
-  TimeoutTrackingCli(
+  static shared_ptr<TimeoutTrackingCli> make(
       string id,
-      shared_ptr<Cli> _cli,
-      shared_ptr<folly::ThreadWheelTimekeeper> _timekeeper,
-      shared_ptr<folly::Executor> _executor,
-      std::chrono::milliseconds _timeoutInterval = std::chrono::seconds(5));
+      shared_ptr<Cli> cli,
+      shared_ptr<folly::ThreadWheelTimekeeper> timekeeper,
+      shared_ptr<folly::Executor> executor,
+      std::chrono::milliseconds timeoutInterval = std::chrono::seconds(5));
 
   ~TimeoutTrackingCli() override;
 
@@ -44,8 +45,14 @@ class TimeoutTrackingCli : public Cli {
   shared_ptr<folly::ThreadWheelTimekeeper> timekeeper;
   shared_ptr<folly::Executor> executor;
   const std::chrono::milliseconds timeoutInterval;
-
   atomic<bool> shutdown;
+
+  TimeoutTrackingCli(
+      string id,
+      shared_ptr<Cli> _cli,
+      shared_ptr<folly::ThreadWheelTimekeeper> _timekeeper,
+      shared_ptr<folly::Executor> _executor,
+      std::chrono::milliseconds _timeoutInterval);
 
   Future<string> executeSomething(
       const Command& cmd,

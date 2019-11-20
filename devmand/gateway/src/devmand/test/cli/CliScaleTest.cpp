@@ -98,7 +98,7 @@ TEST_F(CliScaleTest, DISABLED_scale) {
     MLOG(MWARNING) << "Connecting device at port" << port
                    << " at FD: " << session->getSshFd();
     session->setEvent(sessionEvent);
-    return std::make_shared<QueuedCli>(to_string(port), cli, executor);
+    return QueuedCli::make(to_string(port), cli, executor);
   };
   const Command& cmd = Command::makeReadCommand("show running-config");
 
