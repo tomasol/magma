@@ -59,10 +59,13 @@ void ReconnectingCli::triggerReconnect(shared_ptr<ReconnectParameters> params) {
         [params]() -> Unit {
           MLOG(MDEBUG) << "[" << params->id << "] "
                        << "Recreating cli stack";
-          params->maybeCli = nullptr;
-          MLOG(MDEBUG) << "[" << params->id << "] "
-                       << "Recreating cli stack - destroyed old stack";
-          params->maybeCli = params->createCliStack();
+          {
+            boost::mutex::scoped_lock scoped_lock(params->cliMutex);
+            params->maybeCli = nullptr;
+            MLOG(MDEBUG) << "[" << params->id << "] "
+                         << "Recreating cli stack - destroyed old stack";
+            params->maybeCli = params->createCliStack();
+          }
           params->isReconnecting = false;
           MLOG(MDEBUG) << "[" << params->id << "] "
                        << "Recreating cli stack - done";
@@ -116,7 +119,11 @@ Future<string> ReconnectingCli::executeSomething(
     const string&& loggingPrefix,
     const function<Future<string>(shared_ptr<Cli>)>& innerFunc,
     const string&& loggingSuffix) {
-  shared_ptr<Cli> cliOrNull = reconnectParameters->maybeCli;
+  shared_ptr<Cli> cliOrNull = nullptr;
+  {
+    boost::mutex::scoped_lock scoped_lock(reconnectParameters->cliMutex);
+    cliOrNull = reconnectParameters->maybeCli;
+  }
   if (cliOrNull != nullptr) {
     return innerFunc(cliOrNull)
         .via(reconnectParameters->executor.get())
