@@ -7,6 +7,7 @@
 
 #include <devmand/channels/cli/ReadCachingCli.h>
 #include <folly/Synchronized.h>
+#include <folly/Optional.h>
 #include <folly/container/EvictingCacheMap.h>
 #include <magma_logging.h>
 
@@ -15,6 +16,7 @@ using devmand::channels::cli::Command;
 using folly::EvictingCacheMap;
 using folly::Future;
 using folly::Synchronized;
+using folly::Optional;
 using std::shared_ptr;
 using std::string;
 using CliCache = Synchronized<EvictingCacheMap<string, string>>;
@@ -23,18 +25,18 @@ Future<string> devmand::channels::cli::ReadCachingCli::executeAndRead(
     const Command& cmd) {
   const string command = cmd.toString();
   if (!cmd.skipCache()) {
-    string cachedResult = cache->withWLock([=](auto& cache_) {
+    Optional<string> cachedResult = cache->withWLock([command, this](auto& cache_) -> Optional<string> {
       if (cache_.exists(command)) {
         MLOG(MDEBUG) << "[" << id << "] "
                      << "Found command: " << command << " in cache";
-        return cache_.get(command);
+        return Optional<string>(cache_.get(command));
       } else {
-        return string(""); // FIXME: optional
+        return Optional<string>(folly::none);
       }
     });
 
-    if (!cachedResult.empty()) {
-      return Future<string>(cachedResult);
+    if (cachedResult) {
+      return Future<string>(*cachedResult.get_pointer());
     }
   }
 
