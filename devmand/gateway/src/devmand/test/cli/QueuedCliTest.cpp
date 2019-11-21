@@ -79,7 +79,7 @@ TEST_F(QueuedCliTest, queueOrderingTest) {
       make_shared<CPUThreadPoolExecutor>(parallelThreads);
   Command cmd = Command::makeReadCommand("1\n2\n3\n4\n5\n6\n7\n8\n9");
   const shared_ptr<QueuedCli>& cli =
-      make_shared<QueuedCli>("testOrder", make_shared<EchoCli>(), executor);
+      QueuedCli::make("testOrder", make_shared<EchoCli>(), executor);
 
   vector<Future<string>> queuedFutures;
 
@@ -127,14 +127,15 @@ TEST_F(QueuedCliTest, queuedCliMT) {
 }
 
 TEST_F(QueuedCliTest, threadSafety) {
+  int iterations = 1000;
   shared_ptr<CPUThreadPoolExecutor> testExec =
-      make_shared<CPUThreadPoolExecutor>(32, 1, 100000);
+      make_shared<CPUThreadPoolExecutor>(32, 1, iterations);
 
   shared_ptr<QueuedCli> cli =
       QueuedCli::make("testConnection", make_shared<EchoCli>(), executor);
 
   vector<Future<string>> execs;
-  for (int i = 0; i < 100000; i++) {
+  for (int i = 0; i < iterations; i++) {
     Future<string> future = via(testExec.get(), [cli, i]() {
       return cli->executeAndRead(Command::makeReadCommand(to_string(i))).get();
     });
@@ -143,9 +144,7 @@ TEST_F(QueuedCliTest, threadSafety) {
 
   for (uint i = 0; i < execs.size(); i++) {
     const string& basicString = std::move(execs.at(i)).get();
-    MLOG(MDEBUG) << "received " << i;
   }
-  MLOG(MDEBUG) << "done";
 }
 
 } // namespace cli
