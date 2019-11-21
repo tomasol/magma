@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <boost/thread/mutex.hpp>
 #include <devmand/channels/cli/Cli.h>
 #include <devmand/channels/cli/Command.h>
 #include <folly/Executor.h>
@@ -20,6 +21,8 @@ namespace cli {
 
 using namespace std;
 using namespace folly;
+using boost::mutex;
+using devmand::channels::cli::Cli;
 using devmand::channels::cli::Command;
 
 class ReconnectingCli : public Cli,
@@ -48,9 +51,12 @@ class ReconnectingCli : public Cli,
 
     shared_ptr<Executor> executor;
 
-    function<shared_ptr<devmand::channels::cli::Cli>()> createCliStack;
+    function<shared_ptr<Cli>()> createCliStack;
 
-    shared_ptr<devmand::channels::cli::Cli> maybeCli; // TODO atomic?
+    mutex cliMutex;
+
+    // guarded by mutex
+    shared_ptr<Cli> maybeCli;
 
     std::chrono::milliseconds quietPeriod;
 
