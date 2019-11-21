@@ -29,6 +29,7 @@ class ReconnectingCli : public Cli,
       string id,
       shared_ptr<Executor> executor,
       function<shared_ptr<Cli>()>&& createCliStack,
+      shared_ptr<Timekeeper> timekeeper,
       chrono::milliseconds quietPeriod = chrono::seconds(5));
 
   ~ReconnectingCli() override;
@@ -52,6 +53,8 @@ class ReconnectingCli : public Cli,
     shared_ptr<devmand::channels::cli::Cli> maybeCli; // TODO atomic?
 
     std::chrono::milliseconds quietPeriod;
+
+    shared_ptr<Timekeeper> timekeeper;
   };
 
   shared_ptr<ReconnectParameters> reconnectParameters;
@@ -60,6 +63,7 @@ class ReconnectingCli : public Cli,
       string id,
       shared_ptr<Executor> executor,
       function<shared_ptr<Cli>()>&& createCliStack,
+      shared_ptr<Timekeeper> timekeeper,
       chrono::milliseconds quietPeriod);
 
   Future<string> executeSomething(
