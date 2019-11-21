@@ -105,7 +105,7 @@ shared_ptr<Cli> IoConfigurationBuilder::createAll(
       std::make_shared<CPUThreadPoolExecutor>(
           2, std::make_shared<NamedThreadFactory>("rcli"));
   shared_ptr<ReconnectingCli> rcli = ReconnectingCli::make(
-      connectionParameters->id, rExecutor, move(cliFactory));
+      connectionParameters->id, rExecutor, move(cliFactory), timekeeper);
   // create keepalive cli
   shared_ptr<CPUThreadPoolExecutor> kaExecutor =
       std::make_shared<CPUThreadPoolExecutor>(

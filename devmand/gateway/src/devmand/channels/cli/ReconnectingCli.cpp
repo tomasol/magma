@@ -19,15 +19,17 @@ shared_ptr<ReconnectingCli> ReconnectingCli::make(
     string id,
     shared_ptr<Executor> executor,
     function<shared_ptr<Cli>()>&& createCliStack,
+    shared_ptr<Timekeeper> timekeeper,
     chrono::milliseconds quietPeriod) {
   return shared_ptr<ReconnectingCli>(new ReconnectingCli(
-      id, executor, move(createCliStack), move(quietPeriod)));
+      id, executor, move(createCliStack), move(timekeeper), move(quietPeriod)));
 }
 
 ReconnectingCli::ReconnectingCli(
     string id,
     shared_ptr<Executor> executor,
     function<std::shared_ptr<Cli>()>&& createCliStack,
+    shared_ptr<Timekeeper> timekeeper,
     chrono::milliseconds quietPeriod) {
   reconnectParameters = make_shared<ReconnectParameters>();
   reconnectParameters->id = id;
@@ -37,6 +39,7 @@ ReconnectingCli::ReconnectingCli(
   reconnectParameters->shutdown = false;
   reconnectParameters->isReconnecting = false;
   reconnectParameters->quietPeriod = quietPeriod;
+  reconnectParameters->timekeeper = timekeeper;
   // start async (re)connect
   triggerReconnect(reconnectParameters);
 }
@@ -67,18 +70,24 @@ void ReconnectingCli::triggerReconnect(shared_ptr<ReconnectParameters> params) {
         })
         .thenError(
             folly::tag_t<std::exception>{},
-            [params](std::exception const& e) -> Unit {
+            [params](std::exception const& e) -> Future<Unit> {
               // quiet period
-              MLOG(MDEBUG) << "[" << params->id << "] "
-                           << "triggerReconnect got error : " << e.what();
-              std::this_thread::sleep_for(
-                  params->quietPeriod); // TODO make this via futures::sleep()
               MLOG(MDEBUG)
                   << "[" << params->id << "] "
-                  << "triggerReconnect reconnecting after quiet period";
-              params->isReconnecting = false;
-              triggerReconnect(params);
-              return Unit{};
+                  << "triggerReconnect started quiet period, got error : "
+                  << e.what();
+
+              return futures::sleep(
+                         params->quietPeriod, params->timekeeper.get())
+                  .via(params->executor.get())
+                  .thenValue([params](Unit) -> Future<Unit> {
+                    MLOG(MDEBUG)
+                        << "[" << params->id << "] "
+                        << "triggerReconnect reconnecting after quiet period";
+                    params->isReconnecting = false;
+                    triggerReconnect(params);
+                    return makeFuture();
+                  });
             });
   } else {
     MLOG(MDEBUG) << "[" << params->id << "] "
