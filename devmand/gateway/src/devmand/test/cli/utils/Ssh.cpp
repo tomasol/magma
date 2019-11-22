@@ -248,6 +248,7 @@ shared_ptr<server> startSshServer(
             }
           }
         } while (i > 0);
+        MLOG(MDEBUG) << "Session disconnected";
       });
 
   retVal->serverFuture = move(future);
