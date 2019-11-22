@@ -43,16 +43,13 @@ using namespace devmand::devices::cli;
 
 class ReconnectingSshTest : public ::testing::Test {
  protected:
-  shared_ptr<server> ssh;
-
   void SetUp() override {
     devmand::test::utils::log::initLog();
     devmand::test::utils::ssh::initSsh();
-    ssh = startSshServer();
   }
 
   void TearDown() override {
-    ssh->close();
+    // ssh->close();
   }
 };
 
@@ -97,8 +94,8 @@ static void ensureConnected(const shared_ptr<Cli>& cli) {
 TEST_F(ReconnectingSshTest, plaintextCliDevice) {
   int cmdTimeout = 5;
   IoConfigurationBuilder ioConfigurationBuilder(
-      getConfig("9999", std::chrono::seconds(cmdTimeout)));
-  const shared_ptr<Cli>& cli =
+      getConfig("22", std::chrono::seconds(cmdTimeout)));
+  shared_ptr<Cli> cli =
       ioConfigurationBuilder.createAll(ReadCachingCli::createCache());
   ensureConnected(cli);
   // sleep so that cli stack will be destroyed
@@ -115,11 +112,7 @@ TEST_F(ReconnectingSshTest, plaintextCliDevice) {
         }
       },
       std::exception);
-  MLOG(MDEBUG) << "Sleeping";
-  std::this_thread::sleep_for(std::chrono::seconds(20));
-  MLOG(MDEBUG) << "Sleeping done";
-  ssh->close();
-  ssh = startSshServer();
+
   ensureConnected(cli);
 }
 
