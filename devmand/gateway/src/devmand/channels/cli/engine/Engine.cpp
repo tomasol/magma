@@ -7,11 +7,11 @@
 
 #include <devmand/channels/cli/Spd2Glog.h>
 #include <devmand/channels/cli/engine/Engine.h>
+#include <event2/thread.h>
 #include <libssh/callbacks.h>
 #include <libssh/libssh.h>
 #include <spdlog/spdlog.h>
 #include <iostream>
-#include <event2/thread.h>
 
 namespace devmand {
 namespace channels {

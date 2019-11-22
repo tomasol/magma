@@ -12,6 +12,7 @@
 #include <devmand/channels/cli/SshSocketReader.h>
 #include <devmand/test/cli/utils/Log.h>
 #include <devmand/test/cli/utils/Ssh.h>
+#include <event2/thread.h>
 #include <folly/Singleton.h>
 #include <folly/executors/IOThreadPoolExecutor.h>
 #include <folly/futures/Future.h>
@@ -19,7 +20,6 @@
 #include <chrono>
 #include <ctime>
 #include <thread>
-#include <event2/thread.h>
 
 namespace devmand {
 namespace test {
