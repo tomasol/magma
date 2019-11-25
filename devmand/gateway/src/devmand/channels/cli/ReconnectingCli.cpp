@@ -18,7 +18,7 @@ using namespace folly;
 shared_ptr<ReconnectingCli> ReconnectingCli::make(
     string id,
     shared_ptr<Executor> executor,
-    function<shared_ptr<Cli>()>&& createCliStack,
+    function<SemiFuture<shared_ptr<Cli>>()>&& createCliStack,
     shared_ptr<Timekeeper> timekeeper,
     chrono::milliseconds quietPeriod) {
   return shared_ptr<ReconnectingCli>(new ReconnectingCli(
@@ -28,7 +28,7 @@ shared_ptr<ReconnectingCli> ReconnectingCli::make(
 ReconnectingCli::ReconnectingCli(
     string id,
     shared_ptr<Executor> executor,
-    function<std::shared_ptr<Cli>()>&& createCliStack,
+    function<SemiFuture<shared_ptr<Cli>>()>&& createCliStack,
     shared_ptr<Timekeeper> timekeeper,
     chrono::milliseconds quietPeriod) {
   reconnectParameters = make_shared<ReconnectParameters>();
@@ -56,7 +56,7 @@ void ReconnectingCli::triggerReconnect(shared_ptr<ReconnectParameters> params) {
   bool f = false;
   if (params->isReconnecting.compare_exchange_strong(f, true)) {
     via(params->executor.get(),
-        [params]() -> Unit {
+        [params]() -> Future<Unit> {
           MLOG(MDEBUG) << "[" << params->id << "] "
                        << "Recreating cli stack";
           {
@@ -64,13 +64,23 @@ void ReconnectingCli::triggerReconnect(shared_ptr<ReconnectParameters> params) {
             params->maybeCli = nullptr;
             MLOG(MDEBUG) << "[" << params->id << "] "
                          << "Recreating cli stack - destroyed old stack";
-            params->maybeCli = params->createCliStack();
           }
-          params->isReconnecting = false;
-          MLOG(MDEBUG) << "[" << params->id << "] "
-                       << "Recreating cli stack - done";
-          return Unit{};
-        })
+          Future<shared_ptr<Cli>> newCliFuture =
+              params->createCliStack().via(params->executor.get());
+
+          return move(newCliFuture)
+              .thenValue([params](shared_ptr<Cli> newCli) -> Unit {
+                {
+                  boost::mutex::scoped_lock scoped_lock(params->cliMutex);
+
+                  params->maybeCli = std::move(newCli);
+                }
+                params->isReconnecting = false;
+                MLOG(MDEBUG) << "[" << params->id << "] "
+                             << "Recreating cli stack - done";
+                return Unit{};
+              });
+        }) // TODO: Add onTimeout here to handle establish session timeouts?
         .thenError(
             folly::tag_t<std::exception>{},
             [params](std::exception const& e) -> Future<Unit> {
