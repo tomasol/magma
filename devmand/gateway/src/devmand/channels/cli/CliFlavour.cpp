@@ -29,6 +29,7 @@ void EmptyInitializer::initialize(shared_ptr<SshSessionAsync> session) {
 }
 
 void UbiquitiInitializer::initialize(shared_ptr<SshSessionAsync> session) {
+  // TODO: return SemiFuture
   session->write("enable\n")
       .thenValue([=](...) { return session->write("ubnt\n"); })
       .thenValue([=](...) { return session->write("terminal length 0\n"); })
@@ -38,6 +39,7 @@ void UbiquitiInitializer::initialize(shared_ptr<SshSessionAsync> session) {
 string DefaultPromptResolver::resolvePrompt(
     shared_ptr<SshSessionAsync> session,
     const string& newline) {
+  // TODO: return SemiFuture
   MLOG(MDEBUG) << "Resolving prompt";
   session->read(DEFAULT_MILLIS).get(); // clear input, converges faster on
                                        // prompt
@@ -57,6 +59,7 @@ string DefaultPromptResolver::resolvePrompt(
       string s0 = boost::algorithm::trim_copy(split[0]);
       string s1 = boost::algorithm::trim_copy(split[1]);
       if (s0 == s1) {
+        MLOG(MDEBUG) << "Resolving prompt done";
         return s0;
       }
     }

@@ -90,7 +90,7 @@ shared_ptr<Cli> IoConfigurationBuilder::createAllUsingFactory(
       [executor,
        params = connectionParameters,
        timekeeper,
-       commandCache]() /* -> SemiFuture<shared_ptr<Cli>>*/ {
+       commandCache]() {
         return createPromptAwareCli(executor, params)
             .via(executor.get())
             .thenValue(
@@ -145,35 +145,43 @@ shared_ptr<Cli> IoConfigurationBuilder::createAllUsingFactory(
 Future<shared_ptr<Cli>> IoConfigurationBuilder::createPromptAwareCli(
     shared_ptr<IOThreadPoolExecutor> executor,
     shared_ptr<ConnectionParameters> params) {
+
   MLOG(MDEBUG) << "Creating CLI ssh device for " << params->id
-               << " (host: " << params->ip << ")";
+               << " (" << params->ip << ":" << params->port << ")";
 
   // create session
   std::shared_ptr<SshSessionAsync> session =
       std::make_shared<SshSessionAsync>(params->id, executor);
   // open SSH connection
-  return session
-      ->openShell(params->ip, params->port, params->username, params->password)
-      .via(executor.get())
-      .thenValue([params, session](...) -> SemiFuture<shared_ptr<Cli>> {
-        MLOG(MDEBUG) << "[" << params->id
-                     << "] "
-                        "Setting flavour";
-        shared_ptr<CliFlavour> cl = params->flavour;
 
-        // create CLI
-        shared_ptr<PromptAwareCli> cli =
-            std::make_shared<PromptAwareCli>(session, cl);
-        MLOG(MDEBUG) << "[" << params->id
-                     << "] "
-                        "Initializing cli";
-        // initialize CLI
-        cli->initializeCli();
-        // resolve prompt needs to happen
-        MLOG(MDEBUG) << "[" << params->id
-                     << "] "
-                        "Resolving prompt";
-        cli->resolvePrompt();
+
+  MLOG(MDEBUG) << "[" << params->id << "] "
+                                       "Opening shell";
+  // TODO: do this using future chaining
+  session
+      ->openShell(params->ip, params->port, params->username, params->password).get();
+
+  MLOG(MDEBUG) << "[" << params->id << "] "
+                                       "Setting flavour";
+  shared_ptr<CliFlavour> cl = params->flavour;
+  // create CLI
+  shared_ptr<PromptAwareCli> cli =
+      std::make_shared<PromptAwareCli>(session, cl);
+  MLOG(MDEBUG) << "[" << params->id
+               << "] "
+                  "Initializing cli";
+  // initialize CLI
+  // TODO: do this using future chaining
+  cli->initializeCli();
+  // resolve prompt needs to happen
+  MLOG(MDEBUG) << "[" << params->id
+               << "] "
+                  "Resolving prompt";
+  // TODO: do this using future chaining
+  cli->resolvePrompt();
+
+  return via(executor.get())
+    .thenValue([params, cli, session](...) -> SemiFuture<shared_ptr<Cli>> {
         MLOG(MDEBUG) << "[" << params->id
                      << "] "
                         "Creating async data reader";
