@@ -64,8 +64,7 @@ static DeviceConfig getConfig(
   kvPairs.insert(std::make_pair("username", "root"));
   kvPairs.insert(std::make_pair("password", "root"));
   kvPairs.insert(std::make_pair(
-      configMaxCommandTimeoutSeconds,
-      to_string(commandTimeout.count()))); // count?
+      configMaxCommandTimeoutSeconds, to_string(commandTimeout.count())));
   chnlCfg.kvPairs = kvPairs;
   deviceConfig.channelConfigs.insert(std::make_pair("cli", chnlCfg));
   deviceConfig.ip = "localhost";
