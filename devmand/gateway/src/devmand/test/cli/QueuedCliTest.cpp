@@ -172,7 +172,8 @@ TEST_F(QueuedCliTest, cleanDestructOnSuccess) {
   }
 
   for (uint i = 1; i < 10; i++) {
-    EXPECT_THROW(move(futures.at(i)).via(testExec.get()).get(10s), runtime_error);
+    EXPECT_THROW(
+        move(futures.at(i)).via(testExec.get()).get(10s), runtime_error);
   }
 
   MLOG(MDEBUG) << "Waiting for test executor to finish";

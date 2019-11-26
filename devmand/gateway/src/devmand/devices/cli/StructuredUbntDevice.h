@@ -10,6 +10,7 @@
 #define LOG_WITH_GLOG
 #include <magma_logging.h>
 
+#include <devmand/Application.h>
 #include <devmand/channels/cli/Channel.h>
 #include <devmand/channels/cli/Command.h>
 #include <devmand/channels/cli/ReadCachingCli.h>

@@ -18,7 +18,7 @@ using devmand::channels::cli::Command;
 shared_ptr<TimeoutTrackingCli> TimeoutTrackingCli::make(
     string id,
     shared_ptr<Cli> cli,
-    shared_ptr<folly::ThreadWheelTimekeeper> timekeeper,
+    shared_ptr<folly::Timekeeper> timekeeper,
     shared_ptr<folly::Executor> executor,
     std::chrono::milliseconds timeoutInterval) {
   return shared_ptr<TimeoutTrackingCli>(
@@ -28,7 +28,7 @@ shared_ptr<TimeoutTrackingCli> TimeoutTrackingCli::make(
 TimeoutTrackingCli::TimeoutTrackingCli(
     string _id,
     shared_ptr<Cli> _cli,
-    shared_ptr<folly::ThreadWheelTimekeeper> _timekeeper,
+    shared_ptr<folly::Timekeeper> _timekeeper,
     shared_ptr<folly::Executor> _executor,
     std::chrono::milliseconds _timeoutInterval) {
   timeoutTrackingParameters =

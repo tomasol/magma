@@ -13,8 +13,10 @@
 #include <devmand/channels/cli/Channel.h>
 #include <devmand/channels/cli/Cli.h>
 #include <devmand/channels/cli/IoConfigurationBuilder.h>
+#include <devmand/channels/cli/engine/Engine.h>
 #include <devmand/devices/State.h>
 #include <devmand/devices/cli/PlaintextCliDevice.h>
+#include <folly/executors/IOThreadPoolExecutor.h>
 
 namespace devmand {
 namespace devices {
@@ -26,7 +28,8 @@ using namespace devmand::channels::cli::sshsession;
 std::unique_ptr<devices::Device> PlaintextCliDevice::createDevice(
     Application& app,
     const cartography::DeviceConfig& deviceConfig) {
-  IoConfigurationBuilder ioConfigurationBuilder(deviceConfig);
+  IoConfigurationBuilder ioConfigurationBuilder(
+      deviceConfig, app.getCliEngine());
 
   auto cmdCache = ReadCachingCli::createCache();
 
@@ -51,8 +54,8 @@ PlaintextCliDevice::PlaintextCliDevice(
       channel(_channel),
       stateCommand(ReadCommand::create(_stateCommand)),
       cmdCache(_cmdCache),
-      executor(make_shared<IOThreadPoolExecutor>( // TODO hardcoded executor
-          1)) {}
+      executor(app.getCliEngine().getExecutor(
+          Engine::executorRequestType::plaintextCliDevice)) {}
 
 std::shared_ptr<State> PlaintextCliDevice::getState() {
   MLOG(MINFO) << "[" << id << "] "
