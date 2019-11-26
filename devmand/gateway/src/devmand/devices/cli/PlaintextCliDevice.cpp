@@ -27,7 +27,8 @@ using namespace devmand::channels::cli::sshsession;
 std::unique_ptr<devices::Device> PlaintextCliDevice::createDevice(
     Application& app,
     const cartography::DeviceConfig& deviceConfig) {
-  IoConfigurationBuilder ioConfigurationBuilder(deviceConfig);
+  IoConfigurationBuilder ioConfigurationBuilder(
+      deviceConfig, app.getCliEngine());
 
   auto cmdCache = ReadCachingCli::createCache();
 

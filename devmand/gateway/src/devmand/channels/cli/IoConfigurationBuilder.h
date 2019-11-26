@@ -11,6 +11,7 @@
 #include <devmand/channels/cli/Cli.h>
 #include <devmand/channels/cli/CliFlavour.h>
 #include <devmand/channels/cli/ReadCachingCli.h>
+#include <devmand/channels/cli/engine/Engine.h>
 #include <folly/Executor.h>
 #include <folly/futures/ThreadWheelTimekeeper.h>
 
@@ -31,13 +32,17 @@ static constexpr auto configMaxCommandTimeoutSeconds =
 
 class IoConfigurationBuilder {
  public:
-  IoConfigurationBuilder(const DeviceConfig& deviceConfig);
+  IoConfigurationBuilder(
+      const DeviceConfig& deviceConfig,
+      channels::cli::Engine& engine);
 
   ~IoConfigurationBuilder();
 
   shared_ptr<Cli> createAll(shared_ptr<CliCache> commandCache);
 
  private:
+  channels::cli::Engine& engine;
+
   struct ConnectionParameters {
     string username;
     string password;

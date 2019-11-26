@@ -37,7 +37,9 @@ using folly::EvictingCacheMap;
 using folly::IOThreadPoolExecutor;
 
 IoConfigurationBuilder::IoConfigurationBuilder(
-    const DeviceConfig& deviceConfig) {
+    const DeviceConfig& deviceConfig,
+    channels::cli::Engine& _engine)
+    : engine(_engine) {
   const std::map<std::string, std::string>& plaintextCliKv =
       deviceConfig.channelConfigs.at("cli").kvPairs;
   connectionParameters = make_shared<ConnectionParameters>();

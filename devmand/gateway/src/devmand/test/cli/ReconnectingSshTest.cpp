@@ -41,8 +41,10 @@ using namespace std::chrono_literals;
 
 class ReconnectingSshTest : public ::testing::Test {
  protected:
+  channels::cli::Engine cliEngine;
   shared_ptr<server> ssh;
-  void SetUp() override {
+
+    void SetUp() override {
     devmand::test::utils::log::initLog();
     devmand::test::utils::ssh::initSsh();
     ssh = startSshServer();
@@ -96,7 +98,7 @@ static void ensureConnected(const shared_ptr<Cli>& cli) {
 TEST_F(ReconnectingSshTest, commandTimeout) {
   int cmdTimeout = 5;
   IoConfigurationBuilder ioConfigurationBuilder(getConfig(
-      "9999", std::chrono::seconds(cmdTimeout), std::chrono::seconds(10)));
+      "9999", std::chrono::seconds(cmdTimeout), std::chrono::seconds(10)), cliEngine);
   shared_ptr<Cli> cli =
       ioConfigurationBuilder.createAll(ReadCachingCli::createCache());
   ensureConnected(cli);
@@ -123,7 +125,7 @@ TEST_F(ReconnectingSshTest, commandTimeout) {
 TEST_F(ReconnectingSshTest, serverDisconnectSendCommands) {
   int cmdTimeout = 60;
   IoConfigurationBuilder ioConfigurationBuilder(getConfig(
-      "9999", std::chrono::seconds(cmdTimeout), std::chrono::seconds(60)));
+      "9999", std::chrono::seconds(cmdTimeout), std::chrono::seconds(60)), cliEngine);
   shared_ptr<Cli> cli =
       ioConfigurationBuilder.createAll(ReadCachingCli::createCache());
 
@@ -139,7 +141,7 @@ TEST_F(ReconnectingSshTest, serverDisconnectWaithForKeepalive) {
   IoConfigurationBuilder ioConfigurationBuilder(getConfig(
       "9999",
       std::chrono::seconds(cmdTimeout),
-      std::chrono::seconds(keepaliveFreq)));
+      std::chrono::seconds(keepaliveFreq)), cliEngine);
   shared_ptr<Cli> cli =
       ioConfigurationBuilder.createAll(ReadCachingCli::createCache());
 
@@ -170,7 +172,7 @@ TEST_F(ReconnectingSshTest, keepalive) {
   IoConfigurationBuilder ioConfigurationBuilder(getConfig(
       "22",
       std::chrono::seconds(cmdTimeout),
-      std::chrono::seconds(keepaliveTimeout)));
+      std::chrono::seconds(keepaliveTimeout)), cliEngine);
   shared_ptr<Cli> cli =
       ioConfigurationBuilder.createAll(ReadCachingCli::createCache());
   std::this_thread::sleep_for(std::chrono::seconds(20));
