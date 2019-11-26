@@ -11,7 +11,7 @@
 #include <devmand/channels/cli/Cli.h>
 #include <devmand/channels/cli/CliFlavour.h>
 #include <devmand/channels/cli/ReadCachingCli.h>
-#include <folly/executors/IOThreadPoolExecutor.h>
+#include <folly/Executor.h>
 #include <folly/futures/ThreadWheelTimekeeper.h>
 
 namespace devmand::channels::cli {
@@ -21,7 +21,7 @@ using devmand::channels::cli::Cli;
 using devmand::channels::cli::CliFlavour;
 using namespace std;
 
-using folly::IOThreadPoolExecutor;
+using folly::Executor;
 using folly::SemiFuture;
 
 static constexpr auto configKeepAliveIntervalSeconds =
@@ -54,7 +54,7 @@ class IoConfigurationBuilder {
   shared_ptr<Cli> createAllUsingFactory(shared_ptr<CliCache> commandCache);
 
   static Future<shared_ptr<Cli>> createPromptAwareCli(
-      shared_ptr<folly::IOThreadPoolExecutor> executor,
+      shared_ptr<folly::Executor> executor,
       shared_ptr<ConnectionParameters> params);
 
   static chrono::seconds loadTimeout(

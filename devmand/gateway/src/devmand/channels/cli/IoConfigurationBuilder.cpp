@@ -83,7 +83,7 @@ shared_ptr<Cli> IoConfigurationBuilder::createAllUsingFactory(
                                                    // folly is initialized
 
   // TODO make Executor sharing configurable
-  shared_ptr<IOThreadPoolExecutor> executor = make_shared<IOThreadPoolExecutor>(
+  shared_ptr<Executor> executor = make_shared<IOThreadPoolExecutor>(
       10, std::make_shared<NamedThreadFactory>("persession"));
 
   shared_ptr<IOThreadPoolExecutor> rccliExecutor =
@@ -101,9 +101,8 @@ shared_ptr<Cli> IoConfigurationBuilder::createAllUsingFactory(
             .thenValue(
                 [executor, params, commandCache, timekeeper, rccliExecutor](
                     shared_ptr<Cli> sshCli) -> shared_ptr<Cli> {
-                  MLOG(MDEBUG) << "[" << params->id
-                               << "] "
-                                  "Creating cli layers rcclli, ttcli, qcli";
+                  MLOG(MDEBUG) << "[" << params->id << "] "
+                               << "Creating cli layers rcclli, ttcli, qcli";
                   // create caching cli
                   const shared_ptr<ReadCachingCli>& rccli =
                       std::make_shared<ReadCachingCli>(
@@ -128,15 +127,13 @@ shared_ptr<Cli> IoConfigurationBuilder::createAllUsingFactory(
       };
 
   // create reconnecting cli that uses cliFactory to establish ssh connection
-  shared_ptr<CPUThreadPoolExecutor> rExecutor =
-      std::make_shared<CPUThreadPoolExecutor>(
-          2, std::make_shared<NamedThreadFactory>("rcli"));
+  shared_ptr<Executor> rExecutor = std::make_shared<CPUThreadPoolExecutor>(
+      2, std::make_shared<NamedThreadFactory>("rcli"));
   shared_ptr<ReconnectingCli> rcli = ReconnectingCli::make(
       connectionParameters->id, rExecutor, move(cliFactory), timekeeper);
   // create keepalive cli
-  shared_ptr<CPUThreadPoolExecutor> kaExecutor =
-      std::make_shared<CPUThreadPoolExecutor>(
-          2, std::make_shared<NamedThreadFactory>("kacli"));
+  shared_ptr<Executor> kaExecutor = std::make_shared<CPUThreadPoolExecutor>(
+      2, std::make_shared<NamedThreadFactory>("kacli"));
 
   shared_ptr<KeepaliveCli> kaCli = KeepaliveCli::make(
       connectionParameters->id,
@@ -148,7 +145,7 @@ shared_ptr<Cli> IoConfigurationBuilder::createAllUsingFactory(
 }
 
 Future<shared_ptr<Cli>> IoConfigurationBuilder::createPromptAwareCli(
-    shared_ptr<IOThreadPoolExecutor> executor,
+    shared_ptr<Executor> executor,
     shared_ptr<ConnectionParameters> params) {
   MLOG(MDEBUG) << "Creating CLI ssh device for " << params->id << " ("
                << params->ip << ":" << params->port << ")";
@@ -158,17 +155,15 @@ Future<shared_ptr<Cli>> IoConfigurationBuilder::createPromptAwareCli(
       std::make_shared<SshSessionAsync>(params->id, executor);
   // open SSH connection
 
-  MLOG(MDEBUG) << "[" << params->id
-               << "] "
-                  "Opening shell";
+  MLOG(MDEBUG) << "[" << params->id << "] "
+               << "Opening shell";
   // TODO: do this using future chaining
   session
       ->openShell(params->ip, params->port, params->username, params->password)
       .get();
 
-  MLOG(MDEBUG) << "[" << params->id
-               << "] "
-                  "Setting flavour";
+  MLOG(MDEBUG) << "[" << params->id << "] "
+               << "Setting flavour";
   shared_ptr<CliFlavour> cl = params->flavour;
   const shared_ptr<IOThreadPoolExecutor>& pacli =
       std::make_shared<IOThreadPoolExecutor>(
@@ -176,9 +171,8 @@ Future<shared_ptr<Cli>> IoConfigurationBuilder::createPromptAwareCli(
   // create CLI
   shared_ptr<PromptAwareCli> cli =
       PromptAwareCli::make(params->id, session, cl, pacli);
-  MLOG(MDEBUG) << "[" << params->id
-               << "] "
-                  "Initializing cli";
+  MLOG(MDEBUG) << "[" << params->id << "] "
+               << "Initializing cli";
   // initialize CLI
   // TODO: do this using future chaining:
   //  via(executor.get())
@@ -187,21 +181,18 @@ Future<shared_ptr<Cli>> IoConfigurationBuilder::createPromptAwareCli(
 
   cli->initializeCli(params->password).get();
   // resolve prompt needs to happen
-  MLOG(MDEBUG) << "[" << params->id
-               << "] "
-                  "Resolving prompt";
+  MLOG(MDEBUG) << "[" << params->id << "] "
+               << "Resolving prompt";
   // TODO: do this using future chaining
   cli->resolvePrompt().get();
 
-  MLOG(MDEBUG) << "[" << params->id
-               << "] "
-                  "Creating async data reader";
+  MLOG(MDEBUG) << "[" << params->id << "] "
+               << "Creating async data reader";
   event* sessionEvent = SshSocketReader::getInstance().addSshReader(
       readCallback, session->getSshFd(), session.get());
   session->setEvent(sessionEvent);
-  MLOG(MDEBUG) << "[" << params->id
-               << "] "
-                  "SSH layer configured";
+  MLOG(MDEBUG) << "[" << params->id << "] "
+               << "SSH layer configured";
   return makeFuture(cli);
 }
 

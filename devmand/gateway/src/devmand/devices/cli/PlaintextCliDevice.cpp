@@ -15,6 +15,7 @@
 #include <devmand/channels/cli/IoConfigurationBuilder.h>
 #include <devmand/devices/State.h>
 #include <devmand/devices/cli/PlaintextCliDevice.h>
+#include <folly/executors/IOThreadPoolExecutor.h>
 
 namespace devmand {
 namespace devices {
@@ -51,8 +52,9 @@ PlaintextCliDevice::PlaintextCliDevice(
       channel(_channel),
       stateCommand(ReadCommand::create(_stateCommand)),
       cmdCache(_cmdCache),
-      executor(make_shared<IOThreadPoolExecutor>( // TODO hardcoded executor
-          1)) {}
+      executor(
+          make_shared<folly::IOThreadPoolExecutor>( // TODO hardcoded executor
+              1)) {}
 
 std::shared_ptr<State> PlaintextCliDevice::getState() {
   MLOG(MINFO) << "[" << id << "] "

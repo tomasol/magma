@@ -33,7 +33,6 @@ using namespace folly;
 using devmand::channels::cli::sshsession::readCallback;
 using devmand::channels::cli::sshsession::SshSession;
 using devmand::channels::cli::sshsession::SshSessionAsync;
-using folly::IOThreadPoolExecutor;
 using namespace devmand::cartography;
 using namespace devmand::devices;
 using namespace devmand::devices::cli;
