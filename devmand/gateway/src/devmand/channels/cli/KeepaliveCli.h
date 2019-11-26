@@ -28,7 +28,7 @@ class KeepaliveCli : public Cli {
       string id,
       shared_ptr<Cli> _cli,
       shared_ptr<folly::Executor> parentExecutor,
-      shared_ptr<folly::ThreadWheelTimekeeper> _timekeeper,
+      shared_ptr<folly::Timekeeper> _timekeeper,
       chrono::milliseconds heartbeatInterval = defaultKeepaliveInterval,
       string keepAliveCommand = "",
       chrono::milliseconds backoffAfterKeepaliveTimeout = chrono::seconds(5));
@@ -43,7 +43,7 @@ class KeepaliveCli : public Cli {
   struct KeepaliveParameters {
     string id;
     shared_ptr<Cli> cli; // underlying cli layer
-    shared_ptr<folly::ThreadWheelTimekeeper> timekeeper;
+    shared_ptr<folly::Timekeeper> timekeeper;
     shared_ptr<folly::Executor> parentExecutor;
     folly::Executor::KeepAlive<folly::SerialExecutor> serialExecutorKeepAlive;
     string keepAliveCommand;
@@ -60,7 +60,7 @@ class KeepaliveCli : public Cli {
       string id,
       shared_ptr<Cli> _cli,
       shared_ptr<folly::Executor> parentExecutor,
-      shared_ptr<folly::ThreadWheelTimekeeper> _timekeeper,
+      shared_ptr<folly::Timekeeper> _timekeeper,
       chrono::milliseconds heartbeatInterval,
       string keepAliveCommand,
       chrono::milliseconds backoffAfterKeepaliveTimeout);

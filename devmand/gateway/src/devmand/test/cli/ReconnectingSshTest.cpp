@@ -33,19 +33,21 @@ using namespace folly;
 using devmand::channels::cli::sshsession::readCallback;
 using devmand::channels::cli::sshsession::SshSession;
 using devmand::channels::cli::sshsession::SshSessionAsync;
-using folly::IOThreadPoolExecutor;
 using namespace devmand::cartography;
 using namespace devmand::devices;
 using namespace devmand::devices::cli;
 
 using namespace chrono_literals;
 
+// test log initializer must be first to set up logging for tests correctly
+static devmand::test::utils::log::TestLogInitializer log;
+static channels::cli::Engine cliEngine;
+
 class ReconnectingSshTest : public ::testing::Test {
  protected:
   shared_ptr<server> ssh;
+
   void SetUp() override {
-    devmand::test::utils::log::initLog();
-    devmand::test::utils::ssh::initSsh();
     ssh = startSshServer();
   }
 
@@ -97,7 +99,9 @@ static void ensureConnected(const shared_ptr<Cli>& cli) {
 TEST_F(ReconnectingSshTest, commandTimeout) {
   int cmdTimeout = 5;
   IoConfigurationBuilder ioConfigurationBuilder(
-      getConfig("9999", chrono::seconds(cmdTimeout), chrono::seconds(10)));
+      getConfig(
+          "9999", std::chrono::seconds(cmdTimeout), std::chrono::seconds(10)),
+      cliEngine);
   shared_ptr<Cli> cli =
       ioConfigurationBuilder.createAll(ReadCachingCli::createCache());
   ensureConnected(cli);
@@ -124,7 +128,9 @@ TEST_F(ReconnectingSshTest, commandTimeout) {
 TEST_F(ReconnectingSshTest, serverDisconnectSendCommands) {
   int cmdTimeout = 60;
   IoConfigurationBuilder ioConfigurationBuilder(
-      getConfig("9999", chrono::seconds(cmdTimeout), chrono::seconds(60)));
+      getConfig(
+          "9999", std::chrono::seconds(cmdTimeout), std::chrono::seconds(60)),
+      cliEngine);
   shared_ptr<Cli> cli =
       ioConfigurationBuilder.createAll(ReadCachingCli::createCache());
 
@@ -137,8 +143,12 @@ TEST_F(ReconnectingSshTest, serverDisconnectSendCommands) {
 TEST_F(ReconnectingSshTest, serverDisconnectWaithForKeepalive) {
   int cmdTimeout = 5;
   int keepaliveFreq = 5;
-  IoConfigurationBuilder ioConfigurationBuilder(getConfig(
-      "9999", chrono::seconds(cmdTimeout), chrono::seconds(keepaliveFreq)));
+  IoConfigurationBuilder ioConfigurationBuilder(
+      getConfig(
+          "9999",
+          std::chrono::seconds(cmdTimeout),
+          std::chrono::seconds(keepaliveFreq)),
+      cliEngine);
   shared_ptr<Cli> cli =
       ioConfigurationBuilder.createAll(ReadCachingCli::createCache());
 
@@ -166,8 +176,12 @@ TEST_F(ReconnectingSshTest, serverDisconnectWaithForKeepalive) {
 TEST_F(ReconnectingSshTest, keepalive) {
   int cmdTimeout = 5;
   int keepaliveTimeout = 5;
-  IoConfigurationBuilder ioConfigurationBuilder(getConfig(
-      "9999", chrono::seconds(cmdTimeout), chrono::seconds(keepaliveTimeout)));
+  IoConfigurationBuilder ioConfigurationBuilder(
+      getConfig(
+          "9999",
+          std::chrono::seconds(cmdTimeout),
+          std::chrono::seconds(keepaliveTimeout)),
+      cliEngine);
   shared_ptr<Cli> cli =
       ioConfigurationBuilder.createAll(ReadCachingCli::createCache());
 

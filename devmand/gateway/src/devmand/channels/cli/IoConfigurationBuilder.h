@@ -11,8 +11,8 @@
 #include <devmand/channels/cli/Cli.h>
 #include <devmand/channels/cli/CliFlavour.h>
 #include <devmand/channels/cli/ReadCachingCli.h>
-#include <folly/executors/IOThreadPoolExecutor.h>
-#include <folly/futures/ThreadWheelTimekeeper.h>
+#include <devmand/channels/cli/engine/Engine.h>
+#include <folly/Executor.h>
 
 namespace devmand::channels::cli {
 
@@ -21,8 +21,9 @@ using devmand::channels::cli::Cli;
 using devmand::channels::cli::CliFlavour;
 using namespace std;
 
-using folly::IOThreadPoolExecutor;
+using folly::Executor;
 using folly::SemiFuture;
+using folly::Timekeeper;
 
 static constexpr auto configKeepAliveIntervalSeconds =
     "keepAliveIntervalSeconds";
@@ -30,7 +31,15 @@ static constexpr auto configMaxCommandTimeoutSeconds =
     "maxCommandTimeoutSeconds";
 
 class IoConfigurationBuilder {
- private:
+ public:
+  IoConfigurationBuilder(
+      const DeviceConfig& deviceConfig,
+      channels::cli::Engine& engine);
+
+  ~IoConfigurationBuilder();
+
+  shared_ptr<Cli> createAll(shared_ptr<CliCache> commandCache);
+
   struct ConnectionParameters {
     string username;
     string password;
@@ -40,17 +49,17 @@ class IoConfigurationBuilder {
     shared_ptr<CliFlavour> flavour;
     chrono::seconds kaTimeout;
     chrono::seconds cmdTimeout;
+    shared_ptr<Timekeeper> timekeeper;
+    shared_ptr<Executor> sshExecutor;
+    shared_ptr<Executor> paExecutor;
+    shared_ptr<Executor> rcExecutor;
+    shared_ptr<Executor> ttExecutor;
+    shared_ptr<Executor> qExecutor;
+    shared_ptr<Executor> rExecutor;
+    shared_ptr<Executor> kaExecutor;
   };
 
- public:
-  IoConfigurationBuilder(const DeviceConfig& deviceConfig);
-
-  ~IoConfigurationBuilder();
-
-  shared_ptr<Cli> createAll(shared_ptr<CliCache> commandCache);
-
   static Future<shared_ptr<Cli>> createPromptAwareCli(
-      shared_ptr<folly::Executor> executor,
       shared_ptr<ConnectionParameters> params);
 
   static shared_ptr<ConnectionParameters> makeConnectionParameters(
@@ -61,7 +70,15 @@ class IoConfigurationBuilder {
       string flavour,
       int port,
       chrono::seconds kaTimeout,
-      chrono::seconds cmdTimeout);
+      chrono::seconds cmdTimeout,
+      shared_ptr<Timekeeper> timekeeper,
+      shared_ptr<Executor> sshExecutor,
+      shared_ptr<Executor> paExecutor,
+      shared_ptr<Executor> rcExecutor,
+      shared_ptr<Executor> ttExecutor,
+      shared_ptr<Executor> qExecutor,
+      shared_ptr<Executor> rExecutor,
+      shared_ptr<Executor> kaExecutor);
 
  private:
   shared_ptr<ConnectionParameters> connectionParameters;

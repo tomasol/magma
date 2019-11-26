@@ -31,7 +31,7 @@ class TimeoutTrackingCli : public Cli {
   static shared_ptr<TimeoutTrackingCli> make(
       string id,
       shared_ptr<Cli> cli,
-      shared_ptr<folly::ThreadWheelTimekeeper> timekeeper,
+      shared_ptr<folly::Timekeeper> timekeeper,
       shared_ptr<folly::Executor> executor,
       std::chrono::milliseconds _timeoutInterval = defaultCommandTimeout);
 
@@ -45,7 +45,7 @@ class TimeoutTrackingCli : public Cli {
   struct TimeoutTrackingParameters {
     string id;
     shared_ptr<Cli> cli; // underlying cli layer
-    shared_ptr<folly::ThreadWheelTimekeeper> timekeeper;
+    shared_ptr<folly::Timekeeper> timekeeper;
     shared_ptr<folly::Executor> executor;
     const std::chrono::milliseconds timeoutInterval;
     atomic<bool> shutdown;
@@ -55,7 +55,7 @@ class TimeoutTrackingCli : public Cli {
   TimeoutTrackingCli(
       string id,
       shared_ptr<Cli> _cli,
-      shared_ptr<folly::ThreadWheelTimekeeper> _timekeeper,
+      shared_ptr<folly::Timekeeper> _timekeeper,
       shared_ptr<folly::Executor> _executor,
       std::chrono::milliseconds _timeoutInterval);
 

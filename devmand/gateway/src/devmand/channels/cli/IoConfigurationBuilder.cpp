@@ -20,8 +20,6 @@
 #include <devmand/channels/cli/SshSocketReader.h>
 #include <devmand/channels/cli/TimeoutTrackingCli.h>
 #include <folly/Singleton.h>
-#include <folly/executors/CPUThreadPoolExecutor.h>
-#include <folly/executors/IOThreadPoolExecutor.h>
 
 namespace devmand {
 namespace channels {
@@ -32,12 +30,11 @@ using devmand::channels::cli::SshSocketReader;
 using devmand::channels::cli::sshsession::readCallback;
 using devmand::channels::cli::sshsession::SshSession;
 using devmand::channels::cli::sshsession::SshSessionAsync;
-using folly::CPUThreadPoolExecutor;
 using folly::EvictingCacheMap;
-using folly::IOThreadPoolExecutor;
 
 IoConfigurationBuilder::IoConfigurationBuilder(
-    const DeviceConfig& deviceConfig) {
+    const DeviceConfig& deviceConfig,
+    channels::cli::Engine& engine) {
   const std::map<std::string, std::string>& plaintextCliKv =
       deviceConfig.channelConfigs.at("cli").kvPairs;
 
@@ -57,7 +54,15 @@ IoConfigurationBuilder::IoConfigurationBuilder(
       loadTimeout(
           plaintextCliKv,
           configMaxCommandTimeoutSeconds,
-          defaultCommandTimeout));
+          defaultCommandTimeout),
+      engine.getTimekeeper(),
+      engine.getExecutor(Engine::executorRequestType::sshCli),
+      engine.getExecutor(Engine::executorRequestType::paCli),
+      engine.getExecutor(Engine::executorRequestType::rcCli),
+      engine.getExecutor(Engine::executorRequestType::ttCli),
+      engine.getExecutor(Engine::executorRequestType::qCli),
+      engine.getExecutor(Engine::executorRequestType::rCli),
+      engine.getExecutor(Engine::executorRequestType::kaCli));
 }
 
 IoConfigurationBuilder::~IoConfigurationBuilder() {
@@ -82,107 +87,72 @@ chrono::seconds IoConfigurationBuilder::loadTimeout(
 
 shared_ptr<Cli> IoConfigurationBuilder::createAllUsingFactory(
     shared_ptr<CliCache> commandCache) {
-  shared_ptr<folly::ThreadWheelTimekeeper> timekeeper =
-      make_shared<folly::ThreadWheelTimekeeper>(); // TODO use singleton when
-                                                   // folly is initialized
-
-  // TODO make Executor sharing configurable
-  shared_ptr<IOThreadPoolExecutor> executor = make_shared<IOThreadPoolExecutor>(
-      10, std::make_shared<NamedThreadFactory>("persession"));
-
-  shared_ptr<IOThreadPoolExecutor> rccliExecutor =
-      make_shared<IOThreadPoolExecutor>(
-          1, std::make_shared<NamedThreadFactory>("rccli"));
-
   function<SemiFuture<shared_ptr<Cli>>()> cliFactory =
-      [executor,
-       params = connectionParameters,
-       timekeeper,
-       commandCache,
-       rccliExecutor]() {
-        return createPromptAwareCli(executor, params)
-            .via(executor.get())
-            .thenValue(
-                [executor, params, commandCache, timekeeper, rccliExecutor](
-                    shared_ptr<Cli> sshCli) -> shared_ptr<Cli> {
-                  MLOG(MDEBUG) << "[" << params->id
-                               << "] "
-                                  "Creating cli layers rcclli, ttcli, qcli";
-                  // create caching cli
-                  const shared_ptr<ReadCachingCli>& rccli =
-                      std::make_shared<ReadCachingCli>(
-                          params->id, sshCli, commandCache, rccliExecutor);
-                  // create timeout tracker
-                  shared_ptr<TimeoutTrackingCli> ttcli =
-                      TimeoutTrackingCli::make(
-                          params->id,
-                          rccli,
-                          timekeeper,
-                          std::make_shared<folly::CPUThreadPoolExecutor>(
-                              5, std::make_shared<NamedThreadFactory>("ttcli")),
-                          params->cmdTimeout);
-                  // create Queued cli
-                  shared_ptr<QueuedCli> qcli = QueuedCli::make(
-                      params->id,
-                      ttcli,
-                      std::make_shared<folly::CPUThreadPoolExecutor>(
-                          2, std::make_shared<NamedThreadFactory>("qcli")));
-                  return qcli;
-                });
+      [params = connectionParameters, commandCache]() {
+        return createPromptAwareCli(params).thenValue(
+            [params, commandCache](shared_ptr<Cli> sshCli) -> shared_ptr<Cli> {
+              MLOG(MDEBUG) << "[" << params->id << "] "
+                           << "Creating cli layers rcclli, ttcli, qcli";
+              // create caching cli
+              const shared_ptr<ReadCachingCli>& rccli =
+                  std::make_shared<ReadCachingCli>(
+                      params->id, sshCli, commandCache, params->rcExecutor);
+              // create timeout tracker
+              shared_ptr<TimeoutTrackingCli> ttcli = TimeoutTrackingCli::make(
+                  params->id,
+                  rccli,
+                  params->timekeeper,
+                  params->ttExecutor,
+                  params->cmdTimeout);
+              // create Queued cli
+              shared_ptr<QueuedCli> qcli =
+                  QueuedCli::make(params->id, ttcli, params->qExecutor);
+              return qcli;
+            });
       };
 
   // create reconnecting cli that uses cliFactory to establish ssh connection
-  shared_ptr<CPUThreadPoolExecutor> rExecutor =
-      std::make_shared<CPUThreadPoolExecutor>(
-          2, std::make_shared<NamedThreadFactory>("rcli"));
   shared_ptr<ReconnectingCli> rcli = ReconnectingCli::make(
-      connectionParameters->id, rExecutor, move(cliFactory), timekeeper);
+      connectionParameters->id,
+      connectionParameters->rExecutor,
+      move(cliFactory),
+      connectionParameters->timekeeper);
   // create keepalive cli
-  shared_ptr<CPUThreadPoolExecutor> kaExecutor =
-      std::make_shared<CPUThreadPoolExecutor>(
-          2, std::make_shared<NamedThreadFactory>("kacli"));
-
   shared_ptr<KeepaliveCli> kaCli = KeepaliveCli::make(
       connectionParameters->id,
       rcli,
-      kaExecutor,
-      timekeeper,
+      connectionParameters->kaExecutor,
+      connectionParameters->timekeeper,
       connectionParameters->kaTimeout);
   return kaCli;
 }
 
 Future<shared_ptr<Cli>> IoConfigurationBuilder::createPromptAwareCli(
-    shared_ptr<folly::Executor> executor,
     shared_ptr<ConnectionParameters> params) {
   MLOG(MDEBUG) << "Creating CLI ssh device for " << params->id << " ("
                << params->ip << ":" << params->port << ")";
 
   // create session
   std::shared_ptr<SshSessionAsync> session =
-      std::make_shared<SshSessionAsync>(params->id, executor);
+      std::make_shared<SshSessionAsync>(params->id, params->sshExecutor);
   // open SSH connection
 
-  MLOG(MDEBUG) << "[" << params->id
-               << "] "
-                  "Opening shell";
+  MLOG(MDEBUG) << "[" << params->id << "] "
+               << "Opening shell";
   // TODO: do this using future chaining
   session
       ->openShell(params->ip, params->port, params->username, params->password)
       .get();
 
-  MLOG(MDEBUG) << "[" << params->id
-               << "] "
-                  "Setting flavour";
+  MLOG(MDEBUG) << "[" << params->id << "] "
+               << "Setting flavour";
   shared_ptr<CliFlavour> cl = params->flavour;
-  const shared_ptr<IOThreadPoolExecutor>& pacli =
-      std::make_shared<IOThreadPoolExecutor>(
-          1, std::make_shared<NamedThreadFactory>("pacli"));
+
   // create CLI
   shared_ptr<PromptAwareCli> cli =
-      PromptAwareCli::make(params->id, session, cl, pacli);
-  MLOG(MDEBUG) << "[" << params->id
-               << "] "
-                  "Initializing cli";
+      PromptAwareCli::make(params->id, session, cl, params->paExecutor);
+  MLOG(MDEBUG) << "[" << params->id << "] "
+               << "Initializing cli";
   // initialize CLI
   // TODO: do this using future chaining:
   //  via(executor.get())
@@ -191,21 +161,18 @@ Future<shared_ptr<Cli>> IoConfigurationBuilder::createPromptAwareCli(
 
   cli->initializeCli(params->password).get();
   // resolve prompt needs to happen
-  MLOG(MDEBUG) << "[" << params->id
-               << "] "
-                  "Resolving prompt";
+  MLOG(MDEBUG) << "[" << params->id << "] "
+               << "Resolving prompt";
   // TODO: do this using future chaining
   cli->resolvePrompt().get();
 
-  MLOG(MDEBUG) << "[" << params->id
-               << "] "
-                  "Creating async data reader";
+  MLOG(MDEBUG) << "[" << params->id << "] "
+               << "Creating async data reader";
   event* sessionEvent = SshSocketReader::getInstance().addSshReader(
       readCallback, session->getSshFd(), session.get());
   session->setEvent(sessionEvent);
-  MLOG(MDEBUG) << "[" << params->id
-               << "] "
-                  "SSH layer configured";
+  MLOG(MDEBUG) << "[" << params->id << "] "
+               << "SSH layer configured";
   return makeFuture(cli);
 }
 
@@ -218,7 +185,15 @@ IoConfigurationBuilder::makeConnectionParameters(
     string flavour,
     int port,
     chrono::seconds kaTimeout,
-    chrono::seconds cmdTimeout) {
+    chrono::seconds cmdTimeout,
+    shared_ptr<Timekeeper> timekeeper,
+    shared_ptr<Executor> sshExecutor,
+    shared_ptr<Executor> paExecutor,
+    shared_ptr<Executor> rcExecutor,
+    shared_ptr<Executor> ttExecutor,
+    shared_ptr<Executor> qExecutor,
+    shared_ptr<Executor> rExecutor,
+    shared_ptr<Executor> kaExecutor) {
   shared_ptr<IoConfigurationBuilder::ConnectionParameters>
       connectionParameters =
           make_shared<IoConfigurationBuilder::ConnectionParameters>();
@@ -230,6 +205,16 @@ IoConfigurationBuilder::makeConnectionParameters(
   connectionParameters->flavour = CliFlavour::create(flavour);
   connectionParameters->kaTimeout = kaTimeout;
   connectionParameters->cmdTimeout = cmdTimeout;
+
+  connectionParameters->timekeeper = timekeeper;
+  connectionParameters->sshExecutor = sshExecutor;
+  connectionParameters->paExecutor = paExecutor;
+  connectionParameters->rcExecutor = rcExecutor;
+  connectionParameters->ttExecutor = ttExecutor;
+  connectionParameters->qExecutor = qExecutor;
+  connectionParameters->rExecutor = rExecutor;
+  connectionParameters->kaExecutor = kaExecutor;
+
   return connectionParameters;
 }
 

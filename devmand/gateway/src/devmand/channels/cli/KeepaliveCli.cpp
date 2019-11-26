@@ -19,7 +19,7 @@ shared_ptr<KeepaliveCli> KeepaliveCli::make(
     string id,
     shared_ptr<Cli> cli,
     shared_ptr<folly::Executor> parentExecutor,
-    shared_ptr<folly::ThreadWheelTimekeeper> timekeeper,
+    shared_ptr<folly::Timekeeper> timekeeper,
     chrono::milliseconds heartbeatInterval,
     string keepAliveCommand,
     chrono::milliseconds backoffAfterKeepaliveTimeout) {
@@ -39,7 +39,7 @@ KeepaliveCli::KeepaliveCli(
     string _id,
     shared_ptr<Cli> _cli,
     shared_ptr<Executor> _parentExecutor,
-    shared_ptr<ThreadWheelTimekeeper> _timekeeper,
+    shared_ptr<Timekeeper> _timekeeper,
     chrono::milliseconds _heartbeatInterval,
     string _keepAliveCommand,
     chrono::milliseconds _backoffAfterKeepaliveTimeout) {
