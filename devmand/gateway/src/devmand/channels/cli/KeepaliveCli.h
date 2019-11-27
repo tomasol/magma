@@ -22,7 +22,7 @@ static constexpr chrono::seconds defaultKeepaliveInterval = chrono::seconds(60);
 // CLI layer that should be above QueuedCli. Periodically schedules keepalive
 // command to prevent dropping
 // of inactive connection.
-class KeepaliveCli : public Cli, public enable_shared_from_this<KeepaliveCli> {
+class KeepaliveCli : public Cli {
  public:
   static shared_ptr<KeepaliveCli> make(
       string id,
@@ -31,8 +31,7 @@ class KeepaliveCli : public Cli, public enable_shared_from_this<KeepaliveCli> {
       shared_ptr<folly::ThreadWheelTimekeeper> _timekeeper,
       chrono::milliseconds heartbeatInterval = defaultKeepaliveInterval,
       ReadCommand&& keepAliveCommand = ReadCommand::create("", true),
-      chrono::milliseconds backoffAfterKeepaliveTimeout = // TODO: remove
-      chrono::seconds(5));
+      chrono::milliseconds backoffAfterKeepaliveTimeout = chrono::seconds(5));
 
   ~KeepaliveCli() override;
 
@@ -41,15 +40,21 @@ class KeepaliveCli : public Cli, public enable_shared_from_this<KeepaliveCli> {
   folly::Future<string> executeWrite(const WriteCommand cmd) override;
 
  private:
-  string id;
-  shared_ptr<Cli> cli; // underlying cli layer
-  shared_ptr<folly::ThreadWheelTimekeeper> timekeeper;
-  shared_ptr<folly::Executor> parentExecutor;
-  folly::Executor::KeepAlive<folly::SerialExecutor> serialExecutorKeepAlive;
-  const ReadCommand keepAliveCommand;
-  const chrono::milliseconds heartbeatInterval;
-  const chrono::milliseconds backoffAfterKeepaliveTimeout;
-  atomic<bool> shutdown;
+  struct KeepaliveParameters {
+    string id;
+    shared_ptr<Cli> cli; // underlying cli layer
+    shared_ptr<folly::ThreadWheelTimekeeper> timekeeper;
+    shared_ptr<folly::Executor> parentExecutor;
+    folly::Executor::KeepAlive<folly::SerialExecutor> serialExecutorKeepAlive;
+    ReadCommand keepAliveCommand;
+    chrono::milliseconds heartbeatInterval;
+    chrono::milliseconds backoffAfterKeepaliveTimeout;
+    atomic<bool> shutdown;
+
+    KeepaliveParameters(KeepaliveParameters&&) = default;
+  };
+
+  shared_ptr<KeepaliveParameters> keepaliveParameters;
 
   KeepaliveCli(
       string id,
@@ -58,11 +63,9 @@ class KeepaliveCli : public Cli, public enable_shared_from_this<KeepaliveCli> {
       shared_ptr<folly::ThreadWheelTimekeeper> _timekeeper,
       chrono::milliseconds heartbeatInterval,
       ReadCommand&& keepAliveCommand,
-      chrono::milliseconds backoffAfterKeepaliveTimeout // TODO: remove
-  );
+      chrono::milliseconds backoffAfterKeepaliveTimeout);
 
-  void scheduleNextPing(folly::Future<string> keepAliveCmdFuture);
-
-  void sendKeepAliveCommand();
+  static void triggerSendKeepAliveCommand(
+      shared_ptr<KeepaliveParameters> keepaliveParameters);
 };
 } // namespace devmand::channels::cli
