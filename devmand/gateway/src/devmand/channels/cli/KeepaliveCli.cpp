@@ -32,7 +32,6 @@ shared_ptr<KeepaliveCli> KeepaliveCli::make(
           heartbeatInterval,
           move(keepAliveCommand),
           backoffAfterKeepaliveTimeout));
-  result->sendKeepAliveCommand();
   return result;
 }
 
@@ -43,96 +42,101 @@ KeepaliveCli::KeepaliveCli(
     shared_ptr<ThreadWheelTimekeeper> _timekeeper,
     chrono::milliseconds _heartbeatInterval,
     ReadCommand&& _keepAliveCommand,
-    chrono::milliseconds _backoffAfterKeepaliveTimeout)
-    : id(_id),
-      cli(_cli),
-      timekeeper(_timekeeper),
-      parentExecutor(_parentExecutor),
-      serialExecutorKeepAlive(SerialExecutor::create(
-          Executor::getKeepAliveToken(_parentExecutor.get()))),
-      keepAliveCommand(_keepAliveCommand),
-      heartbeatInterval(_heartbeatInterval),
-      backoffAfterKeepaliveTimeout(_backoffAfterKeepaliveTimeout) {
+    chrono::milliseconds _backoffAfterKeepaliveTimeout) {
   assert(_keepAliveCommand.skipCache());
-  shutdown = false;
-  MLOG(MDEBUG) << "[" << id << "] "
+
+  keepaliveParameters = shared_ptr<KeepaliveParameters>(new KeepaliveParameters{
+      /* id */ _id,
+      /* cli */ _cli,
+      /* timekeeper */ _timekeeper,
+      /* parentExecutor */ _parentExecutor,
+      /* serialExecutorKeepAlive */
+      SerialExecutor::create(
+          Executor::getKeepAliveToken(_parentExecutor.get())),
+      /* keepAliveCommand */ move(_keepAliveCommand),
+      /* heartbeatInterval */ _heartbeatInterval,
+      /* backoffAfterKeepaliveTimeout */ _backoffAfterKeepaliveTimeout,
+      /* shutdown */ {false}});
+
+  MLOG(MDEBUG) << "[" << _id << "] "
                << "initialized";
+  triggerSendKeepAliveCommand(keepaliveParameters);
 }
 
 KeepaliveCli::~KeepaliveCli() {
-  MLOG(MDEBUG) << "[" << id << "] "
-               << "Destructor started";
-  shutdown = true;
-  serialExecutorKeepAlive = nullptr;
-  parentExecutor = nullptr;
-  cli = nullptr;
-  timekeeper = nullptr;
-  MLOG(MDEBUG) << "[" << id << "] "
-               << "Destructor done";
+  keepaliveParameters->shutdown = true;
+  MLOG(MDEBUG) << "[" << keepaliveParameters->id << "] "
+               << "~KeepaliveCli";
+  while (keepaliveParameters.use_count() >
+         1) { // TODO cancel currently running future
+    MLOG(MDEBUG) << "[" << keepaliveParameters->id << "] "
+                 << "~KeepaliveCli sleeping";
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+  }
+  MLOG(MDEBUG) << "[" << keepaliveParameters->id << "] "
+               << "~KeepaliveCli done";
 }
 
-void KeepaliveCli::sendKeepAliveCommand() {
-  if (shutdown)
+void KeepaliveCli::triggerSendKeepAliveCommand(
+    shared_ptr<KeepaliveParameters> keepaliveParameters) {
+  if (keepaliveParameters->shutdown) {
+    MLOG(MDEBUG) << "[" << keepaliveParameters->id << "] "
+                 << "triggerSendKeepAliveCommand shutting down";
     return;
-  MLOG(MDEBUG) << "[" << id << "] "
-               << "sendKeepAliveCommand";
-  Future<string> result =
-      via(serialExecutorKeepAlive).thenValue([dis = shared_from_this()](auto) {
-        if (dis->shutdown)
-          throw runtime_error("KACli: Shutting down");
-        MLOG(MDEBUG) << "[" << dis->id << "] "
-                     << "sendKeepAliveCommand executing keepalive command";
-        return dis->executeRead(dis->keepAliveCommand);
-      });
+  }
+  MLOG(MDEBUG) << "[" << keepaliveParameters->id << "] "
+               << "triggerSendKeepAliveCommand";
 
-  scheduleNextPing(move(result));
-  MLOG(MDEBUG) << "[" << id << "] "
-               << "sendKeepAliveCommand() done";
-}
-
-void KeepaliveCli::scheduleNextPing(Future<string> keepAliveCmdFuture) {
-  if (shutdown)
-    return;
-  MLOG(MDEBUG) << "[" << id << "] "
-               << "scheduleNextPing";
-  move(keepAliveCmdFuture)
-      .via(serialExecutorKeepAlive)
-      .thenValue([dis = shared_from_this()](auto) -> SemiFuture<Unit> {
-        MLOG(MDEBUG) << "[" << dis->id << "] "
-                     << "Creating sleep future";
-        return futures::sleep(dis->heartbeatInterval, dis->timekeeper.get());
+  via(keepaliveParameters->serialExecutorKeepAlive)
+      .thenValue([params = keepaliveParameters](auto) {
+        MLOG(MDEBUG)
+            << "[" << params->id << "] "
+            << "triggerSendKeepAliveCommand executing keepalive command";
+        return params->cli->executeRead(params->keepAliveCommand);
       })
-      .thenValue([dis = shared_from_this()](auto) -> Unit {
-        MLOG(MDEBUG) << "[" << dis->id << "] "
+      .thenValue([params = keepaliveParameters](auto) -> SemiFuture<Unit> {
+        MLOG(MDEBUG) << "[" << params->id << "] "
+                     << "Creating sleep future";
+        return futures::sleep(
+            params->heartbeatInterval, params->timekeeper.get());
+      })
+      .thenValue([keepaliveParameters](auto) -> Unit {
+        MLOG(MDEBUG) << "[" << keepaliveParameters->id << "] "
                      << "Woke up after sleep";
-        dis->sendKeepAliveCommand();
+        triggerSendKeepAliveCommand(keepaliveParameters);
         return Unit{};
       })
       .thenError(
           folly::tag_t<std::exception>{},
-          [dis = shared_from_this()](std::exception const& e) -> Future<Unit> {
+          [params =
+               keepaliveParameters](std::exception const& e) -> Future<Unit> {
             MLOG(MINFO)
-                << "[" << dis->id << "] "
+                << "[" << params->id << "] "
                 << "Got error running keepalive, backing off "
                 << e.what(); // FIXME: real exception is not propagated here
-            if (dis->shutdown)
-              return Unit{}; // sleep might hang
-            std::this_thread::sleep_for(
-                dis->backoffAfterKeepaliveTimeout); // TODO: sleep via futures
-                                                    // if possible
-            MLOG(MDEBUG) << "[" << dis->id << "] "
-                         << "Woke up after backing off";
-            dis->sendKeepAliveCommand();
-            return Unit{};
+
+            return futures::sleep(
+                       params->backoffAfterKeepaliveTimeout,
+                       params->timekeeper.get())
+                .via(params->serialExecutorKeepAlive)
+                .thenValue([params](auto) -> Unit {
+                  MLOG(MDEBUG) << "[" << params->id << "] "
+                               << "Woke up after backing off";
+                  triggerSendKeepAliveCommand(params);
+                  return Unit{};
+                });
           });
+
+  MLOG(MDEBUG) << "[" << keepaliveParameters->id << "] "
+               << "triggerSendKeepAliveCommand() done";
 }
 
 Future<string> KeepaliveCli::executeRead(const ReadCommand cmd) {
-  return cli->executeRead(cmd);
+  return keepaliveParameters->cli->executeRead(cmd);
 }
 
 Future<string> KeepaliveCli::executeWrite(const WriteCommand cmd) {
-  return cli->executeWrite(cmd);
+  return keepaliveParameters->cli->executeWrite(cmd);
 }
 
 } // namespace devmand::channels::cli
