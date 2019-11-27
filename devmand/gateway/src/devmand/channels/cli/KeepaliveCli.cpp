@@ -23,14 +23,17 @@ shared_ptr<KeepaliveCli> KeepaliveCli::make(
     chrono::milliseconds heartbeatInterval,
     ReadCommand&& keepAliveCommand,
     chrono::milliseconds backoffAfterKeepaliveTimeout) {
-  return shared_ptr<KeepaliveCli>(new KeepaliveCli(
-      id,
-      cli,
-      parentExecutor,
-      timekeeper,
-      heartbeatInterval,
-      move(keepAliveCommand),
-      backoffAfterKeepaliveTimeout));
+  const shared_ptr<KeepaliveCli>& result =
+      shared_ptr<KeepaliveCli>(new KeepaliveCli(
+          id,
+          cli,
+          parentExecutor,
+          timekeeper,
+          heartbeatInterval,
+          move(keepAliveCommand),
+          backoffAfterKeepaliveTimeout));
+  result->sendKeepAliveCommand();
+  return result;
 }
 
 KeepaliveCli::KeepaliveCli(
@@ -130,10 +133,6 @@ Future<string> KeepaliveCli::executeRead(const ReadCommand cmd) {
 
 Future<string> KeepaliveCli::executeWrite(const WriteCommand cmd) {
   return cli->executeWrite(cmd);
-}
-
-void KeepaliveCli::start() {
-  sendKeepAliveCommand();
 }
 
 } // namespace devmand::channels::cli
