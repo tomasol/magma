@@ -129,7 +129,11 @@ Future<string> ReconnectingCli::executeSomething(
     const function<Future<string>(shared_ptr<Cli>)>& innerFunc,
     const string&& loggingSuffix) {
   shared_ptr<Cli> cliOrNull = nullptr;
-  {
+  if (reconnectParameters->isReconnecting) {
+    return makeFuture<string>(runtime_error("Not connected"));
+  }
+  { // TODO: trylock and throw on already locked. This means reconnect is in
+    // progress
     boost::mutex::scoped_lock scoped_lock(reconnectParameters->cliMutex);
     cliOrNull = reconnectParameters->maybeCli;
   }
@@ -155,9 +159,6 @@ Future<string> ReconnectingCli::executeSomething(
 
               dis->triggerReconnect(dis->reconnectParameters);
               auto cpException = runtime_error(e.what());
-              MLOG(MDEBUG) << "[" << dis->reconnectParameters->id << "] "
-                           << loggingPrefix << " copied exception "
-                           << cpException.what();
               // TODO: exception type is not preserved,
               // queueEntry.promise->setException(e) results in std::exception
               throw cpException;
