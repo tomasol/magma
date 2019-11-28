@@ -22,16 +22,8 @@ using boost::recursive_mutex;
 /*
  * TODO: throw exception when queue is full
  */
-class QueuedCli : public Cli, public enable_shared_from_this<QueuedCli> {
+class QueuedCli : public Cli {
  private:
-  string id;
-  shared_ptr<Cli> cli;
-
-  shared_ptr<Executor> parentExecutor;
-
-  Executor::KeepAlive<SerialExecutor>
-      serialExecutorKeepAlive; // maintain consumer thread
-
   struct QueueEntry {
     function<Future<string>()> obtainFutureFromCli;
     shared_ptr<Promise<string>> promise;
@@ -39,16 +31,29 @@ class QueuedCli : public Cli, public enable_shared_from_this<QueuedCli> {
     string loggingPrefix;
   };
 
-  /**
-   * Unbounded multi producer single consumer queue where consumer is not
-   * blocked on dequeue.
-   */
-  UnboundedQueue<QueueEntry, false, true, false>
-      queue; // TODO: investigate priority queue for keepalive commands
+  struct QueuedParameters {
+    string id;
+    shared_ptr<Cli> cli;
 
-  atomic<bool> isProcessing;
+    shared_ptr<Executor> parentExecutor;
 
-  atomic<bool> shutdown;
+    Executor::KeepAlive<SerialExecutor>
+        serialExecutorKeepAlive; // maintain consumer thread
+
+    /**
+     * Unbounded multi producer single consumer queue where consumer is not
+     * blocked on dequeue.
+     */
+    UnboundedQueue<QueueEntry, false, true, false>
+        queue; // TODO: investigate priority queue for keepalive commands
+
+    atomic<bool> isProcessing;
+
+    atomic<bool> shutdown;
+
+    recursive_mutex mutex;
+  };
+  shared_ptr<QueuedParameters> queuedParameters;
 
   QueuedCli(
       string id,
@@ -60,8 +65,7 @@ class QueuedCli : public Cli, public enable_shared_from_this<QueuedCli> {
       const string& prefix,
       function<Future<string>()> innerFunc);
 
-  void triggerDequeue();
-  recursive_mutex mutex;
+  static void triggerDequeue(shared_ptr<QueuedParameters> queuedParameters);
 
  public:
   static std::shared_ptr<QueuedCli>
