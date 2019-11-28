@@ -26,8 +26,7 @@ static constexpr std::chrono::seconds defaultCommandTimeout =
 // FutureTimeout if Future returned by
 // underlying layer does not return result within specified time period
 // (timeout).
-class TimeoutTrackingCli : public Cli,
-                           public enable_shared_from_this<TimeoutTrackingCli> {
+class TimeoutTrackingCli : public Cli {
  public:
   static shared_ptr<TimeoutTrackingCli> make(
       string id,

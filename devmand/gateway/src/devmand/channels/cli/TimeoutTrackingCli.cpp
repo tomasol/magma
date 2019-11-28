@@ -41,11 +41,16 @@ TimeoutTrackingCli::TimeoutTrackingCli(
 
 TimeoutTrackingCli::~TimeoutTrackingCli() {
   MLOG(MDEBUG) << "[" << id << "] "
-               << "~TTCli";
+               << "~TTCli started";
   shutdown = true;
-  executor = nullptr;
-  timekeeper = nullptr;
   cli = nullptr;
+  MLOG(MDEBUG) << "[" << id << "] "
+               << "~TTCli cli nulled";
+  executor = nullptr;
+  MLOG(MDEBUG) << "[" << id << "] "
+               << "~TTCli executor nulled";
+  timekeeper = nullptr;
+
   MLOG(MDEBUG) << "[" << id << "] "
                << "~TTCli done";
 }
@@ -68,10 +73,13 @@ Future<string> TimeoutTrackingCli::executeSomething(
     const function<Future<string>()>& innerFunc) {
   MLOG(MDEBUG) << "[" << id << "] " << loggingPrefix << "('" << cmd
                << "') called";
+  if (shutdown) {
+    return Future<string>(runtime_error("TTCli Shutting down"));
+  }
   Future<string> inner =
       innerFunc(); // we expect that this method does not block
-  if (shutdown)
-    throw runtime_error("TTCli Shutting down");
+  MLOG(MDEBUG) << "[" << id << "] " << loggingPrefix << "('" << cmd
+               << "') obtained future from underlying cli";
   return move(inner)
       .via(executor.get())
       .onTimeout(
