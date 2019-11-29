@@ -164,7 +164,7 @@ Future<shared_ptr<Cli>> IoConfigurationBuilder::createPromptAwareCli(
   shared_ptr<CliFlavour> cl = params->flavour;
   // create CLI
   shared_ptr<PromptAwareCli> cli =
-      std::make_shared<PromptAwareCli>(session, cl);
+      std::make_shared<PromptAwareCli>(params->id, session, cl);
   MLOG(MDEBUG) << "[" << params->id
                << "] "
                   "Initializing cli";

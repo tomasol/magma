@@ -24,25 +24,24 @@ using folly::Unit;
 using std::shared_ptr;
 using std::string;
 
-class PromptAwareCli : public Cli,
-                       public std::enable_shared_from_this<PromptAwareCli> {
+class PromptAwareCli : public Cli {
  private:
-  shared_ptr<SshSessionAsync> session;
-  shared_ptr<CliFlavour> cliFlavour;
+  struct PromptAwareParameters {
+    string id;
+    shared_ptr<SshSessionAsync> session;
+    shared_ptr<CliFlavour> cliFlavour;
+    string prompt;
+  };
+  shared_ptr<PromptAwareParameters> promptAwareParameters;
 
  public:
   PromptAwareCli(
+      string id,
       shared_ptr<SshSessionAsync> session,
       shared_ptr<CliFlavour> cliFlavour);
 
-  string prompt;
+  ~PromptAwareCli();
 
- public:
-  void init(
-      const string hostname,
-      const int port,
-      const string username,
-      const string password);
   SemiFuture<Unit> resolvePrompt();
   SemiFuture<Unit> initializeCli(const string secret);
   folly::Future<std::string> executeRead(const ReadCommand cmd);
