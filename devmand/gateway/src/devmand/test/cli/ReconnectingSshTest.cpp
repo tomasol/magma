@@ -118,10 +118,7 @@ TEST_F(ReconnectingSshTest, commandTimeout) {
 
   ssh->close();
   ssh = startSshServer();
-
-  // FIXME
-  std::this_thread::sleep_for(std::chrono::seconds(50));
-  //  ensureConnected(cli);
+  ensureConnected(cli);
 }
 
 TEST_F(ReconnectingSshTest, serverDisconnectSendCommands) {
