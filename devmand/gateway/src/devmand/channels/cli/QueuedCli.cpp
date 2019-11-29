@@ -36,24 +36,44 @@ QueuedCli::QueuedCli(
 }
 
 QueuedCli::~QueuedCli() {
-  MLOG(MDEBUG) << "[" << queuedParameters->id << "] "
-               << "~QCli";
+  string id = queuedParameters->id;
+  MLOG(MDEBUG) << "[" << id << "] "
+               << "~QCli started";
   queuedParameters->shutdown = true;
-  MLOG(MDEBUG) << "[" << queuedParameters->id << "] "
+  MLOG(MDEBUG) << "[" << id << "] "
                << "~QCli: dequeuing " << queuedParameters->queue.size()
                << " items";
   QueueEntry queueEntry;
   while (queuedParameters->queue.try_dequeue(queueEntry)) {
+    MLOG(MDEBUG) << "[" << id << "] (" << queueEntry.command.getIdx() << ") "
+                 << "~QCli: fulfilling promise with exception";
     queueEntry.promise->setException(runtime_error("QCli: Shutting down"));
   }
+  MLOG(MDEBUG) << "[" << id << "] "
+               << "~QCli nulling cli with refcount:"
+               << queuedParameters->cli.use_count();
+  queuedParameters->cli = nullptr;
+  MLOG(MDEBUG) << "[" << id << "] "
+               << "~QCli cli nulled";
+
+  queuedParameters->serialExecutorKeepAlive = nullptr;
+  MLOG(MDEBUG) << "[" << id << "] "
+               << "~QCli serialExecutorKeepAlive nulled";
+
+  MLOG(MDEBUG) << "[" << id << "] "
+               << "~QCli nulling parentExecutor with refcount:"
+               << queuedParameters->parentExecutor.use_count();
+  queuedParameters->parentExecutor = nullptr;
+  MLOG(MDEBUG) << "[" << id << "] "
+               << "~QCli parentExecutor nulled";
 
   while (queuedParameters.use_count() >
          1) { // TODO cancel currently running future
-    MLOG(MDEBUG) << "[" << queuedParameters->id << "] "
+    MLOG(MDEBUG) << "[" << id << "] "
                  << "~QCli sleeping";
     std::this_thread::sleep_for(std::chrono::seconds(1));
   }
-  string id = queuedParameters->id;
+
   queuedParameters = nullptr;
 
   MLOG(MDEBUG) << "[" << id << "] "
@@ -137,7 +157,7 @@ void QueuedCli::triggerDequeue(shared_ptr<QueuedParameters> queuedParameters) {
         if (params->shutdown) {
           MLOG(MDEBUG) << "[" << params->id << "] ("
                        << queueEntry.command.getIdx() << ") "
-                       << " Shutting down";
+                       << queueEntry.loggingPrefix << " Shutting down";
           queueEntry.promise->setException(
               runtime_error("QCli: Shutting down"));
           return;
@@ -146,8 +166,8 @@ void QueuedCli::triggerDequeue(shared_ptr<QueuedParameters> queuedParameters) {
         Future<string> cliFuture = queueEntry.obtainFutureFromCli();
         MLOG(MDEBUG) << "[" << params->id << "] ("
                      << queueEntry.command.getIdx() << ") "
-                     << queueEntry.loggingPrefix << " dequeued ('"
-                     << queueEntry.command << "') and cli future obtained";
+                     << queueEntry.loggingPrefix
+                     << " dequeued and cli future obtained";
         move(cliFuture)
             .via(params->serialExecutorKeepAlive)
             .then(
@@ -157,9 +177,7 @@ void QueuedCli::triggerDequeue(shared_ptr<QueuedParameters> queuedParameters) {
                   // thread
                   MLOG(MDEBUG) << "[" << params->id << "] ("
                                << queueEntry.command.getIdx() << ") "
-                               << queueEntry.loggingPrefix << " finished ('"
-                               << queueEntry.command << "') with result '"
-                               << result << "'";
+                               << queueEntry.loggingPrefix << " succeeded";
                   params->isProcessing = false;
                   queueEntry.promise->setValue(result);
                   triggerDequeue(params);
@@ -168,11 +186,11 @@ void QueuedCli::triggerDequeue(shared_ptr<QueuedParameters> queuedParameters) {
             .thenError(
                 folly::tag_t<std::exception>{},
                 [params, queueEntry](std::exception const& e) -> Future<Unit> {
-                  MLOG(MDEBUG) << "[" << params->id << "] ("
-                               << queueEntry.command.getIdx() << ") "
-                               << queueEntry.loggingPrefix << " failed ('"
-                               << queueEntry.command << "')  with exception '"
-                               << e.what() << "'";
+                  MLOG(MDEBUG)
+                      << "[" << params->id << "] ("
+                      << queueEntry.command.getIdx() << ") "
+                      << queueEntry.loggingPrefix << " failed  with exception '"
+                      << e.what() << "'";
                   if (!params->shutdown) {
                     params->isProcessing = false;
                   }

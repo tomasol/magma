@@ -113,7 +113,7 @@ Future<string> ReconnectingCli::executeRead(const ReadCommand cmd) {
   return executeSomething(
       "RCli.executeRead",
       [cmd](shared_ptr<Cli> cli) { return cli->executeRead(cmd); },
-      cmd.raw());
+      cmd);
 }
 
 Future<string> ReconnectingCli::executeWrite(const WriteCommand cmd) {
@@ -121,13 +121,13 @@ Future<string> ReconnectingCli::executeWrite(const WriteCommand cmd) {
   return executeSomething(
       "RCli.executeWrite",
       [cmd](shared_ptr<Cli> cli) { return cli->executeWrite(cmd); },
-      cmd.raw());
+      cmd);
 }
 
 Future<string> ReconnectingCli::executeSomething(
     const string&& loggingPrefix,
     const function<Future<string>(shared_ptr<Cli>)>& innerFunc,
-    const string&& loggingSuffix) {
+    const Command cmd) {
   shared_ptr<Cli> cliOrNull = nullptr;
   if (reconnectParameters->isReconnecting) {
     return makeFuture<string>(runtime_error("Not connected"));
@@ -141,21 +141,21 @@ Future<string> ReconnectingCli::executeSomething(
     return innerFunc(cliOrNull)
         .via(reconnectParameters->executor.get())
         .thenValue(
-            [dis = shared_from_this(), loggingPrefix, loggingSuffix](
+            [dis = shared_from_this(), loggingPrefix, cmd](
                 string result) -> string {
               // TODO: move this to deeper layer
-              MLOG(MDEBUG) << "[" << dis->reconnectParameters->id << "] "
-                           << loggingPrefix << " got result of running '"
-                           << loggingSuffix << "'";
+              MLOG(MDEBUG) << "[" << dis->reconnectParameters->id << "] ("
+                           << cmd.getIdx() << ") " << loggingPrefix
+                           << " succeeded";
               return result;
             })
         .thenError( // TODO: only reconnect on timeout exception
             folly::tag_t<std::exception>{},
-            [dis = shared_from_this(), loggingPrefix, loggingSuffix](
+            [dis = shared_from_this(), loggingPrefix, cmd](
                 std::exception const& e) -> Future<string> {
-              MLOG(MDEBUG) << "[" << dis->reconnectParameters->id << "] "
-                           << loggingPrefix << " got error : " << e.what()
-                           << " while running '" << loggingSuffix << "'";
+              MLOG(MDEBUG) << "[" << dis->reconnectParameters->id << "] ("
+                           << cmd.getIdx() << ") " << loggingPrefix
+                           << " failed with error : " << e.what();
 
               dis->triggerReconnect(dis->reconnectParameters);
               auto cpException = runtime_error(e.what());
