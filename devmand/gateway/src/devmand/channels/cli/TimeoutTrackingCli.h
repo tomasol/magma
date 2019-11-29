@@ -42,12 +42,15 @@ class TimeoutTrackingCli : public Cli {
   folly::Future<std::string> executeWrite(const WriteCommand cmd) override;
 
  private:
-  string id;
-  shared_ptr<Cli> cli; // underlying cli layer
-  shared_ptr<folly::ThreadWheelTimekeeper> timekeeper;
-  shared_ptr<folly::Executor> executor;
-  const std::chrono::milliseconds timeoutInterval;
-  atomic<bool> shutdown;
+  struct TimeoutTrackingParameters {
+    string id;
+    shared_ptr<Cli> cli; // underlying cli layer
+    shared_ptr<folly::ThreadWheelTimekeeper> timekeeper;
+    shared_ptr<folly::Executor> executor;
+    const std::chrono::milliseconds timeoutInterval;
+    atomic<bool> shutdown;
+  };
+  shared_ptr<TimeoutTrackingParameters> timeoutTrackingParameters;
 
   TimeoutTrackingCli(
       string id,
