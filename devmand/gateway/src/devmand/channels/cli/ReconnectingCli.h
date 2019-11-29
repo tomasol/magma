@@ -75,7 +75,7 @@ class ReconnectingCli : public Cli,
   Future<string> executeSomething(
       const string&& loggingPrefix,
       const function<Future<string>(shared_ptr<Cli>)>& innerFunc,
-      const string&& loggingSuffix);
+      const Command cmd);
 
   static void triggerReconnect(shared_ptr<ReconnectParameters> params);
 };

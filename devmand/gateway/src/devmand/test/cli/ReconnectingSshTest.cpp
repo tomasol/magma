@@ -97,7 +97,7 @@ static void ensureConnected(const shared_ptr<Cli>& cli) {
 TEST_F(ReconnectingSshTest, commandTimeout) {
   int cmdTimeout = 5;
   IoConfigurationBuilder ioConfigurationBuilder(getConfig(
-      "9999", std::chrono::seconds(cmdTimeout), std::chrono::seconds(60)));
+      "9999", std::chrono::seconds(cmdTimeout), std::chrono::seconds(10)));
   shared_ptr<Cli> cli =
       ioConfigurationBuilder.createAll(ReadCachingCli::createCache());
   ensureConnected(cli);
