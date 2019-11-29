@@ -134,16 +134,16 @@ void QueuedCli::triggerDequeue(shared_ptr<QueuedParameters> queuedParameters) {
     if (!params->isProcessing) {
       QueueEntry queueEntry;
       if (params->queue.try_dequeue(queueEntry)) {
-        params->isProcessing = true;
-        Future<string> cliFuture = queueEntry.obtainFutureFromCli();
-        MLOG(MDEBUG) << "[" << params->id << "] " << queueEntry.loggingPrefix
-                     << " dequeued ('" << queueEntry.command
-                     << "') and cli future obtained";
         if (params->shutdown) {
           queueEntry.promise->setException(
               runtime_error("QCli: Shutting down"));
           return;
         }
+        params->isProcessing = true;
+        Future<string> cliFuture = queueEntry.obtainFutureFromCli();
+        MLOG(MDEBUG) << "[" << params->id << "] " << queueEntry.loggingPrefix
+                     << " dequeued ('" << queueEntry.command
+                     << "') and cli future obtained";
         move(cliFuture)
             .via(params->serialExecutorKeepAlive)
             .then(
