@@ -27,7 +27,7 @@ class QueuedCli : public Cli {
   struct QueueEntry {
     function<Future<string>()> obtainFutureFromCli;
     shared_ptr<Promise<string>> promise;
-    Command command = ReadCommand::create("");
+    Command command = ReadCommand::create("dummy");
     string loggingPrefix;
   };
 

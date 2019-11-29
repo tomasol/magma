@@ -14,15 +14,15 @@ namespace cli {
 using std::string;
 using std::vector;
 
-Command::Command(const std::string _command, bool skipCache)
-    : command(_command), skipCache_(skipCache) {}
+Command::Command(const std::string _command, int _idx, bool skipCache)
+    : command(_command), idx(_idx), skipCache_(skipCache) {}
 
 // Factory methods
 ReadCommand ReadCommand::create(const std::string& cmd, bool skipCache) {
-  return ReadCommand(cmd, skipCache);
+  return ReadCommand(cmd, commandCounter++, skipCache);
 }
 WriteCommand WriteCommand::create(const std::string& cmd, bool skipCache) {
-  return WriteCommand(cmd, skipCache);
+  return WriteCommand(cmd, commandCounter++, skipCache);
 }
 static const char DELIMITER = '\n';
 
@@ -44,8 +44,8 @@ vector<Command> Command::splitMultiCommand() {
   return commands;
 }
 
-ReadCommand::ReadCommand(const string& _command, bool _skipCache)
-    : Command(_command, _skipCache) {}
+ReadCommand::ReadCommand(const string& _command, int _idx, bool _skipCache)
+    : Command(_command, _idx, _skipCache) {}
 
 ReadCommand ReadCommand::create(const Command& cmd) {
   return create(cmd.raw(), cmd.skipCache());
@@ -53,25 +53,27 @@ ReadCommand ReadCommand::create(const Command& cmd) {
 
 ReadCommand& ReadCommand::operator=(const ReadCommand& other) {
   this->command = other.command;
+  this->idx = other.idx;
   this->skipCache_ = other.skipCache_;
   return *this;
 }
 
 ReadCommand::ReadCommand(const ReadCommand& rc)
-    : Command(rc.raw(), rc.skipCache()) {}
+    : Command(rc.raw(), rc.idx, rc.skipCache()) {}
 
-WriteCommand::WriteCommand(const string& _command, bool _skipCache)
-    : Command(_command, _skipCache) {}
+WriteCommand::WriteCommand(const string& _command, int _idx, bool _skipCache)
+    : Command(_command, _idx, _skipCache) {}
 
 WriteCommand WriteCommand::create(const Command& cmd) {
   return create(cmd.raw(), cmd.skipCache());
 }
 
 WriteCommand::WriteCommand(const WriteCommand& wc)
-    : Command(wc.raw(), wc.skipCache()) {}
+    : Command(wc.raw(), wc.idx, wc.skipCache()) {}
 
 WriteCommand& WriteCommand::operator=(const WriteCommand& other) {
   this->command = other.command;
+  this->idx = other.idx;
   this->skipCache_ = other.skipCache_;
   return *this;
 }

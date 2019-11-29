@@ -21,7 +21,7 @@ shared_ptr<KeepaliveCli> KeepaliveCli::make(
     shared_ptr<folly::Executor> parentExecutor,
     shared_ptr<folly::ThreadWheelTimekeeper> timekeeper,
     chrono::milliseconds heartbeatInterval,
-    ReadCommand&& keepAliveCommand,
+    string keepAliveCommand,
     chrono::milliseconds backoffAfterKeepaliveTimeout) {
   const shared_ptr<KeepaliveCli>& result =
       shared_ptr<KeepaliveCli>(new KeepaliveCli(
@@ -41,10 +41,8 @@ KeepaliveCli::KeepaliveCli(
     shared_ptr<Executor> _parentExecutor,
     shared_ptr<ThreadWheelTimekeeper> _timekeeper,
     chrono::milliseconds _heartbeatInterval,
-    ReadCommand&& _keepAliveCommand,
+    string _keepAliveCommand,
     chrono::milliseconds _backoffAfterKeepaliveTimeout) {
-  assert(_keepAliveCommand.skipCache());
-
   keepaliveParameters = shared_ptr<KeepaliveParameters>(new KeepaliveParameters{
       /* id */ _id,
       /* cli */ _cli,
@@ -89,10 +87,12 @@ void KeepaliveCli::triggerSendKeepAliveCommand(
 
   via(keepaliveParameters->serialExecutorKeepAlive)
       .thenValue([params = keepaliveParameters](auto) {
+        ReadCommand cmd = ReadCommand::create(params->keepAliveCommand, false);
         MLOG(MDEBUG)
-            << "[" << params->id << "] "
+            << "[" << params->id << "] (" << cmd.getIdx() << ") "
             << "triggerSendKeepAliveCommand executing keepalive command";
-        return params->cli->executeRead(params->keepAliveCommand);
+
+        return params->cli->executeRead(cmd);
       })
       .thenValue([params = keepaliveParameters](auto) -> SemiFuture<Unit> {
         MLOG(MDEBUG) << "[" << params->id << "] "
