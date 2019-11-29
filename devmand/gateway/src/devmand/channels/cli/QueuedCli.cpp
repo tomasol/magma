@@ -43,12 +43,14 @@ QueuedCli::~QueuedCli() {
   MLOG(MDEBUG) << "[" << id << "] "
                << "~QCli: dequeuing " << queuedParameters->queue.size()
                << " items";
-  QueueEntry queueEntry;
-  while (queuedParameters->queue.try_dequeue(queueEntry)) {
-    MLOG(MDEBUG) << "[" << id << "] (" << queueEntry.command.getIdx() << ") "
-                 << "~QCli: fulfilling promise with exception";
-    queueEntry.promise->setException(runtime_error("QCli: Shutting down"));
-  }
+  {
+    QueueEntry queueEntry;
+    while (queuedParameters->queue.try_dequeue(queueEntry)) {
+      MLOG(MDEBUG) << "[" << id << "] (" << queueEntry.command.getIdx() << ") "
+                   << "~QCli: fulfilling promise with exception";
+      queueEntry.promise->setException(runtime_error("QCli: Shutting down"));
+    }
+  } // drop queueEntry to release queuedParameters from its obtain.. function
   MLOG(MDEBUG) << "[" << id << "] "
                << "~QCli nulling cli with refcount:"
                << queuedParameters->cli.use_count();

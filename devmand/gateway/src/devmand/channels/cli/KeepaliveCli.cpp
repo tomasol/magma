@@ -62,16 +62,18 @@ KeepaliveCli::KeepaliveCli(
 }
 
 KeepaliveCli::~KeepaliveCli() {
+  string id = keepaliveParameters->id;
   keepaliveParameters->shutdown = true;
-  MLOG(MDEBUG) << "[" << keepaliveParameters->id << "] "
+  MLOG(MDEBUG) << "[" << id << "] "
                << "~KeepaliveCli";
   while (keepaliveParameters.use_count() >
          1) { // TODO cancel currently running future
-    MLOG(MDEBUG) << "[" << keepaliveParameters->id << "] "
+    MLOG(MDEBUG) << "[" << id << "] "
                  << "~KeepaliveCli sleeping";
     std::this_thread::sleep_for(std::chrono::seconds(1));
   }
-  MLOG(MDEBUG) << "[" << keepaliveParameters->id << "] "
+  keepaliveParameters = nullptr;
+  MLOG(MDEBUG) << "[" << id << "] "
                << "~KeepaliveCli done";
 }
 
