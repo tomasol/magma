@@ -30,7 +30,7 @@ class KeepaliveCli : public Cli {
       shared_ptr<folly::Executor> parentExecutor,
       shared_ptr<folly::ThreadWheelTimekeeper> _timekeeper,
       chrono::milliseconds heartbeatInterval = defaultKeepaliveInterval,
-      ReadCommand&& keepAliveCommand = ReadCommand::create("", true),
+      string keepAliveCommand = "",
       chrono::milliseconds backoffAfterKeepaliveTimeout = chrono::seconds(5));
 
   ~KeepaliveCli() override;
@@ -46,7 +46,7 @@ class KeepaliveCli : public Cli {
     shared_ptr<folly::ThreadWheelTimekeeper> timekeeper;
     shared_ptr<folly::Executor> parentExecutor;
     folly::Executor::KeepAlive<folly::SerialExecutor> serialExecutorKeepAlive;
-    ReadCommand keepAliveCommand;
+    string keepAliveCommand;
     chrono::milliseconds heartbeatInterval;
     chrono::milliseconds backoffAfterKeepaliveTimeout;
     atomic<bool> shutdown;
@@ -62,7 +62,7 @@ class KeepaliveCli : public Cli {
       shared_ptr<folly::Executor> parentExecutor,
       shared_ptr<folly::ThreadWheelTimekeeper> _timekeeper,
       chrono::milliseconds heartbeatInterval,
-      ReadCommand&& keepAliveCommand,
+      string keepAliveCommand,
       chrono::milliseconds backoffAfterKeepaliveTimeout);
 
   static void triggerSendKeepAliveCommand(

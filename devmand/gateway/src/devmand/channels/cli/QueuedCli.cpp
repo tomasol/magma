@@ -53,8 +53,10 @@ QueuedCli::~QueuedCli() {
                  << "~QCli sleeping";
     std::this_thread::sleep_for(std::chrono::seconds(1));
   }
+  string id = queuedParameters->id;
+  queuedParameters = nullptr;
 
-  MLOG(MDEBUG) << "[" << queuedParameters->id << "] "
+  MLOG(MDEBUG) << "[" << id << "] "
                << "~QCli done";
 }
 
@@ -102,14 +104,12 @@ Future<string> QueuedCli::executeSomething(
     const Command& cmd,
     const string& prefix,
     function<Future<string>()> innerFunc) {
-  MLOG(MDEBUG) << "[" << queuedParameters->id << "] " << prefix
-               << " adding to queue ('" << cmd << "')";
   shared_ptr<Promise<string>> promise = std::make_shared<Promise<string>>();
-  QueueEntry queueEntry;
-  queueEntry.obtainFutureFromCli = move(innerFunc);
-  queueEntry.promise = promise;
-  queueEntry.command = cmd;
-  queueEntry.loggingPrefix = prefix;
+  QueueEntry queueEntry = QueueEntry{move(innerFunc), promise, cmd, prefix};
+  MLOG(MDEBUG) << "[" << queuedParameters->id << "] ("
+               << queueEntry.command.getIdx() << ") " << prefix
+               << " adding to queue ('" << cmd << "')";
+
   queuedParameters->queue.enqueue(move(queueEntry));
   if (!queuedParameters->isProcessing) {
     triggerDequeue(queuedParameters);
@@ -135,15 +135,19 @@ void QueuedCli::triggerDequeue(shared_ptr<QueuedParameters> queuedParameters) {
       QueueEntry queueEntry;
       if (params->queue.try_dequeue(queueEntry)) {
         if (params->shutdown) {
+          MLOG(MDEBUG) << "[" << params->id << "] ("
+                       << queueEntry.command.getIdx() << ") "
+                       << " Shutting down";
           queueEntry.promise->setException(
               runtime_error("QCli: Shutting down"));
           return;
         }
         params->isProcessing = true;
         Future<string> cliFuture = queueEntry.obtainFutureFromCli();
-        MLOG(MDEBUG) << "[" << params->id << "] " << queueEntry.loggingPrefix
-                     << " dequeued ('" << queueEntry.command
-                     << "') and cli future obtained";
+        MLOG(MDEBUG) << "[" << params->id << "] ("
+                     << queueEntry.command.getIdx() << ") "
+                     << queueEntry.loggingPrefix << " dequeued ('"
+                     << queueEntry.command << "') and cli future obtained";
         move(cliFuture)
             .via(params->serialExecutorKeepAlive)
             .then(
@@ -151,10 +155,11 @@ void QueuedCli::triggerDequeue(shared_ptr<QueuedParameters> queuedParameters) {
                 [params, queueEntry](std::string result) -> Future<Unit> {
                   // after cliFuture completes, finish processing on consumer
                   // thread
-                  MLOG(MDEBUG)
-                      << "[" << params->id << "] " << queueEntry.loggingPrefix
-                      << " finished ('" << queueEntry.command
-                      << "') with result '" << result << "'";
+                  MLOG(MDEBUG) << "[" << params->id << "] ("
+                               << queueEntry.command.getIdx() << ") "
+                               << queueEntry.loggingPrefix << " finished ('"
+                               << queueEntry.command << "') with result '"
+                               << result << "'";
                   params->isProcessing = false;
                   queueEntry.promise->setValue(result);
                   triggerDequeue(params);
@@ -163,17 +168,15 @@ void QueuedCli::triggerDequeue(shared_ptr<QueuedParameters> queuedParameters) {
             .thenError(
                 folly::tag_t<std::exception>{},
                 [params, queueEntry](std::exception const& e) -> Future<Unit> {
-                  MLOG(MDEBUG)
-                      << "[" << params->id << "] " << queueEntry.loggingPrefix
-                      << " failed ('" << queueEntry.command
-                      << "')  with exception '" << e.what() << "'";
+                  MLOG(MDEBUG) << "[" << params->id << "] ("
+                               << queueEntry.command.getIdx() << ") "
+                               << queueEntry.loggingPrefix << " failed ('"
+                               << queueEntry.command << "')  with exception '"
+                               << e.what() << "'";
                   if (!params->shutdown) {
                     params->isProcessing = false;
                   }
                   auto cpException = runtime_error(e.what());
-                  MLOG(MDEBUG)
-                      << "[" << params->id << "] " << queueEntry.loggingPrefix
-                      << " copied exception " << cpException.what();
                   // TODO: exception type is not preserved,
                   // queueEntry.promise->setException(e) results in
                   // std::exception

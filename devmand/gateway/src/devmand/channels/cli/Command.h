@@ -9,6 +9,7 @@
 
 #include <boost/algorithm/string/replace.hpp>
 #include <folly/futures/Future.h>
+#include <atomic>
 #include <iostream>
 
 using std::string;
@@ -20,11 +21,13 @@ namespace cli {
 /*
  * Command struct encapsulating a string to be executed on a device.
  */
+static std::atomic<int> commandCounter;
 
 class Command {
  protected:
-  explicit Command(std::string _command, bool skipCache);
+  explicit Command(std::string _command, int idx, bool skipCache);
   string command;
+  int idx;
   bool skipCache_;
 
  public:
@@ -38,6 +41,10 @@ class Command {
 
   bool skipCache() const {
     return skipCache_;
+  }
+
+  int getIdx() const {
+    return idx;
   }
 
   friend std::ostream& operator<<(std::ostream& _stream, Command const& c) {
@@ -59,7 +66,7 @@ class WriteCommand : public Command {
   WriteCommand& operator=(const WriteCommand& other);
 
  private:
-  WriteCommand(const string& command, bool skipCache);
+  WriteCommand(const string& command, int idx, bool skipCache);
 };
 
 class ReadCommand : public Command {
@@ -71,7 +78,7 @@ class ReadCommand : public Command {
   ReadCommand(const ReadCommand& rc);
 
  private:
-  ReadCommand(const string& command, bool skipCache);
+  ReadCommand(const string& command, int idx, bool skipCache);
 };
 
 } // namespace cli
