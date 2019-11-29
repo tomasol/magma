@@ -21,53 +21,71 @@ namespace channels {
 namespace cli {
 
 SemiFuture<Unit> PromptAwareCli::resolvePrompt() {
-  return cliFlavour->resolver->resolvePrompt(session, cliFlavour->newline)
-      .thenValue([dis = shared_from_this()](string _prompt) {
-        dis->prompt = _prompt;
+  return promptAwareParameters->cliFlavour->resolver
+      ->resolvePrompt(
+          promptAwareParameters->session,
+          promptAwareParameters->cliFlavour->newline)
+      .thenValue([params = promptAwareParameters](string _prompt) {
+        params->prompt = _prompt;
       });
 }
 
 SemiFuture<Unit> PromptAwareCli::initializeCli(const string secret) {
-  return cliFlavour->initializer->initialize(session, secret);
+  return promptAwareParameters->cliFlavour->initializer->initialize(
+      promptAwareParameters->session, secret);
 }
 
 folly::Future<string> PromptAwareCli::executeRead(const ReadCommand cmd) {
   const string& command = cmd.raw();
 
-  return session->write(command)
-      .thenValue([dis = shared_from_this(), command](...) {
-        return dis->session->readUntilOutput(command);
+  return promptAwareParameters->session->write(command)
+      .thenValue([params = promptAwareParameters, command](...) {
+        return params->session->readUntilOutput(command);
       })
-      .thenValue([dis = shared_from_this()](const string& output) {
+      .thenValue([params = promptAwareParameters](const string& output) {
         auto returnOutputParameter = [output](...) { return output; };
-        return dis->session->write(dis->cliFlavour->newline)
+        return params->session->write(params->cliFlavour->newline)
             .thenValue(returnOutputParameter);
       })
-      .thenValue([dis = shared_from_this()](const string& output) {
+      .thenValue([params = promptAwareParameters](const string& output) {
         auto concatOutputParameter = [output](const string& readUntilOutput) {
           return output + readUntilOutput;
         };
-        return dis->session->readUntilOutput(dis->prompt)
+        return params->session->readUntilOutput(params->prompt)
             .thenValue(concatOutputParameter);
       });
 }
 
 PromptAwareCli::PromptAwareCli(
+    string id,
     shared_ptr<SshSessionAsync> _session,
-    shared_ptr<CliFlavour> _cliFlavour)
-    : session(_session), cliFlavour(_cliFlavour) {}
+    shared_ptr<CliFlavour> _cliFlavour) {
+  promptAwareParameters = shared_ptr<PromptAwareParameters>(
+      new PromptAwareParameters{id, _session, _cliFlavour, {}});
+}
+
+PromptAwareCli::~PromptAwareCli() {
+  while (promptAwareParameters.use_count() > 1) {
+    MLOG(MDEBUG) << "[" << promptAwareParameters->id << "] "
+                 << "~PromptAwareCli sleeping";
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+  }
+  MLOG(MDEBUG) << "[" << promptAwareParameters->id << "] "
+               << "~PromptAwareCli done";
+}
 
 folly::Future<std::string> PromptAwareCli::executeWrite(
     const WriteCommand cmd) {
   const string& command = cmd.raw();
-  return session->write(command)
-      .thenValue([dis = shared_from_this(), command](...) {
-        return dis->session->readUntilOutput(command);
+  return promptAwareParameters->session->write(command)
+      .thenValue([params = promptAwareParameters, command](...) {
+        return params->session->readUntilOutput(command);
       })
-      .thenValue([dis = shared_from_this(), command](const string& output) {
-        return dis->session->write(dis->cliFlavour->newline)
-            .thenValue([output, command](...) { return output + command; });
-      });
+      .thenValue(
+          [params = promptAwareParameters, command](const string& output) {
+            return params->session->write(params->cliFlavour->newline)
+                .thenValue([output, command](...) { return output + command; });
+          });
 }
 } // namespace cli
 } // namespace channels
