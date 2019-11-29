@@ -30,26 +30,33 @@ TimeoutTrackingCli::TimeoutTrackingCli(
     shared_ptr<Cli> _cli,
     shared_ptr<folly::ThreadWheelTimekeeper> _timekeeper,
     shared_ptr<folly::Executor> _executor,
-    std::chrono::milliseconds _timeoutInterval)
-    : id(_id),
-      cli(_cli),
-      timekeeper(_timekeeper),
-      executor(_executor),
-      timeoutInterval(_timeoutInterval) {
-  shutdown = false;
+    std::chrono::milliseconds _timeoutInterval) {
+  timeoutTrackingParameters =
+      shared_ptr<TimeoutTrackingParameters>(new TimeoutTrackingParameters{
+          _id, _cli, _timekeeper, _executor, _timeoutInterval, {false}});
 }
 
 TimeoutTrackingCli::~TimeoutTrackingCli() {
+  string id = timeoutTrackingParameters->id;
   MLOG(MDEBUG) << "[" << id << "] "
                << "~TTCli started";
-  shutdown = true;
-  cli = nullptr;
+  timeoutTrackingParameters->shutdown = true;
+
+  MLOG(MDEBUG) << "[" << id << "] "
+               << "~TTCli nulling cli with refcount:"
+               << timeoutTrackingParameters->cli.use_count();
+  timeoutTrackingParameters->cli = nullptr;
   MLOG(MDEBUG) << "[" << id << "] "
                << "~TTCli cli nulled";
-  executor = nullptr;
-  MLOG(MDEBUG) << "[" << id << "] "
-               << "~TTCli executor nulled";
-  timekeeper = nullptr;
+
+  while (timeoutTrackingParameters.use_count() >
+         1) { // TODO cancel currently running future
+    MLOG(MDEBUG) << "[" << timeoutTrackingParameters->id << "] "
+                 << "~TTCli sleeping";
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+  }
+
+  timeoutTrackingParameters = nullptr;
 
   MLOG(MDEBUG) << "[" << id << "] "
                << "~TTCli done";
@@ -57,13 +64,13 @@ TimeoutTrackingCli::~TimeoutTrackingCli() {
 
 Future<string> TimeoutTrackingCli::executeRead(const ReadCommand cmd) {
   return executeSomething(cmd, "TTCli.executeRead", [this, cmd]() {
-    return cli->executeRead(cmd);
+    return timeoutTrackingParameters->cli->executeRead(cmd);
   });
 }
 
 Future<string> TimeoutTrackingCli::executeWrite(const WriteCommand cmd) {
   return executeSomething(cmd, "TTCli.executeWrite", [this, cmd]() {
-    return cli->executeWrite(cmd);
+    return timeoutTrackingParameters->cli->executeWrite(cmd);
   });
 }
 
@@ -71,25 +78,34 @@ Future<string> TimeoutTrackingCli::executeSomething(
     const Command& cmd,
     const string&& loggingPrefix,
     const function<Future<string>()>& innerFunc) {
-  MLOG(MDEBUG) << "[" << id << "] " << loggingPrefix << "('" << cmd
-               << "') called";
-  if (shutdown) {
+  MLOG(MDEBUG) << "[" << timeoutTrackingParameters->id << "] (" << cmd.getIdx()
+               << ") " << loggingPrefix << "('" << cmd << "') called";
+  if (timeoutTrackingParameters->shutdown) {
     return Future<string>(runtime_error("TTCli Shutting down"));
   }
   Future<string> inner =
       innerFunc(); // we expect that this method does not block
-  MLOG(MDEBUG) << "[" << id << "] " << loggingPrefix << "('" << cmd
-               << "') obtained future from underlying cli";
+  MLOG(MDEBUG) << "[" << timeoutTrackingParameters->id << "] (" << cmd.getIdx()
+               << ") "
+               << "Obtained future from underlying cli";
   return move(inner)
-      .via(executor.get())
+      .via(timeoutTrackingParameters->executor.get())
+      .thenValue(
+          [params = timeoutTrackingParameters, cmd](string result) -> string {
+            MLOG(MDEBUG) << "[" << params->id << "] (" << cmd.getIdx() << ") "
+                         << "succeeded";
+            return result;
+          })
       .onTimeout(
-          timeoutInterval,
-          [_id = this->id, loggingPrefix, cmd](...) -> Future<string> {
-            MLOG(MDEBUG) << "[" << _id << "] " << loggingPrefix << "('" << cmd
-                         << "') timing out";
+          timeoutTrackingParameters->timeoutInterval,
+          [params = timeoutTrackingParameters, cmd](...) -> Future<string> {
+            // NOTE: timeoutTrackingParameters must be captured mainly for
+            // executor
+            MLOG(MDEBUG) << "[" << params->id << "] (" << cmd.getIdx() << ") "
+                         << "timing out";
             throw FutureTimeout();
           },
-          timekeeper.get());
+          timeoutTrackingParameters->timekeeper.get());
 }
 
 } // namespace devmand::channels::cli
