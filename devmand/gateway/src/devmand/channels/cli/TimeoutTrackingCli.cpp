@@ -41,23 +41,13 @@ TimeoutTrackingCli::~TimeoutTrackingCli() {
   MLOG(MDEBUG) << "[" << id << "] "
                << "~TTCli started";
   timeoutTrackingParameters->shutdown = true;
-
-  MLOG(MDEBUG) << "[" << id << "] "
-               << "~TTCli nulling cli with refcount:"
-               << timeoutTrackingParameters->cli.use_count();
-  timeoutTrackingParameters->cli = nullptr;
-  MLOG(MDEBUG) << "[" << id << "] "
-               << "~TTCli cli nulled";
-
   while (timeoutTrackingParameters.use_count() >
          1) { // TODO cancel currently running future
     MLOG(MDEBUG) << "[" << timeoutTrackingParameters->id << "] "
                  << "~TTCli sleeping";
     std::this_thread::sleep_for(std::chrono::seconds(1));
   }
-
   timeoutTrackingParameters = nullptr;
-
   MLOG(MDEBUG) << "[" << id << "] "
                << "~TTCli done";
 }

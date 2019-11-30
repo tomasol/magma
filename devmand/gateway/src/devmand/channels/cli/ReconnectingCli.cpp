@@ -45,9 +45,19 @@ ReconnectingCli::ReconnectingCli(
 }
 
 ReconnectingCli::~ReconnectingCli() {
+  string& id = reconnectParameters->id;
+  MLOG(MDEBUG) << "[" << id << "] "
+               << "~RCli started";
   reconnectParameters->shutdown = true;
-  MLOG(MDEBUG) << "[" << reconnectParameters->id << "] "
-               << "~RCli";
+  while (reconnectParameters.use_count() >
+         1) { // TODO cancel currently running future
+    MLOG(MDEBUG) << "[" << id << "] "
+                 << "~RCli sleeping";
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+  }
+  reconnectParameters = nullptr;
+  MLOG(MDEBUG) << "[" << id << "] "
+               << "~RCli done";
 }
 
 void ReconnectingCli::triggerReconnect(shared_ptr<ReconnectParameters> params) {

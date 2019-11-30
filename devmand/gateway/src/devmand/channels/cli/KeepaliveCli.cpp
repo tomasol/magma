@@ -65,7 +65,7 @@ KeepaliveCli::~KeepaliveCli() {
   string id = keepaliveParameters->id;
   keepaliveParameters->shutdown = true;
   MLOG(MDEBUG) << "[" << id << "] "
-               << "~KeepaliveCli";
+               << "~KeepaliveCli started";
   while (keepaliveParameters.use_count() >
          1) { // TODO cancel currently running future
     MLOG(MDEBUG) << "[" << id << "] "
