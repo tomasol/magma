@@ -51,33 +51,13 @@ QueuedCli::~QueuedCli() {
       queueEntry.promise->setException(runtime_error("QCli: Shutting down"));
     }
   } // drop queueEntry to release queuedParameters from its obtain.. function
-  MLOG(MDEBUG) << "[" << id << "] "
-               << "~QCli nulling cli with refcount:"
-               << queuedParameters->cli.use_count();
-  queuedParameters->cli = nullptr;
-  MLOG(MDEBUG) << "[" << id << "] "
-               << "~QCli cli nulled";
-
-  queuedParameters->serialExecutorKeepAlive = nullptr;
-  MLOG(MDEBUG) << "[" << id << "] "
-               << "~QCli serialExecutorKeepAlive nulled";
-
-  MLOG(MDEBUG) << "[" << id << "] "
-               << "~QCli nulling parentExecutor with refcount:"
-               << queuedParameters->parentExecutor.use_count();
-  queuedParameters->parentExecutor = nullptr;
-  MLOG(MDEBUG) << "[" << id << "] "
-               << "~QCli parentExecutor nulled";
-
   while (queuedParameters.use_count() >
          1) { // TODO cancel currently running future
     MLOG(MDEBUG) << "[" << id << "] "
                  << "~QCli sleeping";
     std::this_thread::sleep_for(std::chrono::seconds(1));
   }
-
   queuedParameters = nullptr;
-
   MLOG(MDEBUG) << "[" << id << "] "
                << "~QCli done";
 }

@@ -65,12 +65,14 @@ PromptAwareCli::PromptAwareCli(
 }
 
 PromptAwareCli::~PromptAwareCli() {
+  string& id = promptAwareParameters->id;
   while (promptAwareParameters.use_count() > 1) {
-    MLOG(MDEBUG) << "[" << promptAwareParameters->id << "] "
+    MLOG(MDEBUG) << "[" << id << "] "
                  << "~PromptAwareCli sleeping";
     std::this_thread::sleep_for(std::chrono::seconds(1));
   }
-  MLOG(MDEBUG) << "[" << promptAwareParameters->id << "] "
+  promptAwareParameters = nullptr;
+  MLOG(MDEBUG) << "[" << id << "] "
                << "~PromptAwareCli done";
 }
 
