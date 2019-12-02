@@ -59,9 +59,6 @@ static void waitTillCliRecreated() {
 }
 
 TEST_F(ReconnectingCliTest, cleanDestructNotConnected) {
-  //  auto factory = [this]() {
-  //    return SemiFuture<shared_ptr<Cli>>(getMockCli<EchoCli>(0, testExec));
-  //  };
   auto factory = [this]() {
     std::this_thread::sleep_for(2s);
     return SemiFuture<shared_ptr<Cli>>(getMockCli<EchoCli>(0, testExec));
@@ -74,7 +71,7 @@ TEST_F(ReconnectingCliTest, cleanDestructNotConnected) {
   // Destruct cli
   testedCli.reset();
 
-  EXPECT_ANY_THROW(move(future).via(testExec.get()).get(10s));
+  EXPECT_THROW(move(future).via(testExec.get()).get(10s), runtime_error);
 }
 
 TEST_F(ReconnectingCliTest, cleanDestructConnected) {
@@ -122,7 +119,7 @@ TEST_F(ReconnectingCliTest, cleanDestructOnError) {
   // Destruct cli
   testedCli.reset();
 
-  EXPECT_ANY_THROW(move(future).via(testExec.get()).get(10s));
+  EXPECT_THROW(move(future).via(testExec.get()).get(10s), runtime_error);
 }
 
 TEST_F(ReconnectingCliTest, cleanDestructOnErrorWithDelay) {
@@ -138,7 +135,7 @@ TEST_F(ReconnectingCliTest, cleanDestructOnErrorWithDelay) {
   // Destruct cli
   testedCli.reset();
 
-  EXPECT_ANY_THROW(move(future).via(testExec.get()).get(10s));
+  EXPECT_THROW(move(future).via(testExec.get()).get(10s), runtime_error);
 }
 
 } // namespace cli
