@@ -55,6 +55,7 @@ ReconnectingCli::~ReconnectingCli() {
                  << "~RCli sleeping";
     std::this_thread::sleep_for(std::chrono::seconds(1));
   }
+
   reconnectParameters = nullptr;
   MLOG(MDEBUG) << "[" << id << "] "
                << "~RCli done";
@@ -88,7 +89,7 @@ void ReconnectingCli::triggerReconnect(shared_ptr<ReconnectParameters> params) {
                 params->isReconnecting = false;
                 MLOG(MDEBUG) << "[" << params->id << "] "
                              << "Recreating cli stack - done";
-                return Unit{};
+                return unit;
               });
         }) // TODO: Add onTimeout here to handle establish session timeouts?
         .thenError(
@@ -156,21 +157,23 @@ SemiFuture<string> ReconnectingCli::executeSomething(
             [params = reconnectParameters, loggingPrefix, cmd](
                 string result) -> string {
               // TODO: move this to deeper layer
+              // auto dis = shared_from_this();
               MLOG(MDEBUG) << "[" << params->id << "] (" << cmd.getIdx() << ") "
                            << loggingPrefix << " succeeded";
               return result;
             })
         .thenError( // TODO: only reconnect on timeout exception
             folly::tag_t<std::exception>{},
-            [dis = shared_from_this(),
+            [this,
              params = reconnectParameters,
              loggingPrefix,
-             cmd](std::exception const& e) -> Future<string> {
+             cmd](exception const& e) -> Future<string> {
               MLOG(MDEBUG) << "[" << params->id << "] (" << cmd.getIdx() << ") "
                            << loggingPrefix
                            << " failed with error : " << e.what();
 
-              dis->triggerReconnect(dis->reconnectParameters);
+              // Using "this" raw pointer, however we have the shared_ptr<params> to protect against destructor call
+              triggerReconnect(params);
               auto cpException = runtime_error(e.what());
               // TODO: exception type is not preserved,
               // queueEntry.promise->setException(e) results in std::exception

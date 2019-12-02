@@ -166,7 +166,7 @@ TEST_F(QueuedCliTest, cleanDestructOnSuccess) {
   // First succeeds, other are canceled
   ASSERT_EQ(move(futures.at(0)).via(testExec.get()).get(10s), "command");
   for (uint i = 1; i < 10; i++) {
-    EXPECT_ANY_THROW(move(futures.at(i)).via(testExec.get()).get(10s));
+    EXPECT_THROW(move(futures.at(i)).via(testExec.get()).get(10s), runtime_error);
   }
 
   MLOG(MDEBUG) << "Waiting for test executor to finish";

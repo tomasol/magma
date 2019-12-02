@@ -57,7 +57,7 @@ class TimeoutCliTest : public ::testing::Test {
   }
 };
 
-static const chrono::milliseconds timeout = 1000ms;
+static const chrono::milliseconds timeout = 1s;
 
 static shared_ptr<TimeoutTrackingCli> getCli(shared_ptr<Cli> delegate) {
   shared_ptr<TimeoutTrackingCli> cli = TimeoutTrackingCli::make(
@@ -79,7 +79,7 @@ TEST_F(TimeoutCliTest, cleanDestructOnTimeout) {
   // Destruct cli
   testedCli.reset();
 
-  EXPECT_ANY_THROW({ move(future).via(testExec.get()).get(10s); });
+  EXPECT_THROW(move(future).via(testExec.get()).get(10s), FutureTimeout);
 }
 
 TEST_F(TimeoutCliTest, cleanDestructOnError) {
@@ -92,7 +92,7 @@ TEST_F(TimeoutCliTest, cleanDestructOnError) {
   // Destruct cli
   testedCli.reset();
 
-  EXPECT_ANY_THROW({ move(future).via(testExec.get()).get(10s); });
+  EXPECT_THROW({ move(future).via(testExec.get()).get(10s); }, runtime_error);
 }
 
 TEST_F(TimeoutCliTest, cleanDestructOnSuccess) {

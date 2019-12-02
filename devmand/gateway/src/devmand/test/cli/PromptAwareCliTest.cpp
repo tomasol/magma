@@ -143,7 +143,7 @@ TEST_F(PromptAwareCliTest, cleanDestructOnError) {
   // Destruct cli
   testedCli.reset();
 
-  EXPECT_ANY_THROW(move(future).via(testExec.get()).get(10s));
+  EXPECT_THROW(move(future).via(testExec.get()).get(10s), runtime_error);
 }
 
 TEST_F(PromptAwareCliTest, promptAwareCli) {
