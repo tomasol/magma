@@ -42,24 +42,35 @@ folly::SemiFuture<std::string> PromptAwareCli::executeRead(
   return promptAwareParameters->session->write(command)
       .semi()
       .via(promptAwareParameters->executor.get())
-      .thenValue([params = promptAwareParameters, command](...) {
-        return params->session->readUntilOutput(command);
+      .thenValue([params = promptAwareParameters, command, cmd](...) {
+        MLOG(MDEBUG) << "[" << params->id << "] (" << cmd.getIdx()
+                     << ") written command";
+        Future<string> result = params->session->readUntilOutput(command);
+        MLOG(MDEBUG) << "[" << params->id << "] (" << cmd.getIdx()
+                     << ") obtained future readUntilOutput";
+        return move(result);
       })
-      .thenValue([params = promptAwareParameters](const string& output) {
-        auto returnOutputParameter = [output](...) { return output; };
+      .thenValue([params = promptAwareParameters, cmd](const string& output) {
         return params->session->write(params->cliFlavour->newline)
             .semi()
             .via(params->executor.get())
-            .thenValue(returnOutputParameter);
+            .thenValue([params, output, cmd](...) {
+              MLOG(MDEBUG) << "[" << params->id << "] (" << cmd.getIdx()
+                           << ") written newline";
+              return output;
+            });
       })
-      .thenValue([params = promptAwareParameters](const string& output) {
-        auto concatOutputParameter = [output](const string& readUntilOutput) {
-          return output + readUntilOutput;
-        };
+      .thenValue([params = promptAwareParameters, cmd](const string& output) {
         return params->session->readUntilOutput(params->prompt)
             .semi()
             .via(params->executor.get())
-            .thenValue(concatOutputParameter);
+            .thenValue(
+                [id = params->id, output, cmd](const string& readUntilOutput) {
+                  // this might never run, do not capture params
+                  MLOG(MDEBUG) << "[" << id << "] (" << cmd.getIdx()
+                               << ") readUntilOutput - read result";
+                  return output + readUntilOutput;
+                });
       });
 }
 
@@ -74,6 +85,8 @@ PromptAwareCli::PromptAwareCli(
 
 PromptAwareCli::~PromptAwareCli() {
   string id = promptAwareParameters->id;
+  MLOG(MDEBUG) << "[" << id << "] "
+               << "~PromptAwareCli started";
   while (promptAwareParameters.use_count() > 1) {
     MLOG(MDEBUG) << "[" << id << "] "
                  << "~PromptAwareCli sleeping";
@@ -90,15 +103,25 @@ folly::SemiFuture<std::string> PromptAwareCli::executeWrite(
   return promptAwareParameters->session->write(command)
       .semi()
       .via(promptAwareParameters->executor.get())
-      .thenValue([params = promptAwareParameters, command](...) {
-        return params->session->readUntilOutput(command).semi();
+      .thenValue([params = promptAwareParameters, command, cmd](...) {
+        MLOG(MDEBUG) << "[" << params->id << "] (" << cmd.getIdx()
+                     << ") written command";
+        SemiFuture<string> result =
+            params->session->readUntilOutput(command).semi();
+        MLOG(MDEBUG) << "[" << params->id << "] (" << cmd.getIdx()
+                     << ") obtained future readUntilOutput";
+        return move(result);
       })
       .thenValue(
-          [params = promptAwareParameters, command](const string& output) {
+          [params = promptAwareParameters, command, cmd](const string& output) {
             return params->session->write(params->cliFlavour->newline)
                 .semi()
                 .via(params->executor.get())
-                .thenValue([output, command](...) { return output + command; });
+                .thenValue([id = params->id, output, command, cmd](...) {
+                  MLOG(MDEBUG) << "[" << id << "] (" << cmd.getIdx()
+                               << ") written newline";
+                  return output + command;
+                });
           });
 }
 
