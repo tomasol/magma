@@ -47,6 +47,12 @@ TimeoutTrackingCli::~TimeoutTrackingCli() {
                  << "~TTCli sleeping";
     std::this_thread::sleep_for(std::chrono::seconds(1));
   }
+
+  MLOG(MDEBUG) << "[" << id << "] "
+               << "~TTCli nulling timeoutTrackingParameters.cli";
+  timeoutTrackingParameters->cli = nullptr;
+  MLOG(MDEBUG) << "[" << id << "] "
+               << "~TTCli nulling timeoutTrackingParameters";
   timeoutTrackingParameters = nullptr;
   MLOG(MDEBUG) << "[" << id << "] "
                << "~TTCli done";
