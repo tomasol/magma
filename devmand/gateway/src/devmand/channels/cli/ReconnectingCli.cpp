@@ -164,15 +164,14 @@ SemiFuture<string> ReconnectingCli::executeSomething(
             })
         .thenError( // TODO: only reconnect on timeout exception
             folly::tag_t<std::exception>{},
-            [this,
-             params = reconnectParameters,
-             loggingPrefix,
-             cmd](exception const& e) -> Future<string> {
+            [params = reconnectParameters, loggingPrefix, cmd](
+                exception const& e) -> Future<string> {
               MLOG(MDEBUG) << "[" << params->id << "] (" << cmd.getIdx() << ") "
                            << loggingPrefix
                            << " failed with error : " << e.what();
 
-              // Using "this" raw pointer, however we have the shared_ptr<params> to protect against destructor call
+              // Using "this" raw pointer, however we have the
+              // shared_ptr<params> to protect against destructor call
               triggerReconnect(params);
               auto cpException = runtime_error(e.what());
               // TODO: exception type is not preserved,
