@@ -25,8 +25,7 @@ using boost::mutex;
 using devmand::channels::cli::Cli;
 using devmand::channels::cli::Command;
 
-class ReconnectingCli : public Cli,
-                        public enable_shared_from_this<ReconnectingCli> {
+class ReconnectingCli : public Cli {
  public:
   static shared_ptr<ReconnectingCli> make(
       string id,
