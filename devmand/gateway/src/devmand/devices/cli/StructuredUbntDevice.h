@@ -39,6 +39,7 @@ class StructuredUbntDevice : public Device {
 
   static std::unique_ptr<devices::Device> createDevice(
       Application& app,
+      Engine& engine,
       const cartography::DeviceConfig& deviceConfig);
 
  public:

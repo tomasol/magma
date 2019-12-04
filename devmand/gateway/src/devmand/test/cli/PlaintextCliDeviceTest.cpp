@@ -32,13 +32,14 @@ using namespace std;
 using namespace folly;
 using namespace devmand::test::utils::ssh;
 
+static channels::cli::Engine cliEngine;
 class PlaintextCliDeviceTest : public ::testing::Test {
  protected:
   shared_ptr<server> ssh;
+  Application app;
 
   void SetUp() override {
     devmand::test::utils::log::initLog();
-    devmand::test::utils::ssh::initSsh();
     ssh = startSshServer();
   }
 
@@ -48,7 +49,6 @@ class PlaintextCliDeviceTest : public ::testing::Test {
 };
 
 TEST_F(PlaintextCliDeviceTest, checkEcho) {
-  devmand::Application app;
   cartography::DeviceConfig deviceConfig;
   devmand::cartography::ChannelConfig chnlCfg;
   map<string, string> kvPairs;
@@ -59,7 +59,7 @@ TEST_F(PlaintextCliDeviceTest, checkEcho) {
   const shared_ptr<EchoCli>& echoCli = make_shared<EchoCli>();
   const shared_ptr<Channel>& channel = make_shared<Channel>("test", echoCli);
   unique_ptr<devices::Device> dev = make_unique<PlaintextCliDevice>(
-      app, deviceConfig.id, "show interfaces brief", channel);
+      app, cliEngine, deviceConfig.id, "show interfaces brief", channel);
 
   shared_ptr<State> state = dev->getState();
   const folly::dynamic& stateResult = state->collect().get();
@@ -87,9 +87,8 @@ static DeviceConfig getConfig(string port) {
 }
 
 TEST_F(PlaintextCliDeviceTest, plaintextCliDevicesError) {
-  Application app;
   auto plaintextDevice =
-      PlaintextCliDevice::createDevice(app, getConfig("9998"));
+      PlaintextCliDevice::createDevice(app, cliEngine, getConfig("9998"));
   const shared_ptr<State>& ptr = plaintextDevice->getState();
   auto state = ptr->collect().get();
 
@@ -99,10 +98,8 @@ TEST_F(PlaintextCliDeviceTest, plaintextCliDevicesError) {
 }
 
 TEST_F(PlaintextCliDeviceTest, plaintextCliDevice) {
-  Application app;
-
   unique_ptr<Device> dev =
-      PlaintextCliDevice::createDevice(app, getConfig("9999"));
+      PlaintextCliDevice::createDevice(app, cliEngine, getConfig("9999"));
 
   int i = 0;
   string output = "";

@@ -27,9 +27,10 @@ using namespace devmand::channels::cli::sshsession;
 
 std::unique_ptr<devices::Device> PlaintextCliDevice::createDevice(
     Application& app,
+    Engine& engine,
     const cartography::DeviceConfig& deviceConfig) {
   IoConfigurationBuilder ioConfigurationBuilder(
-      deviceConfig, app.getCliEngine());
+      deviceConfig, engine);
 
   auto cmdCache = ReadCachingCli::createCache();
 
@@ -38,6 +39,7 @@ std::unique_ptr<devices::Device> PlaintextCliDevice::createDevice(
 
   return std::make_unique<devices::cli::PlaintextCliDevice>(
       app,
+      engine,
       deviceConfig.id,
       deviceConfig.channelConfigs.at("cli").kvPairs.at("stateCommand"),
       channel,
@@ -46,6 +48,7 @@ std::unique_ptr<devices::Device> PlaintextCliDevice::createDevice(
 
 PlaintextCliDevice::PlaintextCliDevice(
     Application& application,
+    Engine& engine,
     const Id id_,
     const std::string _stateCommand,
     const std::shared_ptr<Channel> _channel,
@@ -54,7 +57,7 @@ PlaintextCliDevice::PlaintextCliDevice(
       channel(_channel),
       stateCommand(ReadCommand::create(_stateCommand)),
       cmdCache(_cmdCache),
-      executor(app.getCliEngine().getExecutor(
+      executor(engine.getExecutor(
           Engine::executorRequestType::plaintextCliDevice)) {}
 
 std::shared_ptr<State> PlaintextCliDevice::getState() {
