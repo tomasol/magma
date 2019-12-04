@@ -26,7 +26,7 @@ class PlaintextCliDevice : public Device {
  public:
   PlaintextCliDevice(
       Application& application,
-      Engine &engine,
+      Engine& engine,
       const Id id,
       const std::string stateCommand,
       const std::shared_ptr<Channel> channel,
@@ -40,8 +40,13 @@ class PlaintextCliDevice : public Device {
 
   static std::unique_ptr<devices::Device> createDevice(
       Application& app,
-      Engine& engine,
       const cartography::DeviceConfig& deviceConfig);
+
+  // visible for testing
+  static std::unique_ptr<devices::Device> createDeviceWithEngine(
+      Application& app,
+      const cartography::DeviceConfig& deviceConfig,
+      Engine& engine);
 
  public:
   std::shared_ptr<State> getState() override;
