@@ -37,7 +37,6 @@ using devmand::devices::cli::PlaintextCliDevice;
 
 static channels::cli::Engine cliEngine;
 class RealCliDeviceTest : public ::testing::Test {
-
   void SetUp() override {
     devmand::test::utils::log::initLog();
     devmand::test::utils::ssh::initSsh();
@@ -62,7 +61,7 @@ TEST_F(RealCliDeviceTest, DISABLED_ubiquiti) {
   deviceConfig.id = "ubiquiti-test-device";
 
   std::unique_ptr<devices::Device> dev =
-      PlaintextCliDevice::createDevice(app, cliEngine, deviceConfig);
+      PlaintextCliDevice::createDeviceWithEngine(app, deviceConfig, cliEngine);
   do {
     if (i > 0) {
       std::this_thread::sleep_for(std::chrono::seconds(1));

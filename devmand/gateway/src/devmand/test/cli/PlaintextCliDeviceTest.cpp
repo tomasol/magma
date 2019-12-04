@@ -88,7 +88,7 @@ static DeviceConfig getConfig(string port) {
 
 TEST_F(PlaintextCliDeviceTest, plaintextCliDevicesError) {
   auto plaintextDevice =
-      PlaintextCliDevice::createDevice(app, cliEngine, getConfig("9998"));
+      PlaintextCliDevice::createDeviceWithEngine(app, getConfig("9998"), cliEngine);
   const shared_ptr<State>& ptr = plaintextDevice->getState();
   auto state = ptr->collect().get();
 
@@ -99,7 +99,7 @@ TEST_F(PlaintextCliDeviceTest, plaintextCliDevicesError) {
 
 TEST_F(PlaintextCliDeviceTest, plaintextCliDevice) {
   unique_ptr<Device> dev =
-      PlaintextCliDevice::createDevice(app, cliEngine, getConfig("9999"));
+      PlaintextCliDevice::createDeviceWithEngine(app, getConfig("9999"), cliEngine);
 
   int i = 0;
   string output = "";

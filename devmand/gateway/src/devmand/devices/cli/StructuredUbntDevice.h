@@ -39,8 +39,13 @@ class StructuredUbntDevice : public Device {
 
   static std::unique_ptr<devices::Device> createDevice(
       Application& app,
-      Engine& engine,
       const cartography::DeviceConfig& deviceConfig);
+
+  // visible for testing
+  static std::unique_ptr<devices::Device> createDeviceWithEngine(
+      Application& app,
+      const cartography::DeviceConfig& deviceConfig,
+      Engine& engine);
 
  public:
   std::shared_ptr<State> getState() override;
