@@ -83,6 +83,8 @@ std::shared_ptr<State> PlaintextCliDevice::getState() {
                 [&v, &cmd](auto& lockedState) { lockedState[cmd.raw()] = v; });
           })
           .thenError(
+              // TODO unify with ReconnectingCli
+              // (DisconnectedException+CommandExecutionException)
               folly::tag_t<DisconnectedException>{},
               [state,
                id = this->id](DisconnectedException const& e) -> Future<Unit> {
