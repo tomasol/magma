@@ -212,7 +212,7 @@ IoConfigurationBuilder::makeConnectionParameters(
   connectionParameters->username = username;
   connectionParameters->password = password;
   connectionParameters->port = port;
-  connectionParameters->flavour = CliFlavour::create(flavour);
+  connectionParameters->flavour = CliFlavour::create(flavour, timekeeper);
   connectionParameters->kaTimeout = kaTimeout;
   connectionParameters->cmdTimeout = cmdTimeout;
   connectionParameters->reconnectingQuietPeriod = reconnectingQuietPeriod;
