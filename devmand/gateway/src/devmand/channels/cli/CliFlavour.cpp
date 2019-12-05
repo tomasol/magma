@@ -23,8 +23,6 @@ using devmand::channels::cli::UbiquitiInitializer;
 using devmand::channels::cli::sshsession::SessionAsync;
 using folly::Optional;
 
-static const int DEFAULT_MILLIS = 1000;
-
 SemiFuture<Unit> EmptyInitializer::initialize(
     shared_ptr<SessionAsync> session,
     string secret) {
@@ -47,8 +45,7 @@ Future<string> DefaultPromptResolver::resolvePrompt(
     shared_ptr<SessionAsync> session,
     const string& newline) {
   return session
-      ->read(DEFAULT_MILLIS) // clear input, converges faster on
-                             // prompt
+      ->read(-1)
       .thenValue([=](...) { return resolvePrompt(session, newline, 1); });
 }
 
@@ -69,11 +66,10 @@ Future<string> DefaultPromptResolver::resolvePrompt(
 Future<Optional<string>> DefaultPromptResolver::resolvePromptAsync(
     shared_ptr<SessionAsync> session,
     const string& newline,
-    int delayCounter) {
+    int maxSeconds) {
   return session->write(newline + newline)
-      .thenValue([delayCounter, session](...) {
-        return session->read(delayCounter * DEFAULT_MILLIS);
-      })
+      .delayed(chrono::seconds(maxSeconds), timekeeper.get())
+      .thenValue([session](...) { return session->read(-1); })
       .thenValue([=](string output) {
         regex regxp("\\" + newline);
         vector<string> split(
@@ -106,22 +102,29 @@ void DefaultPromptResolver::removeEmptyStrings(vector<string>& split) const {
 }
 
 CliFlavour::CliFlavour(
+    shared_ptr<folly::Timekeeper> _timekeeper,
     unique_ptr<PromptResolver>&& _resolver,
     unique_ptr<CliInitializer>&& _initializer,
     string _newline)
-    : resolver(forward<unique_ptr<PromptResolver>>(_resolver)),
+    : timekeeper(_timekeeper),
+      resolver(forward<unique_ptr<PromptResolver>>(_resolver)),
       initializer(forward<unique_ptr<CliInitializer>>(_initializer)),
       newline(_newline) {}
 
-shared_ptr<CliFlavour> CliFlavour::create(string flavour) {
+shared_ptr<CliFlavour> CliFlavour::create(
+    string flavour,
+    shared_ptr<folly::Timekeeper> timekeeper) {
   if (flavour == UBIQUITI) {
     return make_shared<CliFlavour>(
-        make_unique<DefaultPromptResolver>(),
+        timekeeper,
+        make_unique<DefaultPromptResolver>(timekeeper),
         make_unique<UbiquitiInitializer>());
+  } else {
+    return make_shared<CliFlavour>(
+        timekeeper,
+        make_unique<DefaultPromptResolver>(timekeeper),
+        make_unique<EmptyInitializer>());
   }
-
-  return make_shared<CliFlavour>(
-      make_unique<DefaultPromptResolver>(), make_unique<EmptyInitializer>());
 }
 
 } // namespace cli

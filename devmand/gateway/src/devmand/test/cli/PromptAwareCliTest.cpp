@@ -31,6 +31,7 @@ using namespace std::chrono_literals;
 class PromptAwareCliTest : public ::testing::Test {
  protected:
   shared_ptr<CPUThreadPoolExecutor> testExec;
+  shared_ptr<folly::ThreadWheelTimekeeper> timekeeper;
 
   void SetUp() override {
     devmand::test::utils::log::initLog();
@@ -81,16 +82,17 @@ class MockSession : public SessionAsync {
 };
 
 static shared_ptr<PromptAwareCli> getCli(
-    shared_ptr<CPUThreadPoolExecutor> testExec) {
+    shared_ptr<CPUThreadPoolExecutor> testExec,
+    shared_ptr<folly::Timekeeper> timekeeper) {
   return PromptAwareCli::make(
       "test",
       make_shared<MockSession>(testExec),
-      CliFlavour::create(""),
+      CliFlavour::create("", timekeeper),
       std::make_shared<folly::CPUThreadPoolExecutor>(1));
 }
 
 TEST_F(PromptAwareCliTest, cleanDestructOnSuccess) {
-  auto testedCli = getCli(testExec);
+  auto testedCli = getCli(testExec, timekeeper);
 
   SemiFuture<string> future =
       testedCli->executeRead(ReadCommand::create("returning"));
@@ -102,7 +104,7 @@ TEST_F(PromptAwareCliTest, cleanDestructOnSuccess) {
 }
 
 TEST_F(PromptAwareCliTest, cleanDestructOnWriteSuccess) {
-  auto testedCli = getCli(testExec);
+  auto testedCli = getCli(testExec, timekeeper);
 
   SemiFuture<string> future =
       testedCli->executeWrite(WriteCommand::create("returning"));
@@ -114,7 +116,7 @@ TEST_F(PromptAwareCliTest, cleanDestructOnWriteSuccess) {
 }
 
 TEST_F(PromptAwareCliTest, cleanDestructOnError) {
-  auto testedCli = getCli(testExec);
+  auto testedCli = getCli(testExec, timekeeper);
 
   SemiFuture<string> future =
       testedCli->executeRead(ReadCommand::create("error"));
