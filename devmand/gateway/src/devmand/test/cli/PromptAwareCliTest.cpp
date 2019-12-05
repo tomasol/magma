@@ -64,8 +64,7 @@ class MockSession : public SessionAsync {
     });
   };
 
-  virtual Future<string> read(int timeoutMillis) {
-    (void)timeoutMillis;
+  virtual Future<string> read() {
     counter++;
     return via(testExec.get(), [c = counter]() {
       if (c == 1) {
