@@ -9,6 +9,7 @@
 
 #include <devmand/channels/cli/SshSessionAsync.h>
 #include <folly/Optional.h>
+#include <folly/futures/ThreadWheelTimekeeper.h>
 #include <memory>
 
 using devmand::channels::cli::sshsession::SessionAsync;
@@ -29,6 +30,7 @@ using std::string;
 
 class PromptResolver {
  public:
+  PromptResolver() = default;
   virtual Future<string> resolvePrompt(
       shared_ptr<SessionAsync> session,
       const string& newline) = 0;
@@ -37,6 +39,7 @@ class PromptResolver {
 
 class DefaultPromptResolver : public PromptResolver {
  private:
+  shared_ptr<folly::Timekeeper> timekeeper;
   Future<folly::Optional<string>> resolvePromptAsync(
       shared_ptr<SessionAsync> session,
       const string& newline,
@@ -47,6 +50,10 @@ class DefaultPromptResolver : public PromptResolver {
       int delayCounter);
 
  public:
+  DefaultPromptResolver() = delete;
+  explicit DefaultPromptResolver(shared_ptr<folly::Timekeeper> _timekeeper)
+      : PromptResolver(), timekeeper(_timekeeper) {}
+
   Future<string> resolvePrompt(
       shared_ptr<SessionAsync> session,
       const string& newline);
@@ -76,13 +83,20 @@ class UbiquitiInitializer : public CliInitializer {
 };
 
 class CliFlavour {
+ private:
+  shared_ptr<folly::Timekeeper> timekeeper;
+
  public:
-  static shared_ptr<CliFlavour> create(string flavour);
+  static shared_ptr<CliFlavour> create(
+      string flavour,
+      shared_ptr<folly::Timekeeper> timekeeper);
+
   std::unique_ptr<PromptResolver> resolver;
   std::unique_ptr<CliInitializer> initializer;
   string newline;
 
   CliFlavour(
+      shared_ptr<folly::Timekeeper> _timekeeper,
       std::unique_ptr<PromptResolver>&& _resolver,
       std::unique_ptr<CliInitializer>&& _initializer,
       string _newline = "\n");
