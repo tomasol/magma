@@ -41,7 +41,7 @@ void readCallback(evutil_socket_t fd, short, void* ptr);
 class SessionAsync {
  public:
   virtual Future<Unit> write(const string& command) = 0;
-  virtual Future<string> read(int timeoutMillis) = 0;
+  virtual Future<string> read() = 0;
   virtual Future<string> readUntilOutput(const string& lastOutput) = 0;
 };
 
@@ -68,8 +68,7 @@ class SshSessionAsync : public std::enable_shared_from_this<SshSessionAsync>,
   ~SshSessionAsync();
 
   Future<Unit> write(const string& command) override;
-  // for clearing ssh channel and prompt resolving
-  Future<string> read(int timeoutMillis) override;
+  Future<string> read() override;
   Future<string> readUntilOutput(const string& lastOutput) override;
 
   Future<Unit> openShell(

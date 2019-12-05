@@ -97,7 +97,8 @@ bool SshSession::checkSuccess(int return_code, int OK_RETURN_CODE) {
   if (return_code == OK_RETURN_CODE) {
     return true;
   }
-  terminate<CliException>(); // TODO is this an appropriate reaction to every problem??
+  terminate<CliException>(); // TODO is this an appropriate reaction to every
+                             // problem??
   return false;
 }
 
@@ -114,21 +115,15 @@ void SshSession::terminate() {
   throw E(error + error_message);
 }
 
-string SshSession::read(int timeoutMillis) {
+string SshSession::read() {
   char buffer[2048];
   string result;
 
   auto chnl = sessionState.channel.load();
 
   while (ssh_channel_is_open(chnl) && !ssh_channel_is_eof(chnl)) {
-    int bytes_read;
-    if (timeoutMillis == -1) {
-      bytes_read =
-          ssh_channel_read_nonblocking(chnl, buffer, sizeof(buffer), 0);
-    } else {
-      bytes_read = ssh_channel_read_timeout(
-          chnl, buffer, sizeof(buffer), 0, timeoutMillis);
-    }
+    int bytes_read =
+        ssh_channel_read_nonblocking(chnl, buffer, sizeof(buffer), 0);
 
     if (bytes_read < 0) {
       MLOG(MERROR) << "[" << id << "] "
@@ -171,10 +166,6 @@ SshSession::~SshSession() {
 SshSession::SshSession(string _id) : id(_id), verbosity(SSH_LOG_NOLOG) {
   sessionState.channel.store(nullptr);
   sessionState.session.store(nullptr);
-}
-
-string SshSession::read() {
-  return read(-1);
 }
 
 socket_t SshSession::getSshFd() {

@@ -73,9 +73,9 @@ void SshSessionAsync::unregisterEvent() {
   callbackFinished = true;
 }
 
-Future<string> SshSessionAsync::read(int timeoutMillis) {
-  return via(serialExecutor.get(), [dis = shared_from_this(), timeoutMillis] {
-    return dis->session.read(timeoutMillis);
+Future<string> SshSessionAsync::read() {
+  return via(serialExecutor.get(), [dis = shared_from_this()] {
+    return dis->session.read();
   });
 }
 
