@@ -10,6 +10,7 @@
 #include <devmand/channels/cli/SshSessionAsync.h>
 #include <folly/Optional.h>
 #include <folly/futures/ThreadWheelTimekeeper.h>
+#include <chrono>
 #include <memory>
 
 using devmand::channels::cli::sshsession::SessionAsync;
@@ -24,6 +25,9 @@ namespace channels {
 namespace cli {
 
 static const char* const UBIQUITI = "ubiquiti";
+
+static const std::chrono::milliseconds delayDelta =
+    std::chrono::milliseconds(100);
 
 using std::shared_ptr;
 using std::string;
@@ -43,11 +47,11 @@ class DefaultPromptResolver : public PromptResolver {
   Future<folly::Optional<string>> resolvePromptAsync(
       shared_ptr<SessionAsync> session,
       const string& newline,
-      int delayCounter);
+      std::chrono::milliseconds delay);
   Future<string> resolvePrompt(
       shared_ptr<SessionAsync> session,
       const string& newline,
-      int delayCounter);
+      std::chrono::milliseconds delay);
 
  public:
   DefaultPromptResolver() = delete;

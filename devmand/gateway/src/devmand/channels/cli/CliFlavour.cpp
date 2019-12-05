@@ -44,19 +44,18 @@ SemiFuture<Unit> UbiquitiInitializer::initialize(
 Future<string> DefaultPromptResolver::resolvePrompt(
     shared_ptr<SessionAsync> session,
     const string& newline) {
-  return session
-      ->read(-1)
-      .thenValue([=](...) { return resolvePrompt(session, newline, 1); });
+  return session->read().thenValue(
+      [=](...) { return resolvePrompt(session, newline, delayDelta); });
 }
 
 Future<string> DefaultPromptResolver::resolvePrompt(
     shared_ptr<SessionAsync> session,
     const string& newline,
-    int delayCounter) {
-  return resolvePromptAsync(session, newline, delayCounter)
+    chrono::milliseconds delay) {
+  return resolvePromptAsync(session, newline, delay)
       .thenValue([=](Optional<string> prompt) {
         if (!prompt.hasValue()) {
-          return resolvePrompt(session, newline, delayCounter + 1);
+          return resolvePrompt(session, newline, delay + delayDelta);
         } else {
           return folly::makeFuture(prompt.value());
         }
@@ -66,10 +65,10 @@ Future<string> DefaultPromptResolver::resolvePrompt(
 Future<Optional<string>> DefaultPromptResolver::resolvePromptAsync(
     shared_ptr<SessionAsync> session,
     const string& newline,
-    int maxSeconds) {
+    chrono::milliseconds delay) {
   return session->write(newline + newline)
-      .delayed(chrono::seconds(maxSeconds), timekeeper.get())
-      .thenValue([session](...) { return session->read(-1); })
+      .delayed(delay, timekeeper.get())
+      .thenValue([session](...) { return session->read(); })
       .thenValue([=](string output) {
         regex regxp("\\" + newline);
         vector<string> split(
