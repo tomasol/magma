@@ -172,13 +172,9 @@ Future<shared_ptr<Cli>> IoConfigurationBuilder::createPromptAwareCli(
           params->password,
           params->sshConnectionTimeout)
       .thenValue([params, session](auto) {
-        MLOG(MDEBUG) << "[" << params->id << "] "
-                     << "Setting flavour";
-        shared_ptr<CliFlavour> cl = params->flavour;
-
         // create CLI
         shared_ptr<PromptAwareCli> cli =
-            PromptAwareCli::make(params->id, session, cl, params->paExecutor);
+            PromptAwareCli::make(params->id, session, params->flavour, params->paExecutor, params->timekeeper);
         return configurePromptAwareCli(
             cli, session, params, params->paExecutor);
       });
@@ -212,7 +208,7 @@ IoConfigurationBuilder::makeConnectionParameters(
   connectionParameters->username = username;
   connectionParameters->password = password;
   connectionParameters->port = port;
-  connectionParameters->flavour = CliFlavour::create(flavour, timekeeper);
+  connectionParameters->flavour = CliFlavour::create(flavour);
   connectionParameters->kaTimeout = kaTimeout;
   connectionParameters->cmdTimeout = cmdTimeout;
   connectionParameters->reconnectingQuietPeriod = reconnectingQuietPeriod;

@@ -86,8 +86,9 @@ static shared_ptr<PromptAwareCli> getCli(
   return PromptAwareCli::make(
       "test",
       make_shared<MockSession>(testExec),
-      CliFlavour::create("", timekeeper),
-      std::make_shared<folly::CPUThreadPoolExecutor>(1));
+      CliFlavour::create(""),
+      std::make_shared<folly::CPUThreadPoolExecutor>(1),
+      timekeeper);
 }
 
 TEST_F(PromptAwareCliTest, cleanDestructOnSuccess) {
