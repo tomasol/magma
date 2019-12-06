@@ -9,11 +9,11 @@
 
 #include <devmand/channels/cli/SshSessionAsync.h>
 #include <folly/Optional.h>
-#include <folly/futures/ThreadWheelTimekeeper.h>
 #include <chrono>
 #include <memory>
 
 using devmand::channels::cli::sshsession::SessionAsync;
+using folly::Timekeeper;
 using folly::Future;
 using folly::SemiFuture;
 using folly::Unit;
@@ -37,30 +37,31 @@ class PromptResolver {
   PromptResolver() = default;
   virtual Future<string> resolvePrompt(
       shared_ptr<SessionAsync> session,
-      const string& newline) = 0;
+      const string& newline,
+      shared_ptr<Timekeeper> timekeeper) = 0;
   virtual ~PromptResolver() = default;
 };
 
 class DefaultPromptResolver : public PromptResolver {
  private:
-  shared_ptr<folly::Timekeeper> timekeeper;
   Future<folly::Optional<string>> resolvePromptAsync(
       shared_ptr<SessionAsync> session,
       const string& newline,
-      std::chrono::milliseconds delay);
+      std::chrono::milliseconds delay,
+      shared_ptr<Timekeeper> timekeeper);
   Future<string> resolvePrompt(
       shared_ptr<SessionAsync> session,
       const string& newline,
-      std::chrono::milliseconds delay);
+      std::chrono::milliseconds delay,
+      shared_ptr<Timekeeper> timekeeper);
 
  public:
-  DefaultPromptResolver() = delete;
-  explicit DefaultPromptResolver(shared_ptr<folly::Timekeeper> _timekeeper)
-      : PromptResolver(), timekeeper(_timekeeper) {}
+  DefaultPromptResolver() = default;
 
   Future<string> resolvePrompt(
       shared_ptr<SessionAsync> session,
-      const string& newline);
+      const string& newline,
+      shared_ptr<Timekeeper> timekeeper);
   void removeEmptyStrings(std::vector<string>& split) const;
 };
 
@@ -92,15 +93,13 @@ class CliFlavour {
 
  public:
   static shared_ptr<CliFlavour> create(
-      string flavour,
-      shared_ptr<folly::Timekeeper> timekeeper);
+      string flavour);
 
   std::unique_ptr<PromptResolver> resolver;
   std::unique_ptr<CliInitializer> initializer;
   string newline;
 
   CliFlavour(
-      shared_ptr<folly::Timekeeper> _timekeeper,
       std::unique_ptr<PromptResolver>&& _resolver,
       std::unique_ptr<CliInitializer>&& _initializer,
       string _newline = "\n");

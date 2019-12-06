@@ -43,19 +43,21 @@ SemiFuture<Unit> UbiquitiInitializer::initialize(
 
 Future<string> DefaultPromptResolver::resolvePrompt(
     shared_ptr<SessionAsync> session,
-    const string& newline) {
+    const string& newline,
+    shared_ptr<Timekeeper> timekeeper) {
   return session->read().thenValue(
-      [=](...) { return resolvePrompt(session, newline, delayDelta); });
+      [=](...) { return resolvePrompt(session, newline, delayDelta, timekeeper); });
 }
 
 Future<string> DefaultPromptResolver::resolvePrompt(
     shared_ptr<SessionAsync> session,
     const string& newline,
-    chrono::milliseconds delay) {
-  return resolvePromptAsync(session, newline, delay)
+    chrono::milliseconds delay,
+    shared_ptr<Timekeeper> timekeeper) {
+  return resolvePromptAsync(session, newline, delay, timekeeper)
       .thenValue([=](Optional<string> prompt) {
         if (!prompt.hasValue()) {
-          return resolvePrompt(session, newline, delay + delayDelta);
+          return resolvePrompt(session, newline, delay + delayDelta, timekeeper);
         } else {
           return folly::makeFuture(prompt.value());
         }
@@ -65,7 +67,8 @@ Future<string> DefaultPromptResolver::resolvePrompt(
 Future<Optional<string>> DefaultPromptResolver::resolvePromptAsync(
     shared_ptr<SessionAsync> session,
     const string& newline,
-    chrono::milliseconds delay) {
+    chrono::milliseconds delay,
+    shared_ptr<Timekeeper> timekeeper) {
   return session->write(newline + newline)
       .delayed(delay, timekeeper.get())
       .thenValue([session](...) { return session->read(); })
@@ -101,27 +104,22 @@ void DefaultPromptResolver::removeEmptyStrings(vector<string>& split) const {
 }
 
 CliFlavour::CliFlavour(
-    shared_ptr<folly::Timekeeper> _timekeeper,
     unique_ptr<PromptResolver>&& _resolver,
     unique_ptr<CliInitializer>&& _initializer,
     string _newline)
-    : timekeeper(_timekeeper),
-      resolver(forward<unique_ptr<PromptResolver>>(_resolver)),
+    : resolver(forward<unique_ptr<PromptResolver>>(_resolver)),
       initializer(forward<unique_ptr<CliInitializer>>(_initializer)),
       newline(_newline) {}
 
 shared_ptr<CliFlavour> CliFlavour::create(
-    string flavour,
-    shared_ptr<folly::Timekeeper> timekeeper) {
+    string flavour) {
   if (flavour == UBIQUITI) {
     return make_shared<CliFlavour>(
-        timekeeper,
-        make_unique<DefaultPromptResolver>(timekeeper),
+        make_unique<DefaultPromptResolver>(),
         make_unique<UbiquitiInitializer>());
   } else {
     return make_shared<CliFlavour>(
-        timekeeper,
-        make_unique<DefaultPromptResolver>(timekeeper),
+        make_unique<DefaultPromptResolver>(),
         make_unique<EmptyInitializer>());
   }
 }

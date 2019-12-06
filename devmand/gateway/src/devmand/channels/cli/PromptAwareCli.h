@@ -33,20 +33,23 @@ class PromptAwareCli : public Cli {
     shared_ptr<CliFlavour> cliFlavour;
     shared_ptr<Executor> executor;
     string prompt;
+    shared_ptr<Timekeeper> timekeeper;
   };
   shared_ptr<PromptAwareParameters> promptAwareParameters;
   PromptAwareCli(
       string id,
       shared_ptr<SessionAsync> session,
       shared_ptr<CliFlavour> cliFlavour,
-      shared_ptr<Executor> executor);
+      shared_ptr<Executor> executor,
+      shared_ptr<Timekeeper> timekeeper);
 
  public:
   static shared_ptr<PromptAwareCli> make(
       string id,
       shared_ptr<SessionAsync> session,
       shared_ptr<CliFlavour> cliFlavour,
-      shared_ptr<Executor> executor);
+      shared_ptr<Executor> executor,
+      shared_ptr<Timekeeper> timekeeper);
 
   ~PromptAwareCli();
 
