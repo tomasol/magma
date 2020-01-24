@@ -13,6 +13,7 @@
 #include <devmand/test/cli/utils/Log.h>
 #include <folly/executors/CPUThreadPoolExecutor.h>
 #include <folly/futures/Future.h>
+#include <folly/json.h>
 #include <gtest/gtest.h>
 #include <ydk_ietf/iana_if_type.hpp>
 #include <ydk_openconfig/openconfig_interfaces.hpp>
@@ -140,6 +141,55 @@ TEST_F(BindingContextTest, jsonSerializationTopLevel) {
       bundleOpenconfig.getCodec().decode(
           interfaceEncoded, make_shared<OpenconfigInterfaces>());
   ASSERT_TRUE(*decodedIfcEntity == *originalIfc);
+}
+
+TEST_F(BindingContextTest, domSerializationTopLevel) {
+  BindingContext& bundleOpenconfig =
+      mreg.getBindingContext(Model::OPENCONFIG_0_1_6);
+
+  shared_ptr<OpenconfigInterfaces> originalIfc = interfacesCpp();
+
+  const dynamic& interfaceEncoded = bundleOpenconfig.getCodec().toDom(
+      "/openconfig-interfaces:interfaces", *originalIfc);
+  ASSERT_EQ(sortJson(interfaceJson), sortJson(toPrettyJson(interfaceEncoded)));
+
+  const shared_ptr<Entity> decodedIfcEntity =
+      bundleOpenconfig.getCodec().fromDom(
+          interfaceEncoded, make_shared<OpenconfigInterfaces>());
+  ASSERT_TRUE(*decodedIfcEntity == *originalIfc);
+}
+
+TEST_F(BindingContextTest, domSerializationNested) {
+  BindingContext& bundleOpenconfig =
+      mreg.getBindingContext(Model::OPENCONFIG_0_1_6);
+
+  shared_ptr<OpenconfigInterface> originalIfc = interfaceCpp();
+
+  const dynamic& interfaceEncoded = bundleOpenconfig.getCodec().toDom(
+      "/openconfig-interfaces:interfaces/interface[name='loopback1']",
+      *originalIfc);
+  cout << interfaceEncoded << endl;
+  cout << folly::parseJson(singleInterfaceJson) << endl;
+  ASSERT_EQ(
+      sortJson(singleInterfaceJson), sortJson(toPrettyJson(interfaceEncoded)));
+
+  const shared_ptr<Entity> decodedIfcEntity =
+      bundleOpenconfig.getCodec().fromDom(
+          interfaceEncoded, make_shared<OpenconfigInterface>());
+  ASSERT_TRUE(*decodedIfcEntity == *originalIfc);
+}
+
+TEST_F(BindingContextTest, toDomFail) {
+  BindingContext& bundleOpenconfig =
+      mreg.getBindingContext(Model::OPENCONFIG_0_1_6);
+
+  shared_ptr<OpenconfigInterfaces> originalIfc = interfacesCpp();
+
+  ASSERT_THROW(
+      bundleOpenconfig.getCodec().toDom(
+          "/openconfig-interfaces:interfaces/interface[name='0/1']",
+          *originalIfc),
+      BindingSerializationException);
 }
 
 TEST_F(BindingContextTest, jsonSerializationFail) {
