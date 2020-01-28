@@ -147,8 +147,8 @@ dynamic BindingCodec::toDom(Path path, Entity& entity) {
   } catch (runtime_error& e) {
     throw BindingSerializationException(
         entity,
-        "Unable to serialize entity on path: " + path.str() + " due to: " +
-            e.what());
+        "Unable to serialize entity on path: " + path.str() +
+            " due to: " + e.what());
   }
 }
 

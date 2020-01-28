@@ -10,32 +10,36 @@
 #include <devmand/channels/cli/codecs/YdkDynamicCodec.h>
 #include <devmand/channels/cli/datastore/DatastoreState.h>
 #include <devmand/channels/cli/datastore/DatastoreTransaction.h>
+#include <devmand/devices/cli/schema/BindingContext.h>
 #include <devmand/devices/cli/schema/Path.h>
 
 namespace devmand::channels::cli::datastore {
 using LeafVector = std::vector<pair<string, string>>;
 using devmand::channels::cli::codecs::YdkDynamicCodec;
+using devmand::devices::cli::BindingCodec;
 using devmand::devices::cli::Path;
 
 class BindingAwareDatastoreTransaction {
  private:
   DatastoreTransaction datastoreTransaction;
-  shared_ptr<YdkDynamicCodec> codec;
+  shared_ptr<BindingCodec> codec;
   atomic_bool hasCommited = ATOMIC_VAR_INIT(false);
 
  public:
   BindingAwareDatastoreTransaction(
       shared_ptr<DatastoreState> datastoreState,
-      shared_ptr<YdkDynamicCodec> codec);
+      shared_ptr<BindingCodec> bindingCodec);
 
  public:
   template <typename T>
   shared_ptr<T> read(Path path) {
-    return codec->convert2<T>(datastoreTransaction.read(path));
+    const shared_ptr<T>& ydkData = make_shared<T>();
+    const dynamic& data = datastoreTransaction.read(path);
+    return codec->decode(toJson(data), ydkData);
   }
   void diff();
   void delete_(Path path);
-  void write(Path path, shared_ptr<Entity> entity);
+  void overwrite(Path path, shared_ptr<Entity> entity);
   void create(shared_ptr<Entity> entity);
   bool isValid();
 

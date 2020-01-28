@@ -6,15 +6,15 @@
 // of patent rights can be found in the PATENTS file in the same directory.
 
 #include <boost/algorithm/string.hpp>
-#include <devmand/channels/cli/datastore/DatastoreTransaction.h>
 #include <devmand/channels/cli/datastore/Datastore.h>
+#include <devmand/channels/cli/datastore/DatastoreTransaction.h>
 #include <libyang/tree_data.h>
 #include <libyang/tree_schema.h>
 
 namespace devmand::channels::cli::datastore {
 
-using std::map;
 using devmand::channels::cli::datastore::DatastoreException;
+using std::map;
 
 bool DatastoreTransaction::delete_(Path p) {
   checkIfCommitted();
@@ -123,7 +123,8 @@ void DatastoreTransaction::abort() {
 
 void DatastoreTransaction::validateBeforeCommit() {
   if (!isValid()) {
-    DatastoreException ex("Model is invalid, won't commit changes to the datastore");
+    DatastoreException ex(
+        "Model is invalid, won't commit changes to the datastore");
     MLOG(MERROR) << ex.what();
     throw ex;
   }
@@ -166,16 +167,16 @@ lllyd_node* DatastoreTransaction::computeRoot(lllyd_node* n) {
 map<Path, DatastoreDiff> DatastoreTransaction::diff() {
   checkIfCommitted();
   if (datastoreState->isEmpty()) {
-      DatastoreException ex("Unable to diff, datastore tree does not yet exist");
-      MLOG(MWARNING) << ex.what();
-      throw ex;
+    DatastoreException ex("Unable to diff, datastore tree does not yet exist");
+    MLOG(MWARNING) << ex.what();
+    throw ex;
   }
   lllyd_difflist* difflist =
       lllyd_diff(datastoreState->root, root, LLLYD_DIFFOPT_WITHDEFAULTS);
   if (!difflist) {
-      DatastoreException ex("Something went wrong, no diff possible");
-      MLOG(MWARNING) << ex.what();
-      throw ex;
+    DatastoreException ex("Something went wrong, no diff possible");
+    MLOG(MWARNING) << ex.what();
+    throw ex;
   }
 
   map<Path, DatastoreDiff> diffs;
@@ -205,9 +206,9 @@ map<Path, DatastoreDiff> DatastoreTransaction::diff() {
         std::forward_as_tuple(before, after, type));
 
     if (not pair.second) {
-        DatastoreException ex("Something went wrong during diff, can't diff");
-        MLOG(MWARNING) << ex.what();
-        throw ex;
+      DatastoreException ex("Something went wrong during diff, can't diff");
+      MLOG(MWARNING) << ex.what();
+      throw ex;
     }
   }
 
@@ -225,9 +226,10 @@ DatastoreTransaction::~DatastoreTransaction() {
 
 void DatastoreTransaction::checkIfCommitted() {
   if (hasCommited) {
-      DatastoreException ex("Transaction already committed or aborted, no operations available");
-      MLOG(MWARNING) << ex.what();
-      throw ex;
+    DatastoreException ex(
+        "Transaction already committed or aborted, no operations available");
+    MLOG(MWARNING) << ex.what();
+    throw ex;
   }
 }
 
@@ -242,11 +244,11 @@ DatastoreDiffType DatastoreTransaction::getDiffType(LLLYD_DIFFTYPE type) {
     case LLLYD_DIFF_END:
       throw DatastoreException("This diff type is not supported");
     case LLLYD_DIFF_MOVEDAFTER1:
-            throw DatastoreException("This diff type is not supported");
+      throw DatastoreException("This diff type is not supported");
     case LLLYD_DIFF_MOVEDAFTER2:
-            throw DatastoreException("This diff type is not supported");
+      throw DatastoreException("This diff type is not supported");
     default:
-            throw DatastoreException("This diff type is not supported");
+      throw DatastoreException("This diff type is not supported");
   }
 }
 
@@ -279,7 +281,7 @@ void DatastoreTransaction::printDiffType(LLLYD_DIFFTYPE type) {
       MLOG(MINFO) << "subtree was added:";
       break;
     case LLLYD_DIFF_END:
-        MLOG(MINFO) << "end of diff:";
+      MLOG(MINFO) << "end of diff:";
   }
 }
 
@@ -293,9 +295,11 @@ dynamic DatastoreTransaction::read(Path path) {
   }
 
   if (pSet->number > 1) {
-      DatastoreException ex("Too many results from path: " + path.str() + " , query must target a unique element");
-      MLOG(MWARNING) << ex.what();
-      throw ex;
+    DatastoreException ex(
+        "Too many results from path: " + path.str() +
+        " , query must target a unique element");
+    MLOG(MWARNING) << ex.what();
+    throw ex;
   }
 
   const string& json = toJson(pSet->set.d[0]);
@@ -325,9 +329,10 @@ lllyd_node* DatastoreTransaction::getExistingNode(
 bool DatastoreTransaction::isValid() {
   checkIfCommitted();
   if (root == nullptr) {
-      DatastoreException ex("Datastore is empty and no changes performed, nothing to validate");
-      MLOG(MWARNING) << ex.what();
-      throw ex;
+    DatastoreException ex(
+        "Datastore is empty and no changes performed, nothing to validate");
+    MLOG(MWARNING) << ex.what();
+    throw ex;
   }
   return lllyd_validate(&root, datastoreTypeToLydOption(), nullptr) == 0;
 }

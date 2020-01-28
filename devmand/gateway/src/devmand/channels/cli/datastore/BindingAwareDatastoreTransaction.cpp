@@ -18,14 +18,14 @@ void BindingAwareDatastoreTransaction::delete_(Path path) {
   datastoreTransaction.delete_(path);
 }
 
-void BindingAwareDatastoreTransaction::write(
+void BindingAwareDatastoreTransaction::overwrite(
     Path path,
     shared_ptr<Entity> entity) {
-    datastoreTransaction.overwrite(path, codec->convert(entity));
+  datastoreTransaction.overwrite(path, codec->toDom(path, *entity));
 }
 
 void BindingAwareDatastoreTransaction::create(shared_ptr<Entity> entity) {
-  write("", entity);
+  overwrite("", entity);
 }
 
 void BindingAwareDatastoreTransaction::commit() {
@@ -34,7 +34,7 @@ void BindingAwareDatastoreTransaction::commit() {
 
 BindingAwareDatastoreTransaction::BindingAwareDatastoreTransaction(
     shared_ptr<DatastoreState> _datastoreState,
-    shared_ptr<YdkDynamicCodec> _codec)
+    shared_ptr<BindingCodec> _codec)
     : datastoreTransaction(_datastoreState), codec(_codec) {}
 
 bool BindingAwareDatastoreTransaction::isValid() {

@@ -122,7 +122,8 @@ Path newInterfaceTopPath(
 Path interface02TopPath(
     "/openconfig-interfaces:interfaces/interface[name='0/2']");
 
-string operStatus = "/openconfig-interfaces:interfaces/openconfig-interfaces:interface/openconfig-interfaces:state/openconfig-interfaces:oper-status";
+string operStatus =
+    "/openconfig-interfaces:interfaces/openconfig-interfaces:interface/openconfig-interfaces:state/openconfig-interfaces:oper-status";
 
 string newInterface =
     "{\n"

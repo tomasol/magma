@@ -6,18 +6,25 @@
 // of patent rights can be found in the PATENTS file in the same directory.
 
 #include <devmand/channels/cli/datastore/Datastore.h>
+#include <devmand/devices/cli/schema/Model.h>
 
 namespace devmand::channels::cli::datastore {
-using std::make_unique;
 using devmand::channels::cli::datastore::DatastoreException;
+using devmand::devices::cli::SchemaContext;
+using std::make_unique;
+Datastore::Datastore(DatastoreType type) {
+  Model model = Model::OPENCONFIG_0_1_6;
+  SchemaContext schemaCtx(model);
 
-Datastore::Datastore(
-    const shared_ptr<YdkDynamicCodec> _codec,
-    DatastoreType type)
-    : codec(_codec) {
-  llly_ctx* pLyCtx = llly_ctx_new("/usr/share/openconfig@0.1.6/", 0);
+  ydk::path::Repository repo(
+      model.getDir(), ydk::path::ModelCachingOption::COMMON);
+  bindingCodec =
+      std::make_shared<BindingCodec>(repo, model.getDir(), schemaCtx);
+
+  llly_ctx* pLyCtx = llly_ctx_new(model.getDir().c_str(), 0);
   llly_ctx_load_module(pLyCtx, "iana-if-type", NULL);
   llly_ctx_load_module(pLyCtx, "openconfig-interfaces", NULL);
+  // schemaCtx.loadModules(pLyCtx, model); //TODO not working
   datastoreState = make_shared<DatastoreState>(pLyCtx, type);
 }
 
@@ -30,14 +37,16 @@ unique_ptr<DatastoreTransaction> Datastore::newTx() {
 unique_ptr<BindingAwareDatastoreTransaction> Datastore::newBindingTx() {
   checkIfTransactionRunning();
   setTransactionRunning();
-  return make_unique<BindingAwareDatastoreTransaction>(datastoreState, codec);
+  return make_unique<BindingAwareDatastoreTransaction>(
+      datastoreState, bindingCodec);
 }
 
 void Datastore::checkIfTransactionRunning() {
   if (datastoreState->transactionUnderway) {
-      DatastoreException ex("Transaction in datastore already running, only 1 at a time permitted");
-      MLOG(MWARNING) << ex.what();
-      throw ex;
+    DatastoreException ex(
+        "Transaction in datastore already running, only 1 at a time permitted");
+    MLOG(MWARNING) << ex.what();
+    throw ex;
   }
 }
 
@@ -52,4 +61,5 @@ DatastoreType Datastore::operational() {
 DatastoreType Datastore::config() {
   return DatastoreType::config;
 }
+
 } // namespace devmand::channels::cli::datastore
