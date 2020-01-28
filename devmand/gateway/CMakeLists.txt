@@ -9,8 +9,8 @@ set(MGM_COM_DIR /usr/lib/)
 add_definitions(-DLIBYANG_PLUGINS_DIR="/usr/lib/libyang/")
 
 # Pass libyang extensions and user_types for non-YDK libyang
-add_definitions(-DLLLIBYANG_EXTENSIONS_PLUGINS_DIR="/usr/lib/libyang/extensions")
-add_definitions(-DLIBYANG_USER_TYPES_PLUGINS_DIR="/usr/lib/libyang/user_types")
+add_definitions(-DLLLIBYANG_EXTENSIONS_PLUGINS_DIR="/usr/lib/x86_64-linux-gnu/libyang/extensions/")
+add_definitions(-DLIBYANG_USER_TYPES_PLUGINS_DIR="/usr/lib/x86_64-linux-gnu/libyang/user_types")
 
 add_definitions(-DPROTOBUF_INLINE_NOT_IN_HEADERS=0)
 
@@ -152,7 +152,9 @@ add_library(devman_channel_cli
   ${PROJECT_SOURCE_DIR}/src/devmand/channels/cli/datastore/DatastoreTransaction.cpp
   ${PROJECT_SOURCE_DIR}/src/devmand/channels/cli/datastore/BindingAwareDatastoreTransaction.cpp
   ${PROJECT_SOURCE_DIR}/src/devmand/channels/cli/datastore/BindingAwareDatastoreTransaction.h
-  ${PROJECT_SOURCE_DIR}/src/devmand/channels/cli/datastore/DatastoreDiff.h)
+  ${PROJECT_SOURCE_DIR}/src/devmand/channels/cli/datastore/DatastoreDiff.h
+  ${PROJECT_SOURCE_DIR}/src/devmand/channels/cli/CliHttpServer.cpp
+  )
 
 target_link_libraries(devman_channel_cli
   devman)
@@ -273,6 +275,7 @@ add_executable(devmantest
   ${PROJECT_SOURCE_DIR}/src/devmand/test/PingChannelTest.cpp
   ${PROJECT_SOURCE_DIR}/src/devmand/test/SnmpChannelTest.cpp
   ${PROJECT_SOURCE_DIR}/src/devmand/test/cli/ReconnectingSshTest.cpp
+  ${PROJECT_SOURCE_DIR}/src/devmand/test/cli/CliHttpServerTest.cpp
         )
 
 target_link_libraries(devmantest

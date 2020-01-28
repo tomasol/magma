@@ -25,6 +25,7 @@
 #include <regex>
 #include <unordered_map>
 #include "StructuredUbntDevice2.h"
+#include <httplib.h>
 
 namespace devmand {
 namespace devices {
@@ -34,6 +35,7 @@ using namespace devmand::channels::cli;
 using namespace std;
 using namespace folly;
 using namespace ydk;
+using namespace httplib;
 
 DeviceType UbntInterfacePlugin::getDeviceType() const {
   return {"ubnt", "*"};
@@ -45,6 +47,7 @@ static const regex shutRegx = regex("shutdown");
 static const regex typeRegx = regex(R"(interface\s+(.+))");
 static const regex ethernetIfcRegx = regex(R"(\d+/\d+)");
 
+/*
 static const string parseIfcType(string ifcName) {
   if (ifcName.find("lag") == 0) {
     return "iana-if-type:Ieee8023adLag";
@@ -55,18 +58,47 @@ static const string parseIfcType(string ifcName) {
   }
   return "iana-if-type:Other";
 }
+*/
 
 class IfcConfigReader : public Reader {
  public:
   Future<dynamic> read(const Path& path, const DeviceAccess& device)
       const override {
+
+    (void) device;
+    Client client("localhost", 3000);
+
+    dynamic request = dynamic::object;
+    request["path"] = path.str();
+    request["readFromConfigDS"] = true;// TODO
+    request["deviceType"] = "ubnt";// TODO
+    request["deviceVersion"] = "1.0";// TODO
+    request["executeCliCommandEndpoint"] = "http:..."; // TODO
+    auto requestBody = folly::toJson(request);
+
+    auto res = client.Post(
+        "/readers/openconfig-interfaces:interfaces/interface/config",
+        requestBody,
+        "application/json");
+    if (res) {
+      if (res->status == 200) {
+        return parseJson(res->body);
+      } else {
+        MLOG(MWARNING) << "External plugin returned wrong status code: " << res->status;
+      }
+    } else {
+      MLOG(MWARNING) << "External plugin not connected";
+    }
+    throw runtime_error("External plugin failed");
+
+    /*
     string ifcName = path.getKeysFromSegment("interface")["name"].getString();
 
     return device.cli()
         ->executeRead(
             ReadCommand::create("show running-config interface " + ifcName))
         .via(folly::getCPUExecutor().get())
-        .thenValue([ifcName](auto out) {
+        .thenValue([ifcName, path](auto out) {
           dynamic config = dynamic::object;
           config["name"] = ifcName;
           parseValue(out, mtuRegx, 1, [&config](auto mtuAsString) {
@@ -82,8 +114,10 @@ class IfcConfigReader : public Reader {
           parseValue(out, typeRegx, 1, [&config](auto typeAsString) {
             config["type"] = parseIfcType(typeAsString);
           });
+          MLOG(MWARNING) << "@@[" << path << "]\n" << folly::toJson(config) << "\n" << out;
           return config;
         });
+    */
   }
 };
 
