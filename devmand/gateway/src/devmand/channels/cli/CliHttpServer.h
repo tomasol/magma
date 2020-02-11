@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <devmand/channels/cli/Cli.h>
+#include <devmand/channels/cli/Channel.h>
 #include <folly/Optional.h>
 #include <folly/dynamic.h>
 #include <httplib.h>
@@ -25,7 +25,7 @@ using namespace devmand::channels::cli;
 //using devmand::channels::cli::datastore::DatastoreType;
 using devmand::devices::cli::Path;
 
-typedef function<shared_ptr<Cli>(const string token)> CliResolver;
+typedef function<shared_ptr<Channel>(const string token)> CliResolver;
 typedef function<dynamic
 (const string token, bool configDS/*DatastoreType type*/, bool readCurrentTx, Path path)> TxResolver;
 

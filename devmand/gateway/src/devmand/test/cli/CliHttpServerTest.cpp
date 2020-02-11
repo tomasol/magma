@@ -9,12 +9,13 @@
 #include <magma_logging.h>
 
 #include <devmand/channels/cli/CliHttpServer.h>
-#include <devmand/channels/cli/Cli.h>
 #include <devmand/test/cli/utils/Log.h>
 #include <devmand/test/cli/utils/MockCli.h>
 #include <gtest/gtest.h>
 #include <thread>
 #include <folly/json.h>
+#include <grpc++/grpc++.h>
+#include <devmand/test/cli/protoc/helloworld.grpc.pb.h>
 
 namespace devmand {
 namespace test {
@@ -26,42 +27,102 @@ using namespace std;
 using namespace folly;
 
 class HttpServerTest : public ::testing::Test {
- public:
-  shared_ptr<CliHttpServer> server;
-  thread t;
-
- protected:
-  void SetUp() override {
-    devmand::test::utils::log::initLog();
-  }
-
-  void TearDown() override {
-    MLOG(MDEBUG) << "Stopping";
-    server->stop();
-    MLOG(MDEBUG) << "Joining";
-    t.join();
-    MLOG(MDEBUG) << "Joined";
-  }
+// public:
+//  shared_ptr<CliHttpServer> server;
+//  thread t;
+//
+// protected:
+//  void SetUp() override {
+//    devmand::test::utils::log::initLog();
+//  }
+//
+//  void TearDown() override {
+//    MLOG(MDEBUG) << "Stopping";
+//    server->stop();
+//    MLOG(MDEBUG) << "Joining";
+//    t.join();
+//    MLOG(MDEBUG) << "Joined";
+//  }
 };
+
+
+using grpc::Channel;
+using grpc::ClientContext;
+using grpc::Status;
+using helloworld::HelloRequest;
+using helloworld::HelloReply;
+using helloworld::Greeter;
+
+class GreeterClient {
+ public:
+  GreeterClient(std::shared_ptr<Channel> channel)
+      : stub_(Greeter::NewStub(channel)) {}
+
+  // Assembles the client's payload, sends it and presents the response back
+  // from the server.
+  std::string SayHello(const std::string& user) {
+    // Data we are sending to the server.
+    HelloRequest request;
+    request.set_name(user);
+
+    // Container for the data we expect from the server.
+    HelloReply reply;
+
+    // Context for the client. It could be used to convey extra information to
+    // the server and/or tweak certain RPC behaviors.
+    ClientContext context;
+
+    // The actual RPC.
+    Status status = stub_->SayHello(&context, request, &reply);
+
+    // Act upon its status.
+    if (status.ok()) {
+      return reply.message();
+    } else {
+      std::cout << status.error_code() << ": " << status.error_message()
+                << std::endl;
+      return "RPC failed";
+    }
+  }
+
+ private:
+  std::unique_ptr<Greeter::Stub> stub_;
+};
+TEST_F(HttpServerTest, grpc) {
+  GreeterClient greeter(grpc::CreateChannel(
+      "localhost:50051", grpc::InsecureChannelCredentials()));
+  std::string user("world");
+  std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+  std::string reply;
+//  for (int i = 0; i < 100; i++) {
+    reply = greeter.SayHello(user);
+//  }
+  auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
+      std::chrono::steady_clock::now() - begin);
+  std::cout << "Greeter received: " << reply << "in " << duration.count() << " ms" << std::endl;
+}
+/*
+
 
 static const auto host = "localhost";
 static const int port = 1234;
 
-static const CliResolver dummyCliResolver = [](const string token) -> shared_ptr<Cli> {
+static const CliResolver dummyCliResolver = [](const string token) -> shared_ptr<Channel> {
   if (token == "secret") {
-    return make_shared<EchoCli>();
+    shared_ptr<Cli> cli = make_shared<EchoCli>();
+    return make_shared<Channel>("testing", cli);
   }
   throw runtime_error("Wrong token");
 };
 
 static const TxResolver dummyTxResolver = []
-    (const string token, /*DatastoreType type*/bool configDS, bool readCurrentTx, Path path) -> dynamic {
+    (const string token, bool configDS, bool readCurrentTx, Path path) -> dynamic {
   if (token == "secret") {
     dynamic result = dynamic::object;
     result["path"] = path.str();
     result["readCurrentTx"] = readCurrentTx;
-    result["isConfig"] = configDS/*type == DatastoreType::config*/;
-    result["isOperational"] = !configDS/*type == DatastoreType::operational*/;
+    result["isConfig"] = configDS;
+    result["isOperational"] = !configDS;
     return result;
   }
   throw runtime_error("Wrong token");
@@ -114,9 +175,10 @@ TEST_F(HttpServerTest, wrongSecret) {
 }
 
 TEST_F(HttpServerTest, errCli) {
-  CliResolver resolver = [](const string cliToken) -> shared_ptr<Cli> {
+  CliResolver resolver = [](const string cliToken) -> shared_ptr<Channel> {
     if (cliToken == "secret") {
-      return make_shared<ErrCli>();
+      shared_ptr<Cli> cli = make_shared<ErrCli>();
+      return make_shared<Channel>("testing", cli);
     }
     throw runtime_error("Wrong token");
   };
@@ -162,7 +224,7 @@ TEST_F(HttpServerTest, txWrongSecret) {
   auto expected = parseJson("{\"error\":{\"message\":\"Wrong token\",\"code\":1}}");
   EXPECT_EQ(parseJson(res->body), expected);
 }
-
+*/
 }
 }
 }

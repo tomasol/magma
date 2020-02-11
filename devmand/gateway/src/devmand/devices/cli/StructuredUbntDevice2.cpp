@@ -14,6 +14,7 @@
 #include <devmand/devices/cli/translation/ReaderRegistry.h>
 #include <folly/json.h>
 #include <memory>
+#include <devmand/channels/cli/CliHttpServer.h>
 
 namespace devmand {
 namespace devices {
@@ -38,6 +39,26 @@ unique_ptr<devices::Device> StructuredUbntDevice2::createDeviceWithEngine(
   const std::shared_ptr<Channel>& channel = std::make_shared<Channel>(
       deviceConfig.id, ioConfigurationBuilder.createAll(cmdCache));
 
+  // TODO make configurable singleton
+  auto dummyTxResolver = [](const string token, bool configDS, bool readCurrentTx, Path path)
+      -> dynamic  {
+    (void)token;(void)configDS;(void)readCurrentTx;(void)path;
+    throw runtime_error("Not implemented");
+  };
+  auto cliResolver = [channel](const string token) -> shared_ptr<Channel> {
+    if (token == "secret") {
+      return channel;
+    }
+    throw runtime_error("Wrong token");
+  };
+  shared_ptr<CliHttpServer> httpServer = make_shared<CliHttpServer>("0.0.0.0", 4000, cliResolver, dummyTxResolver);
+  unique_ptr<std::thread> httpThread = make_unique<std::thread>([httpServer]() {
+    httpServer->listen();
+  });
+  while (not httpServer->is_running()) {
+    this_thread::sleep_for(chrono::milliseconds(10));
+  }
+
   PluginRegistry pReg;
   pReg.registerPlugin(make_shared<UbntInterfacePlugin>(
       engine.getModelRegistry()->getBindingContext(Model::OPENCONFIG_0_1_6)));
@@ -54,7 +75,10 @@ unique_ptr<devices::Device> StructuredUbntDevice2::createDeviceWithEngine(
       channel,
       engine.getModelRegistry(),
       rRegBuilder.build(),
-      cmdCache);
+      cmdCache,
+      httpServer,
+      move(httpThread)
+      );
 }
 
 StructuredUbntDevice2::StructuredUbntDevice2(
@@ -64,12 +88,18 @@ StructuredUbntDevice2::StructuredUbntDevice2(
     const shared_ptr<Channel> _channel,
     const std::shared_ptr<ModelRegistry> _mreg,
     std::unique_ptr<ReaderRegistry>&& _rReg,
-    const shared_ptr<CliCache> _cmdCache)
+    const shared_ptr<CliCache> _cmdCache,
+    const std::shared_ptr<CliHttpServer> _httpServer,
+    std::unique_ptr<std::thread>&& _httpThread
+
+    )
     : Device(application, id_, readonly_),
       channel(_channel),
       cmdCache(_cmdCache),
       mreg(_mreg),
-      rReg(forward<unique_ptr<ReaderRegistry>>(_rReg)) {}
+      rReg(forward<unique_ptr<ReaderRegistry>>(_rReg)),
+      httpServer(_httpServer),
+      httpThread(forward<unique_ptr<std::thread>>(_httpThread)) {}
 
 void StructuredUbntDevice2::setIntendedDatastore(const dynamic& config) {
   (void)config;

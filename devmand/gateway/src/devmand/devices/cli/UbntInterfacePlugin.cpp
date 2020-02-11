@@ -26,6 +26,7 @@
 #include <unordered_map>
 #include "StructuredUbntDevice2.h"
 #include <httplib.h>
+#include <devmand/utils/Time.h>
 
 namespace devmand {
 namespace devices {
@@ -47,7 +48,6 @@ static const regex shutRegx = regex("shutdown");
 static const regex typeRegx = regex(R"(interface\s+(.+))");
 static const regex ethernetIfcRegx = regex(R"(\d+/\d+)");
 
-/*
 static const string parseIfcType(string ifcName) {
   if (ifcName.find("lag") == 0) {
     return "iana-if-type:Ieee8023adLag";
@@ -58,66 +58,89 @@ static const string parseIfcType(string ifcName) {
   }
   return "iana-if-type:Other";
 }
-*/
+
+static Future<dynamic> callRemotePlugin(const dynamic request) {
+  Client client("localhost", 3000);
+
+  auto requestBody = folly::toJson(request);
+  auto res = client.Post(
+      "/readers/openconfig-interfaces:interfaces/interface/config",
+      requestBody,
+      "application/json");
+  if (!res) {
+    MLOG(MWARNING) << "External plugin not connected";
+    throw runtime_error("External plugin failed");
+  }
+  if (res->status == 200) {
+    return makeFuture(parseJson(res->body));
+  } else {
+    MLOG(MWARNING) << "External plugin returned wrong status code: " << res->status;
+    throw runtime_error("External plugin failed");
+  }
+}
+
+static Future<dynamic> callCppPlugin(const Path& path, const DeviceAccess& device) {
+  string ifcName = path.getKeysFromSegment("interface")["name"].getString();
+  return device.cli()
+      ->executeRead(
+          ReadCommand::create("show running-config interface " + ifcName))
+      .via(folly::getCPUExecutor().get())
+      .thenValue([ifcName, path](auto out) {
+        dynamic config = dynamic::object;
+        config["name"] = ifcName;
+        parseValue(out, mtuRegx, 1, [&config](auto mtuAsString) {
+          config["mtu"] = toUI16(mtuAsString);
+        });
+        parseValue(out, descrRegx, 1, [&config](auto descrAsString) {
+          config["description"] = descrAsString;
+        });
+        config["enabled"] = true;
+        parseValue(out, shutRegx, 1, [&config](auto shutdownAsString) {
+          config["enabled"] = "shutdown" != shutdownAsString;
+        });
+        parseValue(out, typeRegx, 1, [&config](auto typeAsString) {
+          config["type"] = parseIfcType(typeAsString);
+        });
+        MLOG(MWARNING) << "@@[" << path << "]\n" << folly::toJson(config) << "\n" << out;
+        return config;
+      });
+}
 
 class IfcConfigReader : public Reader {
  public:
   Future<dynamic> read(const Path& path, const DeviceAccess& device)
       const override {
+    auto begin = utils::Time::now();
+    // cache
+    string ifcName = path.getKeysFromSegment("interface")["name"].getString();
+    const string cmd = "show running-config interface " + ifcName;
+    string cliOutput = device.cli()
+        ->executeRead(
+            ReadCommand::create(cmd))
+        .via(folly::getCPUExecutor().get()).get();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(utils::Time::now() - begin);
+    LOG(INFO) << "Executed command in " << duration.count() << " ms";
 
-    (void) device;
-    Client client("localhost", 3000);
-
+    
+    begin = utils::Time::now();
     dynamic request = dynamic::object;
     request["path"] = path.str();
-    request["readFromConfigDS"] = true;// TODO
     request["deviceType"] = "ubnt";// TODO
     request["deviceVersion"] = "1.0";// TODO
-    request["executeCliCommandEndpoint"] = "http:..."; // TODO
-    auto requestBody = folly::toJson(request);
+    request["executeCliCommandEndpoint"] = "http://172.8.0.85:4000/executeCliCommand/secret"; // TODO
+    dynamic cmdCache = dynamic::object;
+    cmdCache[cmd] = cliOutput;
+    request["cmd"] = cmdCache;
+    callRemotePlugin(request);
+    duration = std::chrono::duration_cast<std::chrono::milliseconds>(utils::Time::now() - begin);
+    LOG(INFO) << "Executed http plugin in " << duration.count() << " ms";
 
-    auto res = client.Post(
-        "/readers/openconfig-interfaces:interfaces/interface/config",
-        requestBody,
-        "application/json");
-    if (res) {
-      if (res->status == 200) {
-        return parseJson(res->body);
-      } else {
-        MLOG(MWARNING) << "External plugin returned wrong status code: " << res->status;
-      }
-    } else {
-      MLOG(MWARNING) << "External plugin not connected";
-    }
-    throw runtime_error("External plugin failed");
+    begin = utils::Time::now();
+    dynamic result = callCppPlugin(path, device).get();
+    duration = std::chrono::duration_cast<std::chrono::milliseconds>(utils::Time::now() - begin);
+    LOG(INFO) << "Executed cpp plugin in " << duration.count() << " ms";
 
-    /*
-    string ifcName = path.getKeysFromSegment("interface")["name"].getString();
-
-    return device.cli()
-        ->executeRead(
-            ReadCommand::create("show running-config interface " + ifcName))
-        .via(folly::getCPUExecutor().get())
-        .thenValue([ifcName, path](auto out) {
-          dynamic config = dynamic::object;
-          config["name"] = ifcName;
-          parseValue(out, mtuRegx, 1, [&config](auto mtuAsString) {
-            config["mtu"] = toUI16(mtuAsString);
-          });
-          parseValue(out, descrRegx, 1, [&config](auto descrAsString) {
-            config["description"] = descrAsString;
-          });
-          config["enabled"] = true;
-          parseValue(out, shutRegx, 1, [&config](auto shutdownAsString) {
-            config["enabled"] = "shutdown" != shutdownAsString;
-          });
-          parseValue(out, typeRegx, 1, [&config](auto typeAsString) {
-            config["type"] = parseIfcType(typeAsString);
-          });
-          MLOG(MWARNING) << "@@[" << path << "]\n" << folly::toJson(config) << "\n" << out;
-          return config;
-        });
-    */
+    return makeFuture(result);
   }
 };
 

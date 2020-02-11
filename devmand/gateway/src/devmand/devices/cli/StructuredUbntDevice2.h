@@ -13,6 +13,7 @@
 #include <devmand/Application.h>
 #include <devmand/channels/cli/Channel.h>
 #include <devmand/channels/cli/Command.h>
+#include <devmand/channels/cli/CliHttpServer.h>
 #include <devmand/channels/cli/ReadCachingCli.h>
 #include <devmand/devices/Device.h>
 #include <devmand/devices/cli/translation/PluginRegistry.h>
@@ -32,8 +33,10 @@ class StructuredUbntDevice2 : public Device {
       const std::shared_ptr<Channel> _channel,
       const std::shared_ptr<ModelRegistry> mreg,
       std::unique_ptr<ReaderRegistry>&& _rReg,
-      const std::shared_ptr<CliCache> _cmdCache =
-          ReadCachingCli::createCache());
+      const std::shared_ptr<CliCache> _cmdCache,
+      const std::shared_ptr<CliHttpServer> _httpServer,
+      std::unique_ptr<std::thread>&& _httpThread
+          );
   StructuredUbntDevice2() = delete;
   virtual ~StructuredUbntDevice2() = default;
   StructuredUbntDevice2(const StructuredUbntDevice2&) = delete;
@@ -62,6 +65,8 @@ class StructuredUbntDevice2 : public Device {
   std::shared_ptr<CliCache> cmdCache;
   std::shared_ptr<ModelRegistry> mreg;
   std::unique_ptr<ReaderRegistry> rReg;
+  std::shared_ptr<CliHttpServer> httpServer; // TODO: Should be singleton
+  std::unique_ptr<std::thread> httpThread;
 };
 
 } // namespace cli
