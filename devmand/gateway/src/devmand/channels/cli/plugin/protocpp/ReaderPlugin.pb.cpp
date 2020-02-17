@@ -29,9 +29,6 @@ namespace {
 const ::google::protobuf::Descriptor* ActualReadRequest_descriptor_ = NULL;
 const ::google::protobuf::internal::GeneratedMessageReflection*
     ActualReadRequest_reflection_ = NULL;
-const ::google::protobuf::Descriptor* CliResponse_descriptor_ = NULL;
-const ::google::protobuf::internal::GeneratedMessageReflection*
-    CliResponse_reflection_ = NULL;
 const ::google::protobuf::Descriptor* ReadRequest_descriptor_ = NULL;
 const ::google::protobuf::internal::GeneratedMessageReflection*
     ReadRequest_reflection_ = NULL;
@@ -39,9 +36,6 @@ struct ReadRequestOneofInstance {
   const ::devmand::channels::cli::plugin::ActualReadRequest* actualreadrequest_;
   const ::devmand::channels::cli::plugin::CliResponse* cliresponse_;
 }* ReadRequest_default_oneof_instance_ = NULL;
-const ::google::protobuf::Descriptor* CliRequest_descriptor_ = NULL;
-const ::google::protobuf::internal::GeneratedMessageReflection*
-    CliRequest_reflection_ = NULL;
 const ::google::protobuf::Descriptor* ActualReadResponse_descriptor_ = NULL;
 const ::google::protobuf::internal::GeneratedMessageReflection*
     ActualReadResponse_reflection_ = NULL;
@@ -80,24 +74,7 @@ void protobuf_AssignDesc_ReaderPlugin_2eproto() {
               ActualReadRequest, _internal_metadata_),
           GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(
               ActualReadRequest, _is_default_instance_));
-  CliResponse_descriptor_ = file->message_type(1);
-  static const int CliResponse_offsets_[1] = {
-      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(CliResponse, output_),
-  };
-  CliResponse_reflection_ = ::google::protobuf::internal::
-      GeneratedMessageReflection::NewGeneratedMessageReflection(
-          CliResponse_descriptor_,
-          CliResponse::default_instance_,
-          CliResponse_offsets_,
-          -1,
-          -1,
-          -1,
-          sizeof(CliResponse),
-          GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(
-              CliResponse, _internal_metadata_),
-          GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(
-              CliResponse, _is_default_instance_));
-  ReadRequest_descriptor_ = file->message_type(2);
+  ReadRequest_descriptor_ = file->message_type(1);
   static const int ReadRequest_offsets_[3] = {
       PROTO2_GENERATED_DEFAULT_ONEOF_FIELD_OFFSET(
           ReadRequest_default_oneof_instance_, actualreadrequest_),
@@ -122,24 +99,7 @@ void protobuf_AssignDesc_ReaderPlugin_2eproto() {
               ReadRequest, _internal_metadata_),
           GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(
               ReadRequest, _is_default_instance_));
-  CliRequest_descriptor_ = file->message_type(3);
-  static const int CliRequest_offsets_[1] = {
-      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(CliRequest, cmd_),
-  };
-  CliRequest_reflection_ = ::google::protobuf::internal::
-      GeneratedMessageReflection::NewGeneratedMessageReflection(
-          CliRequest_descriptor_,
-          CliRequest::default_instance_,
-          CliRequest_offsets_,
-          -1,
-          -1,
-          -1,
-          sizeof(CliRequest),
-          GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(
-              CliRequest, _internal_metadata_),
-          GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(
-              CliRequest, _is_default_instance_));
-  ActualReadResponse_descriptor_ = file->message_type(4);
+  ActualReadResponse_descriptor_ = file->message_type(2);
   static const int ActualReadResponse_offsets_[1] = {
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ActualReadResponse, json_),
   };
@@ -156,7 +116,7 @@ void protobuf_AssignDesc_ReaderPlugin_2eproto() {
               ActualReadResponse, _internal_metadata_),
           GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(
               ActualReadResponse, _is_default_instance_));
-  ReadResponse_descriptor_ = file->message_type(5);
+  ReadResponse_descriptor_ = file->message_type(3);
   static const int ReadResponse_offsets_[3] = {
       PROTO2_GENERATED_DEFAULT_ONEOF_FIELD_OFFSET(
           ReadResponse_default_oneof_instance_, clirequest_),
@@ -198,11 +158,7 @@ void protobuf_RegisterTypes(const ::std::string&) {
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
       ActualReadRequest_descriptor_, &ActualReadRequest::default_instance());
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
-      CliResponse_descriptor_, &CliResponse::default_instance());
-  ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
       ReadRequest_descriptor_, &ReadRequest::default_instance());
-  ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
-      CliRequest_descriptor_, &CliRequest::default_instance());
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
       ActualReadResponse_descriptor_, &ActualReadResponse::default_instance());
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
@@ -214,13 +170,9 @@ void protobuf_RegisterTypes(const ::std::string&) {
 void protobuf_ShutdownFile_ReaderPlugin_2eproto() {
   delete ActualReadRequest::default_instance_;
   delete ActualReadRequest_reflection_;
-  delete CliResponse::default_instance_;
-  delete CliResponse_reflection_;
   delete ReadRequest::default_instance_;
   delete ReadRequest_default_oneof_instance_;
   delete ReadRequest_reflection_;
-  delete CliRequest::default_instance_;
-  delete CliRequest_reflection_;
   delete ActualReadResponse::default_instance_;
   delete ActualReadResponse_reflection_;
   delete ReadResponse::default_instance_;
@@ -236,39 +188,35 @@ void protobuf_AddDesc_ReaderPlugin_2eproto() {
   already_here = true;
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
+  ::devmand::channels::cli::plugin::protobuf_AddDesc_Common_2eproto();
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
       "\n\022ReaderPlugin.proto\022\033devmand.channels.c"
-      "li.plugin\"!\n\021ActualReadRequest\022\014\n\004path\030\001"
-      " \001(\t\"\035\n\013CliResponse\022\016\n\006output\030\001 \001(\t\"\257\001\n\013"
-      "ReadRequest\022K\n\021actualReadRequest\030\001 \001(\0132."
-      ".devmand.channels.cli.plugin.ActualReadR"
-      "equestH\000\022\?\n\013cliResponse\030\002 \001(\0132(.devmand."
-      "channels.cli.plugin.CliResponseH\000B\022\n\020Rea"
-      "dRequestUnion\"\031\n\nCliRequest\022\013\n\003cmd\030\001 \001(\t"
-      "\"\"\n\022ActualReadResponse\022\014\n\004json\030\001 \001(\t\"\261\001\n"
-      "\014ReadResponse\022=\n\ncliRequest\030\001 \001(\0132\'.devm"
-      "and.channels.cli.plugin.CliRequestH\000\022M\n\022"
-      "actualReadResponse\030\002 \001(\0132/.devmand.chann"
-      "els.cli.plugin.ActualReadResponseH\000B\023\n\021R"
-      "eadResponseUnion2q\n\014ReaderPlugin\022a\n\004Read"
-      "\022(.devmand.channels.cli.plugin.ReadReque"
-      "st\032).devmand.channels.cli.plugin.ReadRes"
-      "ponse\"\000(\0010\001b\006proto3",
-      659);
+      "li.plugin\032\014Common.proto\"!\n\021ActualReadReq"
+      "uest\022\014\n\004path\030\001 \001(\t\"\257\001\n\013ReadRequest\022K\n\021ac"
+      "tualReadRequest\030\001 \001(\0132..devmand.channels"
+      ".cli.plugin.ActualReadRequestH\000\022\?\n\013cliRe"
+      "sponse\030\002 \001(\0132(.devmand.channels.cli.plug"
+      "in.CliResponseH\000B\022\n\020ReadRequestUnion\"\"\n\022"
+      "ActualReadResponse\022\014\n\004json\030\001 \001(\t\"\261\001\n\014Rea"
+      "dResponse\022=\n\ncliRequest\030\001 \001(\0132\'.devmand."
+      "channels.cli.plugin.CliRequestH\000\022M\n\022actu"
+      "alReadResponse\030\002 \001(\0132/.devmand.channels."
+      "cli.plugin.ActualReadResponseH\000B\023\n\021ReadR"
+      "esponseUnion2q\n\014ReaderPlugin\022a\n\004Read\022(.d"
+      "evmand.channels.cli.plugin.ReadRequest\032)"
+      ".devmand.channels.cli.plugin.ReadRespons"
+      "e\"\000(\0010\001b\006proto3",
+      615);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
       "ReaderPlugin.proto", &protobuf_RegisterTypes);
   ActualReadRequest::default_instance_ = new ActualReadRequest();
-  CliResponse::default_instance_ = new CliResponse();
   ReadRequest::default_instance_ = new ReadRequest();
   ReadRequest_default_oneof_instance_ = new ReadRequestOneofInstance();
-  CliRequest::default_instance_ = new CliRequest();
   ActualReadResponse::default_instance_ = new ActualReadResponse();
   ReadResponse::default_instance_ = new ReadResponse();
   ReadResponse_default_oneof_instance_ = new ReadResponseOneofInstance();
   ActualReadRequest::default_instance_->InitAsDefaultInstance();
-  CliResponse::default_instance_->InitAsDefaultInstance();
   ReadRequest::default_instance_->InitAsDefaultInstance();
-  CliRequest::default_instance_->InitAsDefaultInstance();
   ActualReadResponse::default_instance_->InitAsDefaultInstance();
   ReadResponse::default_instance_->InitAsDefaultInstance();
   ::google::protobuf::internal::OnShutdown(
@@ -416,6 +364,7 @@ failure:
 
 void ActualReadRequest::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
+  (void)output;
   // @@protoc_insertion_point(serialize_start:devmand.channels.cli.plugin.ActualReadRequest)
   // optional string path = 1;
   if (this->path().size() > 0) {
@@ -591,311 +540,6 @@ void ActualReadRequest::set_allocated_path(::std::string* path) {
 // ===================================================================
 
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
-const int CliResponse::kOutputFieldNumber;
-#endif // !defined(_MSC_VER) || _MSC_VER >= 1900
-
-CliResponse::CliResponse()
-    : ::google::protobuf::Message(), _internal_metadata_(NULL) {
-  SharedCtor();
-  // @@protoc_insertion_point(constructor:devmand.channels.cli.plugin.CliResponse)
-}
-
-void CliResponse::InitAsDefaultInstance() {
-  _is_default_instance_ = true;
-}
-
-CliResponse::CliResponse(const CliResponse& from)
-    : ::google::protobuf::Message(), _internal_metadata_(NULL) {
-  SharedCtor();
-  MergeFrom(from);
-  // @@protoc_insertion_point(copy_constructor:devmand.channels.cli.plugin.CliResponse)
-}
-
-void CliResponse::SharedCtor() {
-  _is_default_instance_ = false;
-  ::google::protobuf::internal::GetEmptyString();
-  _cached_size_ = 0;
-  output_.UnsafeSetDefault(
-      &::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-
-CliResponse::~CliResponse() {
-  // @@protoc_insertion_point(destructor:devmand.channels.cli.plugin.CliResponse)
-  SharedDtor();
-}
-
-void CliResponse::SharedDtor() {
-  output_.DestroyNoArena(
-      &::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  if (this != default_instance_) {
-  }
-}
-
-void CliResponse::SetCachedSize(int size) const {
-  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
-  _cached_size_ = size;
-  GOOGLE_SAFE_CONCURRENT_WRITES_END();
-}
-const ::google::protobuf::Descriptor* CliResponse::descriptor() {
-  protobuf_AssignDescriptorsOnce();
-  return CliResponse_descriptor_;
-}
-
-const CliResponse& CliResponse::default_instance() {
-  if (default_instance_ == NULL)
-    protobuf_AddDesc_ReaderPlugin_2eproto();
-  return *default_instance_;
-}
-
-CliResponse* CliResponse::default_instance_ = NULL;
-
-CliResponse* CliResponse::New(::google::protobuf::Arena* arena) const {
-  CliResponse* n = new CliResponse;
-  if (arena != NULL) {
-    arena->Own(n);
-  }
-  return n;
-}
-
-void CliResponse::Clear() {
-  // @@protoc_insertion_point(message_clear_start:devmand.channels.cli.plugin.CliResponse)
-  output_.ClearToEmptyNoArena(
-      &::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-
-bool CliResponse::MergePartialFromCodedStream(
-    ::google::protobuf::io::CodedInputStream* input) {
-#define DO_(EXPRESSION)                 \
-  if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) \
-  goto failure
-  ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:devmand.channels.cli.plugin.CliResponse)
-  for (;;) {
-    ::std::pair<::google::protobuf::uint32, bool> p =
-        input->ReadTagWithCutoff(127);
-    tag = p.first;
-    if (!p.second)
-      goto handle_unusual;
-    switch (
-        ::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // optional string output = 1;
-      case 1: {
-        if (tag == 10) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
-              input, this->mutable_output()));
-          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-              this->output().data(),
-              (int)this->output().length(),
-              ::google::protobuf::internal::WireFormatLite::PARSE,
-              "devmand.channels.cli.plugin.CliResponse.output"));
-        } else {
-          goto handle_unusual;
-        }
-        if (input->ExpectAtEnd())
-          goto success;
-        break;
-      }
-
-      default: {
-      handle_unusual:
-        if (tag == 0 ||
-            ::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
-                ::google::protobuf::internal::WireFormatLite::
-                    WIRETYPE_END_GROUP) {
-          goto success;
-        }
-        DO_(::google::protobuf::internal::WireFormatLite::SkipField(
-            input, tag));
-        break;
-      }
-    }
-  }
-success:
-  // @@protoc_insertion_point(parse_success:devmand.channels.cli.plugin.CliResponse)
-  return true;
-failure:
-  // @@protoc_insertion_point(parse_failure:devmand.channels.cli.plugin.CliResponse)
-  return false;
-#undef DO_
-}
-
-void CliResponse::SerializeWithCachedSizes(
-    ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:devmand.channels.cli.plugin.CliResponse)
-  // optional string output = 1;
-  if (this->output().size() > 0) {
-    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-        this->output().data(),
-        (int)this->output().length(),
-        ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-        "devmand.channels.cli.plugin.CliResponse.output");
-    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
-        1, this->output(), output);
-  }
-
-  // @@protoc_insertion_point(serialize_end:devmand.channels.cli.plugin.CliResponse)
-}
-
-::google::protobuf::uint8* CliResponse::InternalSerializeWithCachedSizesToArray(
-    bool deterministic,
-    ::google::protobuf::uint8* target) const {
-  (void)deterministic;
-  // @@protoc_insertion_point(serialize_to_array_start:devmand.channels.cli.plugin.CliResponse)
-  // optional string output = 1;
-  if (this->output().size() > 0) {
-    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-        this->output().data(),
-        (int)this->output().length(),
-        ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-        "devmand.channels.cli.plugin.CliResponse.output");
-    target = ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
-        1, this->output(), target);
-  }
-
-  // @@protoc_insertion_point(serialize_to_array_end:devmand.channels.cli.plugin.CliResponse)
-  return target;
-}
-
-int CliResponse::ByteSize() const {
-  // @@protoc_insertion_point(message_byte_size_start:devmand.channels.cli.plugin.CliResponse)
-  int total_size = 0;
-
-  // optional string output = 1;
-  if (this->output().size() > 0) {
-    total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::StringSize(
-                      this->output());
-  }
-
-  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
-  _cached_size_ = total_size;
-  GOOGLE_SAFE_CONCURRENT_WRITES_END();
-  return total_size;
-}
-
-void CliResponse::MergeFrom(const ::google::protobuf::Message& from) {
-  // @@protoc_insertion_point(generalized_merge_from_start:devmand.channels.cli.plugin.CliResponse)
-  if (GOOGLE_PREDICT_FALSE(&from == this)) {
-    ::google::protobuf::internal::MergeFromFail(__FILE__, __LINE__);
-  }
-  const CliResponse* source =
-      ::google::protobuf::internal::DynamicCastToGenerated<const CliResponse>(
-          &from);
-  if (source == NULL) {
-    // @@protoc_insertion_point(generalized_merge_from_cast_fail:devmand.channels.cli.plugin.CliResponse)
-    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
-  } else {
-    // @@protoc_insertion_point(generalized_merge_from_cast_success:devmand.channels.cli.plugin.CliResponse)
-    MergeFrom(*source);
-  }
-}
-
-void CliResponse::MergeFrom(const CliResponse& from) {
-  // @@protoc_insertion_point(class_specific_merge_from_start:devmand.channels.cli.plugin.CliResponse)
-  if (GOOGLE_PREDICT_FALSE(&from == this)) {
-    ::google::protobuf::internal::MergeFromFail(__FILE__, __LINE__);
-  }
-  if (from.output().size() > 0) {
-    output_.AssignWithDefault(
-        &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-        from.output_);
-  }
-}
-
-void CliResponse::CopyFrom(const ::google::protobuf::Message& from) {
-  // @@protoc_insertion_point(generalized_copy_from_start:devmand.channels.cli.plugin.CliResponse)
-  if (&from == this)
-    return;
-  Clear();
-  MergeFrom(from);
-}
-
-void CliResponse::CopyFrom(const CliResponse& from) {
-  // @@protoc_insertion_point(class_specific_copy_from_start:devmand.channels.cli.plugin.CliResponse)
-  if (&from == this)
-    return;
-  Clear();
-  MergeFrom(from);
-}
-
-bool CliResponse::IsInitialized() const {
-  return true;
-}
-
-void CliResponse::Swap(CliResponse* other) {
-  if (other == this)
-    return;
-  InternalSwap(other);
-}
-void CliResponse::InternalSwap(CliResponse* other) {
-  output_.Swap(&other->output_);
-  _internal_metadata_.Swap(&other->_internal_metadata_);
-  std::swap(_cached_size_, other->_cached_size_);
-}
-
-::google::protobuf::Metadata CliResponse::GetMetadata() const {
-  protobuf_AssignDescriptorsOnce();
-  ::google::protobuf::Metadata metadata;
-  metadata.descriptor = CliResponse_descriptor_;
-  metadata.reflection = CliResponse_reflection_;
-  return metadata;
-}
-
-#if PROTOBUF_INLINE_NOT_IN_HEADERS
-// CliResponse
-
-// optional string output = 1;
-void CliResponse::clear_output() {
-  output_.ClearToEmptyNoArena(
-      &::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-const ::std::string& CliResponse::output() const {
-  // @@protoc_insertion_point(field_get:devmand.channels.cli.plugin.CliResponse.output)
-  return output_.GetNoArena(
-      &::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-void CliResponse::set_output(const ::std::string& value) {
-  output_.SetNoArena(
-      &::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:devmand.channels.cli.plugin.CliResponse.output)
-}
-void CliResponse::set_output(const char* value) {
-  output_.SetNoArena(
-      &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-      ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:devmand.channels.cli.plugin.CliResponse.output)
-}
-void CliResponse::set_output(const char* value, size_t size) {
-  output_.SetNoArena(
-      &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-      ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:devmand.channels.cli.plugin.CliResponse.output)
-}
-::std::string* CliResponse::mutable_output() {
-  // @@protoc_insertion_point(field_mutable:devmand.channels.cli.plugin.CliResponse.output)
-  return output_.MutableNoArena(
-      &::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-::std::string* CliResponse::release_output() {
-  // @@protoc_insertion_point(field_release:devmand.channels.cli.plugin.CliResponse.output)
-
-  return output_.ReleaseNoArena(
-      &::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-void CliResponse::set_allocated_output(::std::string* output) {
-  if (output != NULL) {
-  } else {
-  }
-  output_.SetAllocatedNoArena(
-      &::google::protobuf::internal::GetEmptyStringAlreadyInited(), output);
-  // @@protoc_insertion_point(field_set_allocated:devmand.channels.cli.plugin.CliResponse.output)
-}
-
-#endif // PROTOBUF_INLINE_NOT_IN_HEADERS
-
-// ===================================================================
-
-#if !defined(_MSC_VER) || _MSC_VER >= 1900
 const int ReadRequest::kActualReadRequestFieldNumber;
 const int ReadRequest::kCliResponseFieldNumber;
 #endif // !defined(_MSC_VER) || _MSC_VER >= 1900
@@ -1059,6 +703,7 @@ failure:
 
 void ReadRequest::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
+  (void)output;
   // @@protoc_insertion_point(serialize_start:devmand.channels.cli.plugin.ReadRequest)
   // optional .devmand.channels.cli.plugin.ActualReadRequest actualReadRequest =
   // 1;
@@ -1337,310 +982,6 @@ ReadRequest::ReadRequestUnionCase ReadRequest::ReadRequestUnion_case() const {
 // ===================================================================
 
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
-const int CliRequest::kCmdFieldNumber;
-#endif // !defined(_MSC_VER) || _MSC_VER >= 1900
-
-CliRequest::CliRequest()
-    : ::google::protobuf::Message(), _internal_metadata_(NULL) {
-  SharedCtor();
-  // @@protoc_insertion_point(constructor:devmand.channels.cli.plugin.CliRequest)
-}
-
-void CliRequest::InitAsDefaultInstance() {
-  _is_default_instance_ = true;
-}
-
-CliRequest::CliRequest(const CliRequest& from)
-    : ::google::protobuf::Message(), _internal_metadata_(NULL) {
-  SharedCtor();
-  MergeFrom(from);
-  // @@protoc_insertion_point(copy_constructor:devmand.channels.cli.plugin.CliRequest)
-}
-
-void CliRequest::SharedCtor() {
-  _is_default_instance_ = false;
-  ::google::protobuf::internal::GetEmptyString();
-  _cached_size_ = 0;
-  cmd_.UnsafeSetDefault(
-      &::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-
-CliRequest::~CliRequest() {
-  // @@protoc_insertion_point(destructor:devmand.channels.cli.plugin.CliRequest)
-  SharedDtor();
-}
-
-void CliRequest::SharedDtor() {
-  cmd_.DestroyNoArena(
-      &::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  if (this != default_instance_) {
-  }
-}
-
-void CliRequest::SetCachedSize(int size) const {
-  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
-  _cached_size_ = size;
-  GOOGLE_SAFE_CONCURRENT_WRITES_END();
-}
-const ::google::protobuf::Descriptor* CliRequest::descriptor() {
-  protobuf_AssignDescriptorsOnce();
-  return CliRequest_descriptor_;
-}
-
-const CliRequest& CliRequest::default_instance() {
-  if (default_instance_ == NULL)
-    protobuf_AddDesc_ReaderPlugin_2eproto();
-  return *default_instance_;
-}
-
-CliRequest* CliRequest::default_instance_ = NULL;
-
-CliRequest* CliRequest::New(::google::protobuf::Arena* arena) const {
-  CliRequest* n = new CliRequest;
-  if (arena != NULL) {
-    arena->Own(n);
-  }
-  return n;
-}
-
-void CliRequest::Clear() {
-  // @@protoc_insertion_point(message_clear_start:devmand.channels.cli.plugin.CliRequest)
-  cmd_.ClearToEmptyNoArena(
-      &::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-
-bool CliRequest::MergePartialFromCodedStream(
-    ::google::protobuf::io::CodedInputStream* input) {
-#define DO_(EXPRESSION)                 \
-  if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) \
-  goto failure
-  ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:devmand.channels.cli.plugin.CliRequest)
-  for (;;) {
-    ::std::pair<::google::protobuf::uint32, bool> p =
-        input->ReadTagWithCutoff(127);
-    tag = p.first;
-    if (!p.second)
-      goto handle_unusual;
-    switch (
-        ::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // optional string cmd = 1;
-      case 1: {
-        if (tag == 10) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
-              input, this->mutable_cmd()));
-          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-              this->cmd().data(),
-              (int)this->cmd().length(),
-              ::google::protobuf::internal::WireFormatLite::PARSE,
-              "devmand.channels.cli.plugin.CliRequest.cmd"));
-        } else {
-          goto handle_unusual;
-        }
-        if (input->ExpectAtEnd())
-          goto success;
-        break;
-      }
-
-      default: {
-      handle_unusual:
-        if (tag == 0 ||
-            ::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
-                ::google::protobuf::internal::WireFormatLite::
-                    WIRETYPE_END_GROUP) {
-          goto success;
-        }
-        DO_(::google::protobuf::internal::WireFormatLite::SkipField(
-            input, tag));
-        break;
-      }
-    }
-  }
-success:
-  // @@protoc_insertion_point(parse_success:devmand.channels.cli.plugin.CliRequest)
-  return true;
-failure:
-  // @@protoc_insertion_point(parse_failure:devmand.channels.cli.plugin.CliRequest)
-  return false;
-#undef DO_
-}
-
-void CliRequest::SerializeWithCachedSizes(
-    ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:devmand.channels.cli.plugin.CliRequest)
-  // optional string cmd = 1;
-  if (this->cmd().size() > 0) {
-    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-        this->cmd().data(),
-        (int)this->cmd().length(),
-        ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-        "devmand.channels.cli.plugin.CliRequest.cmd");
-    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
-        1, this->cmd(), output);
-  }
-
-  // @@protoc_insertion_point(serialize_end:devmand.channels.cli.plugin.CliRequest)
-}
-
-::google::protobuf::uint8* CliRequest::InternalSerializeWithCachedSizesToArray(
-    bool deterministic,
-    ::google::protobuf::uint8* target) const {
-  (void)deterministic;
-  // @@protoc_insertion_point(serialize_to_array_start:devmand.channels.cli.plugin.CliRequest)
-  // optional string cmd = 1;
-  if (this->cmd().size() > 0) {
-    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-        this->cmd().data(),
-        (int)this->cmd().length(),
-        ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-        "devmand.channels.cli.plugin.CliRequest.cmd");
-    target = ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
-        1, this->cmd(), target);
-  }
-
-  // @@protoc_insertion_point(serialize_to_array_end:devmand.channels.cli.plugin.CliRequest)
-  return target;
-}
-
-int CliRequest::ByteSize() const {
-  // @@protoc_insertion_point(message_byte_size_start:devmand.channels.cli.plugin.CliRequest)
-  int total_size = 0;
-
-  // optional string cmd = 1;
-  if (this->cmd().size() > 0) {
-    total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::StringSize(this->cmd());
-  }
-
-  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
-  _cached_size_ = total_size;
-  GOOGLE_SAFE_CONCURRENT_WRITES_END();
-  return total_size;
-}
-
-void CliRequest::MergeFrom(const ::google::protobuf::Message& from) {
-  // @@protoc_insertion_point(generalized_merge_from_start:devmand.channels.cli.plugin.CliRequest)
-  if (GOOGLE_PREDICT_FALSE(&from == this)) {
-    ::google::protobuf::internal::MergeFromFail(__FILE__, __LINE__);
-  }
-  const CliRequest* source =
-      ::google::protobuf::internal::DynamicCastToGenerated<const CliRequest>(
-          &from);
-  if (source == NULL) {
-    // @@protoc_insertion_point(generalized_merge_from_cast_fail:devmand.channels.cli.plugin.CliRequest)
-    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
-  } else {
-    // @@protoc_insertion_point(generalized_merge_from_cast_success:devmand.channels.cli.plugin.CliRequest)
-    MergeFrom(*source);
-  }
-}
-
-void CliRequest::MergeFrom(const CliRequest& from) {
-  // @@protoc_insertion_point(class_specific_merge_from_start:devmand.channels.cli.plugin.CliRequest)
-  if (GOOGLE_PREDICT_FALSE(&from == this)) {
-    ::google::protobuf::internal::MergeFromFail(__FILE__, __LINE__);
-  }
-  if (from.cmd().size() > 0) {
-    cmd_.AssignWithDefault(
-        &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-        from.cmd_);
-  }
-}
-
-void CliRequest::CopyFrom(const ::google::protobuf::Message& from) {
-  // @@protoc_insertion_point(generalized_copy_from_start:devmand.channels.cli.plugin.CliRequest)
-  if (&from == this)
-    return;
-  Clear();
-  MergeFrom(from);
-}
-
-void CliRequest::CopyFrom(const CliRequest& from) {
-  // @@protoc_insertion_point(class_specific_copy_from_start:devmand.channels.cli.plugin.CliRequest)
-  if (&from == this)
-    return;
-  Clear();
-  MergeFrom(from);
-}
-
-bool CliRequest::IsInitialized() const {
-  return true;
-}
-
-void CliRequest::Swap(CliRequest* other) {
-  if (other == this)
-    return;
-  InternalSwap(other);
-}
-void CliRequest::InternalSwap(CliRequest* other) {
-  cmd_.Swap(&other->cmd_);
-  _internal_metadata_.Swap(&other->_internal_metadata_);
-  std::swap(_cached_size_, other->_cached_size_);
-}
-
-::google::protobuf::Metadata CliRequest::GetMetadata() const {
-  protobuf_AssignDescriptorsOnce();
-  ::google::protobuf::Metadata metadata;
-  metadata.descriptor = CliRequest_descriptor_;
-  metadata.reflection = CliRequest_reflection_;
-  return metadata;
-}
-
-#if PROTOBUF_INLINE_NOT_IN_HEADERS
-// CliRequest
-
-// optional string cmd = 1;
-void CliRequest::clear_cmd() {
-  cmd_.ClearToEmptyNoArena(
-      &::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-const ::std::string& CliRequest::cmd() const {
-  // @@protoc_insertion_point(field_get:devmand.channels.cli.plugin.CliRequest.cmd)
-  return cmd_.GetNoArena(
-      &::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-void CliRequest::set_cmd(const ::std::string& value) {
-  cmd_.SetNoArena(
-      &::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:devmand.channels.cli.plugin.CliRequest.cmd)
-}
-void CliRequest::set_cmd(const char* value) {
-  cmd_.SetNoArena(
-      &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-      ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:devmand.channels.cli.plugin.CliRequest.cmd)
-}
-void CliRequest::set_cmd(const char* value, size_t size) {
-  cmd_.SetNoArena(
-      &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-      ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:devmand.channels.cli.plugin.CliRequest.cmd)
-}
-::std::string* CliRequest::mutable_cmd() {
-  // @@protoc_insertion_point(field_mutable:devmand.channels.cli.plugin.CliRequest.cmd)
-  return cmd_.MutableNoArena(
-      &::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-::std::string* CliRequest::release_cmd() {
-  // @@protoc_insertion_point(field_release:devmand.channels.cli.plugin.CliRequest.cmd)
-
-  return cmd_.ReleaseNoArena(
-      &::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-void CliRequest::set_allocated_cmd(::std::string* cmd) {
-  if (cmd != NULL) {
-  } else {
-  }
-  cmd_.SetAllocatedNoArena(
-      &::google::protobuf::internal::GetEmptyStringAlreadyInited(), cmd);
-  // @@protoc_insertion_point(field_set_allocated:devmand.channels.cli.plugin.CliRequest.cmd)
-}
-
-#endif // PROTOBUF_INLINE_NOT_IN_HEADERS
-
-// ===================================================================
-
-#if !defined(_MSC_VER) || _MSC_VER >= 1900
 const int ActualReadResponse::kJsonFieldNumber;
 #endif // !defined(_MSC_VER) || _MSC_VER >= 1900
 
@@ -1772,6 +1113,7 @@ failure:
 
 void ActualReadResponse::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
+  (void)output;
   // @@protoc_insertion_point(serialize_start:devmand.channels.cli.plugin.ActualReadResponse)
   // optional string json = 1;
   if (this->json().size() > 0) {
@@ -2111,6 +1453,7 @@ failure:
 
 void ReadResponse::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
+  (void)output;
   // @@protoc_insertion_point(serialize_start:devmand.channels.cli.plugin.ReadResponse)
   // optional .devmand.channels.cli.plugin.CliRequest cliRequest = 1;
   if (has_clirequest()) {

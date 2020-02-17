@@ -159,8 +159,16 @@ add_library(devman_channel_cli
   ${PROJECT_SOURCE_DIR}/src/devmand/channels/cli/datastore/DatastoreDiff.h
   ${PROJECT_SOURCE_DIR}/src/devmand/channels/cli/datastore/BindingAwareDatastore.cpp
   ${PROJECT_SOURCE_DIR}/src/devmand/channels/cli/datastore/BindingAwareDatastore.h
+  ${PROJECT_SOURCE_DIR}/src/devmand/channels/cli/plugin/protocpp/Common.pb.cpp
+  ${PROJECT_SOURCE_DIR}/src/devmand/channels/cli/plugin/protocpp/Common.grpc.pb.cpp
   ${PROJECT_SOURCE_DIR}/src/devmand/channels/cli/plugin/protocpp/ReaderPlugin.pb.cpp
   ${PROJECT_SOURCE_DIR}/src/devmand/channels/cli/plugin/protocpp/ReaderPlugin.grpc.pb.cpp
+  ${PROJECT_SOURCE_DIR}/src/devmand/channels/cli/plugin/protocpp/WriterPlugin.pb.cpp
+  ${PROJECT_SOURCE_DIR}/src/devmand/channels/cli/plugin/protocpp/WriterPlugin.grpc.pb.cpp
+  ${PROJECT_SOURCE_DIR}/src/devmand/channels/cli/plugin/protocpp/PluginRegistration.pb.cpp
+  ${PROJECT_SOURCE_DIR}/src/devmand/channels/cli/plugin/protocpp/PluginRegistration.grpc.pb.cpp
+  ${PROJECT_SOURCE_DIR}/src/devmand/channels/cli/plugin/protocpp/CliFlavour.pb.cpp
+  ${PROJECT_SOURCE_DIR}/src/devmand/channels/cli/plugin/protocpp/CliFlavour.grpc.pb.cpp
   ${PROJECT_SOURCE_DIR}/src/devmand/devices/cli/translation/GrpcReader.cpp
 )
 

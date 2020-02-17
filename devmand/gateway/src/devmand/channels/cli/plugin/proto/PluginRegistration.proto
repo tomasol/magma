@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package devmand.channels.cli.plugin;
+
+service PluginRegistration {
+  rpc GetCapabilities(CapabilitiesRequest) returns (CapabilitiesResponse) {}
+}
+
+message CapabilitiesRequest {}
+
+message ReaderCapability {
+  string path = 1;
+  bool subtree = 2;
+}
+message WriterCapability {
+  string path = 1;
+  bool subtree = 2;
+}
+message CapabilitiesResponse {
+  repeated ReaderCapability readerCapabilities = 1;
+  repeated WriterCapability writerCapabilities = 2;
+}

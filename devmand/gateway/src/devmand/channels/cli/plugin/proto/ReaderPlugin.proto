@@ -2,15 +2,14 @@ syntax = "proto3";
 
 package devmand.channels.cli.plugin;
 
+import "Common.proto";
+
 service ReaderPlugin {
   rpc Read(stream ReadRequest) returns (stream ReadResponse) {}
 }
 
 message ActualReadRequest {
   string path = 1;
-}
-message CliResponse {
-  string output = 1;
 }
 message ReadRequest {
   oneof ReadRequestUnion {
@@ -19,9 +18,6 @@ message ReadRequest {
   }
 }
 
-message CliRequest {
-  string cmd = 1;
-}
 message ActualReadResponse {
   string json = 1;
 }
