@@ -170,6 +170,8 @@ add_library(devman_channel_cli
   ${PROJECT_SOURCE_DIR}/src/devmand/channels/cli/plugin/protocpp/CliFlavour.pb.cpp
   ${PROJECT_SOURCE_DIR}/src/devmand/channels/cli/plugin/protocpp/CliFlavour.grpc.pb.cpp
   ${PROJECT_SOURCE_DIR}/src/devmand/devices/cli/translation/GrpcReader.cpp
+  ${PROJECT_SOURCE_DIR}/src/devmand/devices/cli/translation/GrpcWriter.cpp
+  ${PROJECT_SOURCE_DIR}/src/devmand/devices/cli/translation/GrpcCliHandler.cpp
 )
 
 target_link_libraries(devman_channel_cli

@@ -41,6 +41,7 @@ void protobuf_ShutdownFile_PluginRegistration_2eproto();
 
 class CapabilitiesRequest;
 class CapabilitiesResponse;
+class DeviceType;
 class ReaderCapability;
 class WriterCapability;
 
@@ -127,6 +128,114 @@ class CapabilitiesRequest : public ::google::protobuf::Message /* @@protoc_inser
 
   void InitAsDefaultInstance();
   static CapabilitiesRequest* default_instance_;
+};
+// -------------------------------------------------------------------
+
+class DeviceType : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:devmand.channels.cli.plugin.DeviceType)
+                                                       */
+{
+ public:
+  DeviceType();
+  virtual ~DeviceType();
+
+  DeviceType(const DeviceType& from);
+
+  inline DeviceType& operator=(const DeviceType& from) {
+    CopyFrom(from);
+    return *this;
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const DeviceType& default_instance();
+
+  void Swap(DeviceType* other);
+
+  // implements Message ----------------------------------------------
+
+  inline DeviceType* New() const {
+    return New(NULL);
+  }
+
+  DeviceType* New(::google::protobuf::Arena* arena) const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const DeviceType& from);
+  void MergeFrom(const DeviceType& from);
+  void Clear();
+  bool IsInitialized() const;
+
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic,
+      ::google::protobuf::uint8* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(
+      ::google::protobuf::uint8* output) const {
+    return InternalSerializeWithCachedSizesToArray(false, output);
+  }
+  int GetCachedSize() const {
+    return _cached_size_;
+  }
+
+ private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  void InternalSwap(DeviceType* other);
+
+ private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return _internal_metadata_.arena();
+  }
+  inline void* MaybeArenaPtr() const {
+    return _internal_metadata_.raw_arena_ptr();
+  }
+
+ public:
+  ::google::protobuf::Metadata GetMetadata() const;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // optional string device = 1;
+  void clear_device();
+  static const int kDeviceFieldNumber = 1;
+  const ::std::string& device() const;
+  void set_device(const ::std::string& value);
+  void set_device(const char* value);
+  void set_device(const char* value, size_t size);
+  ::std::string* mutable_device();
+  ::std::string* release_device();
+  void set_allocated_device(::std::string* device);
+
+  // optional string version = 2;
+  void clear_version();
+  static const int kVersionFieldNumber = 2;
+  const ::std::string& version() const;
+  void set_version(const ::std::string& value);
+  void set_version(const char* value);
+  void set_version(const char* value, size_t size);
+  ::std::string* mutable_version();
+  ::std::string* release_version();
+  void set_allocated_version(::std::string* version);
+
+  // @@protoc_insertion_point(class_scope:devmand.channels.cli.plugin.DeviceType)
+ private:
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  bool _is_default_instance_;
+  ::google::protobuf::internal::ArenaStringPtr device_;
+  ::google::protobuf::internal::ArenaStringPtr version_;
+  mutable int _cached_size_;
+  friend void protobuf_AddDesc_PluginRegistration_2eproto();
+  friend void protobuf_AssignDesc_PluginRegistration_2eproto();
+  friend void protobuf_ShutdownFile_PluginRegistration_2eproto();
+
+  void InitAsDefaultInstance();
+  static DeviceType* default_instance_;
 };
 // -------------------------------------------------------------------
 
@@ -406,11 +515,21 @@ class CapabilitiesResponse : public ::google::protobuf::Message /* @@protoc_inse
 
   // accessors -------------------------------------------------------
 
+  // optional .devmand.channels.cli.plugin.DeviceType deviceType = 1;
+  bool has_devicetype() const;
+  void clear_devicetype();
+  static const int kDeviceTypeFieldNumber = 1;
+  const ::devmand::channels::cli::plugin::DeviceType& devicetype() const;
+  ::devmand::channels::cli::plugin::DeviceType* mutable_devicetype();
+  ::devmand::channels::cli::plugin::DeviceType* release_devicetype();
+  void set_allocated_devicetype(
+      ::devmand::channels::cli::plugin::DeviceType* devicetype);
+
   // repeated .devmand.channels.cli.plugin.ReaderCapability readerCapabilities =
-  // 1;
+  // 2;
   int readercapabilities_size() const;
   void clear_readercapabilities();
-  static const int kReaderCapabilitiesFieldNumber = 1;
+  static const int kReaderCapabilitiesFieldNumber = 2;
   const ::devmand::channels::cli::plugin::ReaderCapability& readercapabilities(
       int index) const;
   ::devmand::channels::cli::plugin::ReaderCapability*
@@ -424,10 +543,10 @@ class CapabilitiesResponse : public ::google::protobuf::Message /* @@protoc_inse
   readercapabilities() const;
 
   // repeated .devmand.channels.cli.plugin.WriterCapability writerCapabilities =
-  // 2;
+  // 3;
   int writercapabilities_size() const;
   void clear_writercapabilities();
-  static const int kWriterCapabilitiesFieldNumber = 2;
+  static const int kWriterCapabilitiesFieldNumber = 3;
   const ::devmand::channels::cli::plugin::WriterCapability& writercapabilities(
       int index) const;
   ::devmand::channels::cli::plugin::WriterCapability*
@@ -444,6 +563,7 @@ class CapabilitiesResponse : public ::google::protobuf::Message /* @@protoc_inse
  private:
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   bool _is_default_instance_;
+  ::devmand::channels::cli::plugin::DeviceType* devicetype_;
   ::google::protobuf::RepeatedPtrField<
       ::devmand::channels::cli::plugin::ReaderCapability>
       readercapabilities_;
@@ -464,6 +584,104 @@ class CapabilitiesResponse : public ::google::protobuf::Message /* @@protoc_inse
 
 #if !PROTOBUF_INLINE_NOT_IN_HEADERS
 // CapabilitiesRequest
+
+// -------------------------------------------------------------------
+
+// DeviceType
+
+// optional string device = 1;
+inline void DeviceType::clear_device() {
+  device_.ClearToEmptyNoArena(
+      &::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& DeviceType::device() const {
+  // @@protoc_insertion_point(field_get:devmand.channels.cli.plugin.DeviceType.device)
+  return device_.GetNoArena(
+      &::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void DeviceType::set_device(const ::std::string& value) {
+  device_.SetNoArena(
+      &::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:devmand.channels.cli.plugin.DeviceType.device)
+}
+inline void DeviceType::set_device(const char* value) {
+  device_.SetNoArena(
+      &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:devmand.channels.cli.plugin.DeviceType.device)
+}
+inline void DeviceType::set_device(const char* value, size_t size) {
+  device_.SetNoArena(
+      &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:devmand.channels.cli.plugin.DeviceType.device)
+}
+inline ::std::string* DeviceType::mutable_device() {
+  // @@protoc_insertion_point(field_mutable:devmand.channels.cli.plugin.DeviceType.device)
+  return device_.MutableNoArena(
+      &::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* DeviceType::release_device() {
+  // @@protoc_insertion_point(field_release:devmand.channels.cli.plugin.DeviceType.device)
+
+  return device_.ReleaseNoArena(
+      &::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void DeviceType::set_allocated_device(::std::string* device) {
+  if (device != NULL) {
+  } else {
+  }
+  device_.SetAllocatedNoArena(
+      &::google::protobuf::internal::GetEmptyStringAlreadyInited(), device);
+  // @@protoc_insertion_point(field_set_allocated:devmand.channels.cli.plugin.DeviceType.device)
+}
+
+// optional string version = 2;
+inline void DeviceType::clear_version() {
+  version_.ClearToEmptyNoArena(
+      &::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& DeviceType::version() const {
+  // @@protoc_insertion_point(field_get:devmand.channels.cli.plugin.DeviceType.version)
+  return version_.GetNoArena(
+      &::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void DeviceType::set_version(const ::std::string& value) {
+  version_.SetNoArena(
+      &::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:devmand.channels.cli.plugin.DeviceType.version)
+}
+inline void DeviceType::set_version(const char* value) {
+  version_.SetNoArena(
+      &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:devmand.channels.cli.plugin.DeviceType.version)
+}
+inline void DeviceType::set_version(const char* value, size_t size) {
+  version_.SetNoArena(
+      &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:devmand.channels.cli.plugin.DeviceType.version)
+}
+inline ::std::string* DeviceType::mutable_version() {
+  // @@protoc_insertion_point(field_mutable:devmand.channels.cli.plugin.DeviceType.version)
+  return version_.MutableNoArena(
+      &::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* DeviceType::release_version() {
+  // @@protoc_insertion_point(field_release:devmand.channels.cli.plugin.DeviceType.version)
+
+  return version_.ReleaseNoArena(
+      &::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void DeviceType::set_allocated_version(::std::string* version) {
+  if (version != NULL) {
+  } else {
+  }
+  version_.SetAllocatedNoArena(
+      &::google::protobuf::internal::GetEmptyStringAlreadyInited(), version);
+  // @@protoc_insertion_point(field_set_allocated:devmand.channels.cli.plugin.DeviceType.version)
+}
 
 // -------------------------------------------------------------------
 
@@ -597,8 +815,48 @@ inline void WriterCapability::set_subtree(bool value) {
 
 // CapabilitiesResponse
 
+// optional .devmand.channels.cli.plugin.DeviceType deviceType = 1;
+inline bool CapabilitiesResponse::has_devicetype() const {
+  return !_is_default_instance_ && devicetype_ != NULL;
+}
+inline void CapabilitiesResponse::clear_devicetype() {
+  if (GetArenaNoVirtual() == NULL && devicetype_ != NULL)
+    delete devicetype_;
+  devicetype_ = NULL;
+}
+inline const ::devmand::channels::cli::plugin::DeviceType&
+CapabilitiesResponse::devicetype() const {
+  // @@protoc_insertion_point(field_get:devmand.channels.cli.plugin.CapabilitiesResponse.deviceType)
+  return devicetype_ != NULL ? *devicetype_ : *default_instance_->devicetype_;
+}
+inline ::devmand::channels::cli::plugin::DeviceType*
+CapabilitiesResponse::mutable_devicetype() {
+  if (devicetype_ == NULL) {
+    devicetype_ = new ::devmand::channels::cli::plugin::DeviceType;
+  }
+  // @@protoc_insertion_point(field_mutable:devmand.channels.cli.plugin.CapabilitiesResponse.deviceType)
+  return devicetype_;
+}
+inline ::devmand::channels::cli::plugin::DeviceType*
+CapabilitiesResponse::release_devicetype() {
+  // @@protoc_insertion_point(field_release:devmand.channels.cli.plugin.CapabilitiesResponse.deviceType)
+
+  ::devmand::channels::cli::plugin::DeviceType* temp = devicetype_;
+  devicetype_ = NULL;
+  return temp;
+}
+inline void CapabilitiesResponse::set_allocated_devicetype(
+    ::devmand::channels::cli::plugin::DeviceType* devicetype) {
+  delete devicetype_;
+  devicetype_ = devicetype;
+  if (devicetype) {
+  } else {
+  }
+  // @@protoc_insertion_point(field_set_allocated:devmand.channels.cli.plugin.CapabilitiesResponse.deviceType)
+}
+
 // repeated .devmand.channels.cli.plugin.ReaderCapability readerCapabilities =
-// 1;
+// 2;
 inline int CapabilitiesResponse::readercapabilities_size() const {
   return readercapabilities_.size();
 }
@@ -634,7 +892,7 @@ CapabilitiesResponse::readercapabilities() const {
 }
 
 // repeated .devmand.channels.cli.plugin.WriterCapability writerCapabilities =
-// 2;
+// 3;
 inline int CapabilitiesResponse::writercapabilities_size() const {
   return writercapabilities_.size();
 }
@@ -670,6 +928,8 @@ CapabilitiesResponse::writercapabilities() const {
 }
 
 #endif // !PROTOBUF_INLINE_NOT_IN_HEADERS
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------

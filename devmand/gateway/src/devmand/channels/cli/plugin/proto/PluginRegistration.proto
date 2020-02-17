@@ -8,6 +8,11 @@ service PluginRegistration {
 
 message CapabilitiesRequest {}
 
+message DeviceType {
+  string device = 1;
+  string version = 2;
+}
+
 message ReaderCapability {
   string path = 1;
   bool subtree = 2;
@@ -17,6 +22,7 @@ message WriterCapability {
   bool subtree = 2;
 }
 message CapabilitiesResponse {
-  repeated ReaderCapability readerCapabilities = 1;
-  repeated WriterCapability writerCapabilities = 2;
+  DeviceType deviceType = 1;
+  repeated ReaderCapability readerCapabilities = 2;
+  repeated WriterCapability writerCapabilities = 3;
 }

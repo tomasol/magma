@@ -10,7 +10,7 @@
 #define LOG_WITH_GLOG
 #include <magma_logging.h>
 
-#include <devmand/channels/cli/plugin/protocpp/ReaderPlugin.grpc.pb.h>
+#include <devmand/channels/cli/plugin/protocpp/WriterPlugin.grpc.pb.h>
 #include <devmand/devices/cli/translation/PluginRegistry.h>
 #include <devmand/devices/cli/translation/GrpcCliHandler.h>
 #include <grpc++/grpc++.h>
@@ -23,18 +23,29 @@ using namespace std;
 using namespace folly;
 using namespace devmand::channels::cli;
 
-class GrpcReader : public Reader, public GrpcCliHandler {
+class GrpcWriter : public Writer, public GrpcCliHandler {
  private:
-  unique_ptr<devmand::channels::cli::plugin::ReaderPlugin::Stub> stub_;
+  unique_ptr<devmand::channels::cli::plugin::WriterPlugin::Stub> stub_;
 
  public:
-  GrpcReader(
+  GrpcWriter(
       shared_ptr<grpc::Channel> channel,
       const string id,
       shared_ptr<Executor> executor);
 
-  Future<dynamic> read(const Path& path, const DeviceAccess& device)
+  Future<Unit> create(const Path& path, dynamic cfg, const DeviceAccess& device)
       const override;
+
+  Future<Unit> update(
+      const Path& path,
+      dynamic before,
+      dynamic after,
+      const DeviceAccess& device) const override;
+
+  Future<Unit> remove(
+      const Path& path,
+      dynamic before,
+      const DeviceAccess& device) const override;
 };
 
 } // namespace cli
