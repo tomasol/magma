@@ -304,6 +304,7 @@ add_executable(devmantest
   ${PROJECT_SOURCE_DIR}/src/devmand/test/cli/TreeCacheCliTest.cpp
   ${PROJECT_SOURCE_DIR}/src/devmand/test/cli/TreeCacheTest.cpp
   ${PROJECT_SOURCE_DIR}/src/devmand/test/cli/GrpcReaderTest.cpp
+  ${PROJECT_SOURCE_DIR}/src/devmand/test/cli/GrpcListReaderTest.cpp
 )
 
 target_link_libraries(devmantest

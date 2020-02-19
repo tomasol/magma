@@ -39,20 +39,15 @@ Future<vector<dynamic>> GrpcListReader::readKeys(
       request,
       device,
       [this](auto context) { return stub_->Read(context); },
-      [](auto response) {
-        // TODO: return array instead of {"keys":[]}
+      [this](auto response) -> vector<dynamic> {
+        dynamic result = parseJson(response.actualreadresponse().json());
+        if (not result.isArray()) {
+          MLOG(MERROR) << "[" << id << "] Response is not json array:" << response.actualreadresponse().json() ;
+          throw runtime_error("Response is not json array");
+        }
         vector<dynamic> values;
-        if (response.actualreadresponse().json() == "") {
-          return values;
-        }
-        auto responseDyn = parseJson(response.actualreadresponse().json());
-        if (responseDyn.find("keys") == responseDyn.items().end()) {
-          return values;
-        }
-        if (!responseDyn["keys"].isArray()) {
-          return values;
-        }
-        for (auto& k : responseDyn["keys"]) {
+        for (auto& k : result) {
+          MLOG(MDEBUG) << "pushing " << toJson(k);
           values.push_back(k);
         }
         return values;
