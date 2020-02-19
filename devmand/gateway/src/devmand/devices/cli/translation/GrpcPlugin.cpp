@@ -7,6 +7,7 @@
 
 #include <devmand/devices/cli/translation/GrpcPlugin.h>
 #include <devmand/devices/cli/translation/GrpcReader.h>
+#include <devmand/devices/cli/translation/GrpcListReader.h>
 #include <devmand/devices/cli/translation/GrpcWriter.h>
 #include <devmand/channels/cli/plugin/protocpp/PluginRegistration.grpc.pb.h>
 // TODO make async
@@ -60,13 +61,12 @@ void GrpcPlugin::provideReaders(ReaderRegistryBuilder& registry) const {
     auto remoteReaderPlugin = make_shared<GrpcReader>(channel, id, executor);
     registry.add(path, remoteReaderPlugin);
   }
-  // TODO listReaders
-//  for (int i = 0; i < capabilities.readers_size(); i++ ) {
-//    Path path(capabilities.listreaders().Get(i).path());
-//    // TODO subtree
-//    auto remoteReaderPlugin = make_shared<GrpcListReader>(channel, id, executor);
-//    registry.addList(path, remoteReaderPlugin);
-//  }
+  for (int i = 0; i < capabilities.readers_size(); i++ ) {
+    Path path(capabilities.listreaders().Get(i).path());
+    // TODO subtree
+    auto remoteReaderPlugin = make_shared<GrpcListReader>(channel, id, executor);
+    registry.addList(path, remoteReaderPlugin);
+  }
 }
 
 void GrpcPlugin::provideWriters(WriterRegistryBuilder& registry) const {
