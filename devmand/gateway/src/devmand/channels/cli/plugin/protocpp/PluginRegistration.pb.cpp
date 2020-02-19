@@ -104,10 +104,12 @@ void protobuf_AssignDesc_PluginRegistration_2eproto() {
           GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(
               ReaderCapability, _is_default_instance_));
   WriterCapability_descriptor_ = file->message_type(3);
-  static const int WriterCapability_offsets_[2] = {
+  static const int WriterCapability_offsets_[3] = {
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(WriterCapability, path_),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(
           WriterCapability, subtree_),
+      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(
+          WriterCapability, dependencies_),
   };
   WriterCapability_reflection_ = ::google::protobuf::internal::
       GeneratedMessageReflection::NewGeneratedMessageReflection(
@@ -123,13 +125,15 @@ void protobuf_AssignDesc_PluginRegistration_2eproto() {
           GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(
               WriterCapability, _is_default_instance_));
   CapabilitiesResponse_descriptor_ = file->message_type(4);
-  static const int CapabilitiesResponse_offsets_[3] = {
+  static const int CapabilitiesResponse_offsets_[4] = {
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(
           CapabilitiesResponse, devicetype_),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(
-          CapabilitiesResponse, readercapabilities_),
+          CapabilitiesResponse, readers_),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(
-          CapabilitiesResponse, writercapabilities_),
+          CapabilitiesResponse, listreaders_),
+      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(
+          CapabilitiesResponse, writers_),
   };
   CapabilitiesResponse_reflection_ = ::google::protobuf::internal::
       GeneratedMessageReflection::NewGeneratedMessageReflection(
@@ -200,19 +204,21 @@ void protobuf_AddDesc_PluginRegistration_2eproto() {
       "nels.cli.plugin\"\025\n\023CapabilitiesRequest\"-"
       "\n\nDeviceType\022\016\n\006device\030\001 \001(\t\022\017\n\007version\030"
       "\002 \001(\t\"1\n\020ReaderCapability\022\014\n\004path\030\001 \001(\t\022"
-      "\017\n\007subtree\030\002 \001(\010\"1\n\020WriterCapability\022\014\n\004"
-      "path\030\001 \001(\t\022\017\n\007subtree\030\002 \001(\010\"\351\001\n\024Capabili"
-      "tiesResponse\022;\n\ndeviceType\030\001 \001(\0132\'.devma"
-      "nd.channels.cli.plugin.DeviceType\022I\n\022rea"
-      "derCapabilities\030\002 \003(\0132-.devmand.channels"
-      ".cli.plugin.ReaderCapability\022I\n\022writerCa"
-      "pabilities\030\003 \003(\0132-.devmand.channels.cli."
-      "plugin.WriterCapability2\216\001\n\022PluginRegist"
-      "ration\022x\n\017GetCapabilities\0220.devmand.chan"
-      "nels.cli.plugin.CapabilitiesRequest\0321.de"
-      "vmand.channels.cli.plugin.CapabilitiesRe"
-      "sponse\"\000b\006proto3",
-      616);
+      "\017\n\007subtree\030\002 \001(\010\"G\n\020WriterCapability\022\014\n\004"
+      "path\030\001 \001(\t\022\017\n\007subtree\030\002 \001(\010\022\024\n\014dependenc"
+      "ies\030\003 \003(\t\"\227\002\n\024CapabilitiesResponse\022;\n\nde"
+      "viceType\030\001 \001(\0132\'.devmand.channels.cli.pl"
+      "ugin.DeviceType\022>\n\007readers\030\002 \003(\0132-.devma"
+      "nd.channels.cli.plugin.ReaderCapability\022"
+      "B\n\013listReaders\030\003 \003(\0132-.devmand.channels."
+      "cli.plugin.ReaderCapability\022>\n\007writers\030\004"
+      " \003(\0132-.devmand.channels.cli.plugin.Write"
+      "rCapability2\216\001\n\022PluginRegistration\022x\n\017Ge"
+      "tCapabilities\0220.devmand.channels.cli.plu"
+      "gin.CapabilitiesRequest\0321.devmand.channe"
+      "ls.cli.plugin.CapabilitiesResponse\"\000b\006pr"
+      "oto3",
+      684);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
       "PluginRegistration.proto", &protobuf_RegisterTypes);
   CapabilitiesRequest::default_instance_ = new CapabilitiesRequest();
@@ -532,7 +538,7 @@ bool DeviceType::MergePartialFromCodedStream(
               input, this->mutable_device()));
           DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
               this->device().data(),
-              (int)this->device().length(),
+(int)              this->device().length(),
               ::google::protobuf::internal::WireFormatLite::PARSE,
               "devmand.channels.cli.plugin.DeviceType.device"));
         } else {
@@ -551,7 +557,7 @@ bool DeviceType::MergePartialFromCodedStream(
               input, this->mutable_version()));
           DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
               this->version().data(),
-              (int)this->version().length(),
+(int)              this->version().length(),
               ::google::protobuf::internal::WireFormatLite::PARSE,
               "devmand.channels.cli.plugin.DeviceType.version"));
         } else {
@@ -593,7 +599,7 @@ void DeviceType::SerializeWithCachedSizes(
   if (this->device().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
         this->device().data(),
-        (int)this->device().length(),
+(int)        this->device().length(),
         ::google::protobuf::internal::WireFormatLite::SERIALIZE,
         "devmand.channels.cli.plugin.DeviceType.device");
     ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
@@ -604,7 +610,7 @@ void DeviceType::SerializeWithCachedSizes(
   if (this->version().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
         this->version().data(),
-        (int)this->version().length(),
+(int)        this->version().length(),
         ::google::protobuf::internal::WireFormatLite::SERIALIZE,
         "devmand.channels.cli.plugin.DeviceType.version");
     ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
@@ -623,7 +629,7 @@ void DeviceType::SerializeWithCachedSizes(
   if (this->device().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
         this->device().data(),
-        (int)this->device().length(),
+(int)        this->device().length(),
         ::google::protobuf::internal::WireFormatLite::SERIALIZE,
         "devmand.channels.cli.plugin.DeviceType.device");
     target = ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
@@ -634,7 +640,7 @@ void DeviceType::SerializeWithCachedSizes(
   if (this->version().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
         this->version().data(),
-        (int)this->version().length(),
+(int)        this->version().length(),
         ::google::protobuf::internal::WireFormatLite::SERIALIZE,
         "devmand.channels.cli.plugin.DeviceType.version");
     target = ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
@@ -943,7 +949,7 @@ bool ReaderCapability::MergePartialFromCodedStream(
               input, this->mutable_path()));
           DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
               this->path().data(),
-              (int)this->path().length(),
+(int)              this->path().length(),
               ::google::protobuf::internal::WireFormatLite::PARSE,
               "devmand.channels.cli.plugin.ReaderCapability.path"));
         } else {
@@ -1002,7 +1008,7 @@ void ReaderCapability::SerializeWithCachedSizes(
   if (this->path().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
         this->path().data(),
-        (int)this->path().length(),
+(int)        this->path().length(),
         ::google::protobuf::internal::WireFormatLite::SERIALIZE,
         "devmand.channels.cli.plugin.ReaderCapability.path");
     ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
@@ -1028,7 +1034,7 @@ ReaderCapability::InternalSerializeWithCachedSizesToArray(
   if (this->path().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
         this->path().data(),
-        (int)this->path().length(),
+(int)        this->path().length(),
         ::google::protobuf::internal::WireFormatLite::SERIALIZE,
         "devmand.channels.cli.plugin.ReaderCapability.path");
     target = ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
@@ -1208,6 +1214,7 @@ void ReaderCapability::set_subtree(bool value) {
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
 const int WriterCapability::kPathFieldNumber;
 const int WriterCapability::kSubtreeFieldNumber;
+const int WriterCapability::kDependenciesFieldNumber;
 #endif // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 WriterCapability::WriterCapability()
@@ -1280,6 +1287,7 @@ void WriterCapability::Clear() {
   path_.ClearToEmptyNoArena(
       &::google::protobuf::internal::GetEmptyStringAlreadyInited());
   subtree_ = false;
+  dependencies_.Clear();
 }
 
 bool WriterCapability::MergePartialFromCodedStream(
@@ -1304,7 +1312,7 @@ bool WriterCapability::MergePartialFromCodedStream(
               input, this->mutable_path()));
           DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
               this->path().data(),
-              (int)this->path().length(),
+(int)              this->path().length(),
               ::google::protobuf::internal::WireFormatLite::PARSE,
               "devmand.channels.cli.plugin.WriterCapability.path"));
         } else {
@@ -1327,6 +1335,27 @@ bool WriterCapability::MergePartialFromCodedStream(
         } else {
           goto handle_unusual;
         }
+        if (input->ExpectTag(26))
+          goto parse_dependencies;
+        break;
+      }
+
+      // repeated string dependencies = 3;
+      case 3: {
+        if (tag == 26) {
+        parse_dependencies:
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+              input, this->add_dependencies()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+              this->dependencies(this->dependencies_size() - 1).data(),
+(int)              this->dependencies(this->dependencies_size() - 1).length(),
+              ::google::protobuf::internal::WireFormatLite::PARSE,
+              "devmand.channels.cli.plugin.WriterCapability.dependencies"));
+        } else {
+          goto handle_unusual;
+        }
+        if (input->ExpectTag(26))
+          goto parse_dependencies;
         if (input->ExpectAtEnd())
           goto success;
         break;
@@ -1363,7 +1392,7 @@ void WriterCapability::SerializeWithCachedSizes(
   if (this->path().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
         this->path().data(),
-        (int)this->path().length(),
+(int)        this->path().length(),
         ::google::protobuf::internal::WireFormatLite::SERIALIZE,
         "devmand.channels.cli.plugin.WriterCapability.path");
     ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
@@ -1374,6 +1403,17 @@ void WriterCapability::SerializeWithCachedSizes(
   if (this->subtree() != 0) {
     ::google::protobuf::internal::WireFormatLite::WriteBool(
         2, this->subtree(), output);
+  }
+
+  // repeated string dependencies = 3;
+  for (int i = 0; i < this->dependencies_size(); i++) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+        this->dependencies(i).data(),
+(int)        this->dependencies(i).length(),
+        ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+        "devmand.channels.cli.plugin.WriterCapability.dependencies");
+    ::google::protobuf::internal::WireFormatLite::WriteString(
+        3, this->dependencies(i), output);
   }
 
   // @@protoc_insertion_point(serialize_end:devmand.channels.cli.plugin.WriterCapability)
@@ -1389,7 +1429,7 @@ WriterCapability::InternalSerializeWithCachedSizesToArray(
   if (this->path().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
         this->path().data(),
-        (int)this->path().length(),
+(int)        this->path().length(),
         ::google::protobuf::internal::WireFormatLite::SERIALIZE,
         "devmand.channels.cli.plugin.WriterCapability.path");
     target = ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
@@ -1400,6 +1440,17 @@ WriterCapability::InternalSerializeWithCachedSizesToArray(
   if (this->subtree() != 0) {
     target = ::google::protobuf::internal::WireFormatLite::WriteBoolToArray(
         2, this->subtree(), target);
+  }
+
+  // repeated string dependencies = 3;
+  for (int i = 0; i < this->dependencies_size(); i++) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+        this->dependencies(i).data(),
+(int)        this->dependencies(i).length(),
+        ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+        "devmand.channels.cli.plugin.WriterCapability.dependencies");
+    target = ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
+        3, this->dependencies(i), target);
   }
 
   // @@protoc_insertion_point(serialize_to_array_end:devmand.channels.cli.plugin.WriterCapability)
@@ -1419,6 +1470,13 @@ int WriterCapability::ByteSize() const {
   // optional bool subtree = 2;
   if (this->subtree() != 0) {
     total_size += 1 + 1;
+  }
+
+  // repeated string dependencies = 3;
+  total_size += 1 * this->dependencies_size();
+  for (int i = 0; i < this->dependencies_size(); i++) {
+    total_size += ::google::protobuf::internal::WireFormatLite::StringSize(
+        this->dependencies(i));
   }
 
   GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
@@ -1449,6 +1507,7 @@ void WriterCapability::MergeFrom(const WriterCapability& from) {
   if (GOOGLE_PREDICT_FALSE(&from == this)) {
     ::google::protobuf::internal::MergeFromFail(__FILE__, __LINE__);
   }
+  dependencies_.MergeFrom(from.dependencies_);
   if (from.path().size() > 0) {
     path_.AssignWithDefault(
         &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
@@ -1487,6 +1546,7 @@ void WriterCapability::Swap(WriterCapability* other) {
 void WriterCapability::InternalSwap(WriterCapability* other) {
   path_.Swap(&other->path_);
   std::swap(subtree_, other->subtree_);
+  dependencies_.UnsafeArenaSwap(&other->dependencies_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
   std::swap(_cached_size_, other->_cached_size_);
 }
@@ -1562,14 +1622,73 @@ void WriterCapability::set_subtree(bool value) {
   // @@protoc_insertion_point(field_set:devmand.channels.cli.plugin.WriterCapability.subtree)
 }
 
+// repeated string dependencies = 3;
+int WriterCapability::dependencies_size() const {
+  return dependencies_.size();
+}
+void WriterCapability::clear_dependencies() {
+  dependencies_.Clear();
+}
+const ::std::string& WriterCapability::dependencies(int index) const {
+  // @@protoc_insertion_point(field_get:devmand.channels.cli.plugin.WriterCapability.dependencies)
+  return dependencies_.Get(index);
+}
+::std::string* WriterCapability::mutable_dependencies(int index) {
+  // @@protoc_insertion_point(field_mutable:devmand.channels.cli.plugin.WriterCapability.dependencies)
+  return dependencies_.Mutable(index);
+}
+void WriterCapability::set_dependencies(int index, const ::std::string& value) {
+  // @@protoc_insertion_point(field_set:devmand.channels.cli.plugin.WriterCapability.dependencies)
+  dependencies_.Mutable(index)->assign(value);
+}
+void WriterCapability::set_dependencies(int index, const char* value) {
+  dependencies_.Mutable(index)->assign(value);
+  // @@protoc_insertion_point(field_set_char:devmand.channels.cli.plugin.WriterCapability.dependencies)
+}
+void WriterCapability::set_dependencies(
+    int index,
+    const char* value,
+    size_t size) {
+  dependencies_.Mutable(index)->assign(
+      reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_set_pointer:devmand.channels.cli.plugin.WriterCapability.dependencies)
+}
+::std::string* WriterCapability::add_dependencies() {
+  // @@protoc_insertion_point(field_add_mutable:devmand.channels.cli.plugin.WriterCapability.dependencies)
+  return dependencies_.Add();
+}
+void WriterCapability::add_dependencies(const ::std::string& value) {
+  dependencies_.Add()->assign(value);
+  // @@protoc_insertion_point(field_add:devmand.channels.cli.plugin.WriterCapability.dependencies)
+}
+void WriterCapability::add_dependencies(const char* value) {
+  dependencies_.Add()->assign(value);
+  // @@protoc_insertion_point(field_add_char:devmand.channels.cli.plugin.WriterCapability.dependencies)
+}
+void WriterCapability::add_dependencies(const char* value, size_t size) {
+  dependencies_.Add()->assign(reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_add_pointer:devmand.channels.cli.plugin.WriterCapability.dependencies)
+}
+const ::google::protobuf::RepeatedPtrField<::std::string>&
+WriterCapability::dependencies() const {
+  // @@protoc_insertion_point(field_list:devmand.channels.cli.plugin.WriterCapability.dependencies)
+  return dependencies_;
+}
+::google::protobuf::RepeatedPtrField<::std::string>*
+WriterCapability::mutable_dependencies() {
+  // @@protoc_insertion_point(field_mutable_list:devmand.channels.cli.plugin.WriterCapability.dependencies)
+  return &dependencies_;
+}
+
 #endif // PROTOBUF_INLINE_NOT_IN_HEADERS
 
 // ===================================================================
 
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
 const int CapabilitiesResponse::kDeviceTypeFieldNumber;
-const int CapabilitiesResponse::kReaderCapabilitiesFieldNumber;
-const int CapabilitiesResponse::kWriterCapabilitiesFieldNumber;
+const int CapabilitiesResponse::kReadersFieldNumber;
+const int CapabilitiesResponse::kListReadersFieldNumber;
+const int CapabilitiesResponse::kWritersFieldNumber;
 #endif // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 CapabilitiesResponse::CapabilitiesResponse()
@@ -1640,8 +1759,9 @@ void CapabilitiesResponse::Clear() {
   if (GetArenaNoVirtual() == NULL && devicetype_ != NULL)
     delete devicetype_;
   devicetype_ = NULL;
-  readercapabilities_.Clear();
-  writercapabilities_.Clear();
+  readers_.Clear();
+  listreaders_.Clear();
+  writers_.Clear();
 }
 
 bool CapabilitiesResponse::MergePartialFromCodedStream(
@@ -1668,45 +1788,60 @@ bool CapabilitiesResponse::MergePartialFromCodedStream(
           goto handle_unusual;
         }
         if (input->ExpectTag(18))
-          goto parse_readerCapabilities;
+          goto parse_readers;
         break;
       }
 
-      // repeated .devmand.channels.cli.plugin.ReaderCapability
-      // readerCapabilities = 2;
+      // repeated .devmand.channels.cli.plugin.ReaderCapability readers = 2;
       case 2: {
         if (tag == 18) {
-        parse_readerCapabilities:
+        parse_readers:
           DO_(input->IncrementRecursionDepth());
-        parse_loop_readerCapabilities:
+        parse_loop_readers:
           DO_(::google::protobuf::internal::WireFormatLite::
-                  ReadMessageNoVirtualNoRecursionDepth(
-                      input, add_readercapabilities()));
+                  ReadMessageNoVirtualNoRecursionDepth(input, add_readers()));
         } else {
           goto handle_unusual;
         }
         if (input->ExpectTag(18))
-          goto parse_loop_readerCapabilities;
+          goto parse_loop_readers;
         if (input->ExpectTag(26))
-          goto parse_loop_writerCapabilities;
+          goto parse_loop_listReaders;
         input->UnsafeDecrementRecursionDepth();
         break;
       }
 
-      // repeated .devmand.channels.cli.plugin.WriterCapability
-      // writerCapabilities = 3;
+      // repeated .devmand.channels.cli.plugin.ReaderCapability listReaders = 3;
       case 3: {
         if (tag == 26) {
           DO_(input->IncrementRecursionDepth());
-        parse_loop_writerCapabilities:
+        parse_loop_listReaders:
           DO_(::google::protobuf::internal::WireFormatLite::
                   ReadMessageNoVirtualNoRecursionDepth(
-                      input, add_writercapabilities()));
+                      input, add_listreaders()));
         } else {
           goto handle_unusual;
         }
         if (input->ExpectTag(26))
-          goto parse_loop_writerCapabilities;
+          goto parse_loop_listReaders;
+        if (input->ExpectTag(34))
+          goto parse_loop_writers;
+        input->UnsafeDecrementRecursionDepth();
+        break;
+      }
+
+      // repeated .devmand.channels.cli.plugin.WriterCapability writers = 4;
+      case 4: {
+        if (tag == 34) {
+          DO_(input->IncrementRecursionDepth());
+        parse_loop_writers:
+          DO_(::google::protobuf::internal::WireFormatLite::
+                  ReadMessageNoVirtualNoRecursionDepth(input, add_writers()));
+        } else {
+          goto handle_unusual;
+        }
+        if (input->ExpectTag(34))
+          goto parse_loop_writers;
         input->UnsafeDecrementRecursionDepth();
         if (input->ExpectAtEnd())
           goto success;
@@ -1746,18 +1881,22 @@ void CapabilitiesResponse::SerializeWithCachedSizes(
         1, *this->devicetype_, output);
   }
 
-  // repeated .devmand.channels.cli.plugin.ReaderCapability readerCapabilities =
-  // 2;
-  for (int i = 0, n = this->readercapabilities_size(); i < n; i++) {
+  // repeated .devmand.channels.cli.plugin.ReaderCapability readers = 2;
+  for (int i = 0, n = this->readers_size(); i < n; i++) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-        2, this->readercapabilities(i), output);
+        2, this->readers(i), output);
   }
 
-  // repeated .devmand.channels.cli.plugin.WriterCapability writerCapabilities =
-  // 3;
-  for (int i = 0, n = this->writercapabilities_size(); i < n; i++) {
+  // repeated .devmand.channels.cli.plugin.ReaderCapability listReaders = 3;
+  for (int i = 0, n = this->listreaders_size(); i < n; i++) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-        3, this->writercapabilities(i), output);
+        3, this->listreaders(i), output);
+  }
+
+  // repeated .devmand.channels.cli.plugin.WriterCapability writers = 4;
+  for (int i = 0, n = this->writers_size(); i < n; i++) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+        4, this->writers(i), output);
   }
 
   // @@protoc_insertion_point(serialize_end:devmand.channels.cli.plugin.CapabilitiesResponse)
@@ -1776,20 +1915,25 @@ CapabilitiesResponse::InternalSerializeWithCachedSizesToArray(
             1, *this->devicetype_, false, target);
   }
 
-  // repeated .devmand.channels.cli.plugin.ReaderCapability readerCapabilities =
-  // 2;
-  for (int i = 0, n = this->readercapabilities_size(); i < n; i++) {
+  // repeated .devmand.channels.cli.plugin.ReaderCapability readers = 2;
+  for (int i = 0, n = this->readers_size(); i < n; i++) {
     target = ::google::protobuf::internal::WireFormatLite::
         InternalWriteMessageNoVirtualToArray(
-            2, this->readercapabilities(i), false, target);
+            2, this->readers(i), false, target);
   }
 
-  // repeated .devmand.channels.cli.plugin.WriterCapability writerCapabilities =
-  // 3;
-  for (int i = 0, n = this->writercapabilities_size(); i < n; i++) {
+  // repeated .devmand.channels.cli.plugin.ReaderCapability listReaders = 3;
+  for (int i = 0, n = this->listreaders_size(); i < n; i++) {
     target = ::google::protobuf::internal::WireFormatLite::
         InternalWriteMessageNoVirtualToArray(
-            3, this->writercapabilities(i), false, target);
+            3, this->listreaders(i), false, target);
+  }
+
+  // repeated .devmand.channels.cli.plugin.WriterCapability writers = 4;
+  for (int i = 0, n = this->writers_size(); i < n; i++) {
+    target = ::google::protobuf::internal::WireFormatLite::
+        InternalWriteMessageNoVirtualToArray(
+            4, this->writers(i), false, target);
   }
 
   // @@protoc_insertion_point(serialize_to_array_end:devmand.channels.cli.plugin.CapabilitiesResponse)
@@ -1807,22 +1951,28 @@ int CapabilitiesResponse::ByteSize() const {
                       *this->devicetype_);
   }
 
-  // repeated .devmand.channels.cli.plugin.ReaderCapability readerCapabilities =
-  // 2;
-  total_size += 1 * this->readercapabilities_size();
-  for (int i = 0; i < this->readercapabilities_size(); i++) {
+  // repeated .devmand.channels.cli.plugin.ReaderCapability readers = 2;
+  total_size += 1 * this->readers_size();
+  for (int i = 0; i < this->readers_size(); i++) {
     total_size +=
         ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
-            this->readercapabilities(i));
+            this->readers(i));
   }
 
-  // repeated .devmand.channels.cli.plugin.WriterCapability writerCapabilities =
-  // 3;
-  total_size += 1 * this->writercapabilities_size();
-  for (int i = 0; i < this->writercapabilities_size(); i++) {
+  // repeated .devmand.channels.cli.plugin.ReaderCapability listReaders = 3;
+  total_size += 1 * this->listreaders_size();
+  for (int i = 0; i < this->listreaders_size(); i++) {
     total_size +=
         ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
-            this->writercapabilities(i));
+            this->listreaders(i));
+  }
+
+  // repeated .devmand.channels.cli.plugin.WriterCapability writers = 4;
+  total_size += 1 * this->writers_size();
+  for (int i = 0; i < this->writers_size(); i++) {
+    total_size +=
+        ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
+            this->writers(i));
   }
 
   GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
@@ -1853,8 +2003,9 @@ void CapabilitiesResponse::MergeFrom(const CapabilitiesResponse& from) {
   if (GOOGLE_PREDICT_FALSE(&from == this)) {
     ::google::protobuf::internal::MergeFromFail(__FILE__, __LINE__);
   }
-  readercapabilities_.MergeFrom(from.readercapabilities_);
-  writercapabilities_.MergeFrom(from.writercapabilities_);
+  readers_.MergeFrom(from.readers_);
+  listreaders_.MergeFrom(from.listreaders_);
+  writers_.MergeFrom(from.writers_);
   if (from.has_devicetype()) {
     mutable_devicetype()
         ->::devmand::channels::cli::plugin::DeviceType::MergeFrom(
@@ -1889,8 +2040,9 @@ void CapabilitiesResponse::Swap(CapabilitiesResponse* other) {
 }
 void CapabilitiesResponse::InternalSwap(CapabilitiesResponse* other) {
   std::swap(devicetype_, other->devicetype_);
-  readercapabilities_.UnsafeArenaSwap(&other->readercapabilities_);
-  writercapabilities_.UnsafeArenaSwap(&other->writercapabilities_);
+  readers_.UnsafeArenaSwap(&other->readers_);
+  listreaders_.UnsafeArenaSwap(&other->listreaders_);
+  writers_.UnsafeArenaSwap(&other->writers_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
   std::swap(_cached_size_, other->_cached_size_);
 }
@@ -1946,76 +2098,109 @@ void CapabilitiesResponse::set_allocated_devicetype(
   // @@protoc_insertion_point(field_set_allocated:devmand.channels.cli.plugin.CapabilitiesResponse.deviceType)
 }
 
-// repeated .devmand.channels.cli.plugin.ReaderCapability readerCapabilities =
-// 2;
-int CapabilitiesResponse::readercapabilities_size() const {
-  return readercapabilities_.size();
+// repeated .devmand.channels.cli.plugin.ReaderCapability readers = 2;
+int CapabilitiesResponse::readers_size() const {
+  return readers_.size();
 }
-void CapabilitiesResponse::clear_readercapabilities() {
-  readercapabilities_.Clear();
+void CapabilitiesResponse::clear_readers() {
+  readers_.Clear();
 }
 const ::devmand::channels::cli::plugin::ReaderCapability&
-CapabilitiesResponse::readercapabilities(int index) const {
-  // @@protoc_insertion_point(field_get:devmand.channels.cli.plugin.CapabilitiesResponse.readerCapabilities)
-  return readercapabilities_.Get(index);
+CapabilitiesResponse::readers(int index) const {
+  // @@protoc_insertion_point(field_get:devmand.channels.cli.plugin.CapabilitiesResponse.readers)
+  return readers_.Get(index);
 }
 ::devmand::channels::cli::plugin::ReaderCapability*
-CapabilitiesResponse::mutable_readercapabilities(int index) {
-  // @@protoc_insertion_point(field_mutable:devmand.channels.cli.plugin.CapabilitiesResponse.readerCapabilities)
-  return readercapabilities_.Mutable(index);
+CapabilitiesResponse::mutable_readers(int index) {
+  // @@protoc_insertion_point(field_mutable:devmand.channels.cli.plugin.CapabilitiesResponse.readers)
+  return readers_.Mutable(index);
 }
 ::devmand::channels::cli::plugin::ReaderCapability*
-CapabilitiesResponse::add_readercapabilities() {
-  // @@protoc_insertion_point(field_add:devmand.channels.cli.plugin.CapabilitiesResponse.readerCapabilities)
-  return readercapabilities_.Add();
+CapabilitiesResponse::add_readers() {
+  // @@protoc_insertion_point(field_add:devmand.channels.cli.plugin.CapabilitiesResponse.readers)
+  return readers_.Add();
 }
 ::google::protobuf::RepeatedPtrField<
     ::devmand::channels::cli::plugin::ReaderCapability>*
-CapabilitiesResponse::mutable_readercapabilities() {
-  // @@protoc_insertion_point(field_mutable_list:devmand.channels.cli.plugin.CapabilitiesResponse.readerCapabilities)
-  return &readercapabilities_;
+CapabilitiesResponse::mutable_readers() {
+  // @@protoc_insertion_point(field_mutable_list:devmand.channels.cli.plugin.CapabilitiesResponse.readers)
+  return &readers_;
 }
 const ::google::protobuf::RepeatedPtrField<
     ::devmand::channels::cli::plugin::ReaderCapability>&
-CapabilitiesResponse::readercapabilities() const {
-  // @@protoc_insertion_point(field_list:devmand.channels.cli.plugin.CapabilitiesResponse.readerCapabilities)
-  return readercapabilities_;
+CapabilitiesResponse::readers() const {
+  // @@protoc_insertion_point(field_list:devmand.channels.cli.plugin.CapabilitiesResponse.readers)
+  return readers_;
 }
 
-// repeated .devmand.channels.cli.plugin.WriterCapability writerCapabilities =
-// 3;
-int CapabilitiesResponse::writercapabilities_size() const {
-  return writercapabilities_.size();
+// repeated .devmand.channels.cli.plugin.ReaderCapability listReaders = 3;
+int CapabilitiesResponse::listreaders_size() const {
+  return listreaders_.size();
 }
-void CapabilitiesResponse::clear_writercapabilities() {
-  writercapabilities_.Clear();
+void CapabilitiesResponse::clear_listreaders() {
+  listreaders_.Clear();
+}
+const ::devmand::channels::cli::plugin::ReaderCapability&
+CapabilitiesResponse::listreaders(int index) const {
+  // @@protoc_insertion_point(field_get:devmand.channels.cli.plugin.CapabilitiesResponse.listReaders)
+  return listreaders_.Get(index);
+}
+::devmand::channels::cli::plugin::ReaderCapability*
+CapabilitiesResponse::mutable_listreaders(int index) {
+  // @@protoc_insertion_point(field_mutable:devmand.channels.cli.plugin.CapabilitiesResponse.listReaders)
+  return listreaders_.Mutable(index);
+}
+::devmand::channels::cli::plugin::ReaderCapability*
+CapabilitiesResponse::add_listreaders() {
+  // @@protoc_insertion_point(field_add:devmand.channels.cli.plugin.CapabilitiesResponse.listReaders)
+  return listreaders_.Add();
+}
+::google::protobuf::RepeatedPtrField<
+    ::devmand::channels::cli::plugin::ReaderCapability>*
+CapabilitiesResponse::mutable_listreaders() {
+  // @@protoc_insertion_point(field_mutable_list:devmand.channels.cli.plugin.CapabilitiesResponse.listReaders)
+  return &listreaders_;
+}
+const ::google::protobuf::RepeatedPtrField<
+    ::devmand::channels::cli::plugin::ReaderCapability>&
+CapabilitiesResponse::listreaders() const {
+  // @@protoc_insertion_point(field_list:devmand.channels.cli.plugin.CapabilitiesResponse.listReaders)
+  return listreaders_;
+}
+
+// repeated .devmand.channels.cli.plugin.WriterCapability writers = 4;
+int CapabilitiesResponse::writers_size() const {
+  return writers_.size();
+}
+void CapabilitiesResponse::clear_writers() {
+  writers_.Clear();
 }
 const ::devmand::channels::cli::plugin::WriterCapability&
-CapabilitiesResponse::writercapabilities(int index) const {
-  // @@protoc_insertion_point(field_get:devmand.channels.cli.plugin.CapabilitiesResponse.writerCapabilities)
-  return writercapabilities_.Get(index);
+CapabilitiesResponse::writers(int index) const {
+  // @@protoc_insertion_point(field_get:devmand.channels.cli.plugin.CapabilitiesResponse.writers)
+  return writers_.Get(index);
 }
 ::devmand::channels::cli::plugin::WriterCapability*
-CapabilitiesResponse::mutable_writercapabilities(int index) {
-  // @@protoc_insertion_point(field_mutable:devmand.channels.cli.plugin.CapabilitiesResponse.writerCapabilities)
-  return writercapabilities_.Mutable(index);
+CapabilitiesResponse::mutable_writers(int index) {
+  // @@protoc_insertion_point(field_mutable:devmand.channels.cli.plugin.CapabilitiesResponse.writers)
+  return writers_.Mutable(index);
 }
 ::devmand::channels::cli::plugin::WriterCapability*
-CapabilitiesResponse::add_writercapabilities() {
-  // @@protoc_insertion_point(field_add:devmand.channels.cli.plugin.CapabilitiesResponse.writerCapabilities)
-  return writercapabilities_.Add();
+CapabilitiesResponse::add_writers() {
+  // @@protoc_insertion_point(field_add:devmand.channels.cli.plugin.CapabilitiesResponse.writers)
+  return writers_.Add();
 }
 ::google::protobuf::RepeatedPtrField<
     ::devmand::channels::cli::plugin::WriterCapability>*
-CapabilitiesResponse::mutable_writercapabilities() {
-  // @@protoc_insertion_point(field_mutable_list:devmand.channels.cli.plugin.CapabilitiesResponse.writerCapabilities)
-  return &writercapabilities_;
+CapabilitiesResponse::mutable_writers() {
+  // @@protoc_insertion_point(field_mutable_list:devmand.channels.cli.plugin.CapabilitiesResponse.writers)
+  return &writers_;
 }
 const ::google::protobuf::RepeatedPtrField<
     ::devmand::channels::cli::plugin::WriterCapability>&
-CapabilitiesResponse::writercapabilities() const {
-  // @@protoc_insertion_point(field_list:devmand.channels.cli.plugin.CapabilitiesResponse.writerCapabilities)
-  return writercapabilities_;
+CapabilitiesResponse::writers() const {
+  // @@protoc_insertion_point(field_list:devmand.channels.cli.plugin.CapabilitiesResponse.writers)
+  return writers_;
 }
 
 #endif // PROTOBUF_INLINE_NOT_IN_HEADERS

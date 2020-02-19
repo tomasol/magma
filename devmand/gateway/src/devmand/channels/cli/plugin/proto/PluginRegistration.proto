@@ -20,9 +20,11 @@ message ReaderCapability {
 message WriterCapability {
   string path = 1;
   bool subtree = 2;
+  repeated string dependencies = 3;
 }
 message CapabilitiesResponse {
   DeviceType deviceType = 1;
-  repeated ReaderCapability readerCapabilities = 2;
-  repeated WriterCapability writerCapabilities = 3;
+  repeated ReaderCapability readers = 2;
+  repeated ReaderCapability listReaders = 3;
+  repeated WriterCapability writers = 4;
 }

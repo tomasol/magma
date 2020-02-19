@@ -462,7 +462,7 @@ bool CliFlavourResponse::MergePartialFromCodedStream(
               input, this->mutable_newline()));
           DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
               this->newline().data(),
-              (int)this->newline().length(),
+(int)              this->newline().length(),
               ::google::protobuf::internal::WireFormatLite::PARSE,
               "devmand.channels.cli.plugin.CliFlavourResponse.newline"));
         } else {
@@ -481,7 +481,7 @@ bool CliFlavourResponse::MergePartialFromCodedStream(
               input, this->mutable_baseshowconfigregex()));
           DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
               this->baseshowconfigregex().data(),
-              (int)this->baseshowconfigregex().length(),
+(int)              this->baseshowconfigregex().length(),
               ::google::protobuf::internal::WireFormatLite::PARSE,
               "devmand.channels.cli.plugin.CliFlavourResponse.baseShowConfigRegex"));
         } else {
@@ -517,7 +517,7 @@ bool CliFlavourResponse::MergePartialFromCodedStream(
               input, this->mutable_singleindentchar()));
           DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
               this->singleindentchar().data(),
-              (int)this->singleindentchar().length(),
+(int)              this->singleindentchar().length(),
               ::google::protobuf::internal::WireFormatLite::PARSE,
               "devmand.channels.cli.plugin.CliFlavourResponse.singleIndentChar"));
         } else {
@@ -536,7 +536,7 @@ bool CliFlavourResponse::MergePartialFromCodedStream(
               input, this->mutable_configsubsectionend()));
           DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
               this->configsubsectionend().data(),
-              (int)this->configsubsectionend().length(),
+(int)              this->configsubsectionend().length(),
               ::google::protobuf::internal::WireFormatLite::PARSE,
               "devmand.channels.cli.plugin.CliFlavourResponse.configSubsectionEnd"));
         } else {
@@ -578,7 +578,7 @@ void CliFlavourResponse::SerializeWithCachedSizes(
   if (this->newline().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
         this->newline().data(),
-        (int)this->newline().length(),
+(int)        this->newline().length(),
         ::google::protobuf::internal::WireFormatLite::SERIALIZE,
         "devmand.channels.cli.plugin.CliFlavourResponse.newline");
     ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
@@ -589,7 +589,7 @@ void CliFlavourResponse::SerializeWithCachedSizes(
   if (this->baseshowconfigregex().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
         this->baseshowconfigregex().data(),
-        (int)this->baseshowconfigregex().length(),
+(int)        this->baseshowconfigregex().length(),
         ::google::protobuf::internal::WireFormatLite::SERIALIZE,
         "devmand.channels.cli.plugin.CliFlavourResponse.baseShowConfigRegex");
     ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
@@ -606,7 +606,7 @@ void CliFlavourResponse::SerializeWithCachedSizes(
   if (this->singleindentchar().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
         this->singleindentchar().data(),
-        (int)this->singleindentchar().length(),
+(int)        this->singleindentchar().length(),
         ::google::protobuf::internal::WireFormatLite::SERIALIZE,
         "devmand.channels.cli.plugin.CliFlavourResponse.singleIndentChar");
     ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
@@ -617,7 +617,7 @@ void CliFlavourResponse::SerializeWithCachedSizes(
   if (this->configsubsectionend().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
         this->configsubsectionend().data(),
-        (int)this->configsubsectionend().length(),
+(int)        this->configsubsectionend().length(),
         ::google::protobuf::internal::WireFormatLite::SERIALIZE,
         "devmand.channels.cli.plugin.CliFlavourResponse.configSubsectionEnd");
     ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
@@ -637,7 +637,7 @@ CliFlavourResponse::InternalSerializeWithCachedSizesToArray(
   if (this->newline().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
         this->newline().data(),
-        (int)this->newline().length(),
+(int)        this->newline().length(),
         ::google::protobuf::internal::WireFormatLite::SERIALIZE,
         "devmand.channels.cli.plugin.CliFlavourResponse.newline");
     target = ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
@@ -648,7 +648,7 @@ CliFlavourResponse::InternalSerializeWithCachedSizesToArray(
   if (this->baseshowconfigregex().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
         this->baseshowconfigregex().data(),
-        (int)this->baseshowconfigregex().length(),
+(int)        this->baseshowconfigregex().length(),
         ::google::protobuf::internal::WireFormatLite::SERIALIZE,
         "devmand.channels.cli.plugin.CliFlavourResponse.baseShowConfigRegex");
     target = ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
@@ -665,7 +665,7 @@ CliFlavourResponse::InternalSerializeWithCachedSizesToArray(
   if (this->singleindentchar().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
         this->singleindentchar().data(),
-        (int)this->singleindentchar().length(),
+(int)        this->singleindentchar().length(),
         ::google::protobuf::internal::WireFormatLite::SERIALIZE,
         "devmand.channels.cli.plugin.CliFlavourResponse.singleIndentChar");
     target = ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
@@ -676,7 +676,7 @@ CliFlavourResponse::InternalSerializeWithCachedSizesToArray(
   if (this->configsubsectionend().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
         this->configsubsectionend().data(),
-        (int)this->configsubsectionend().length(),
+(int)        this->configsubsectionend().length(),
         ::google::protobuf::internal::WireFormatLite::SERIALIZE,
         "devmand.channels.cli.plugin.CliFlavourResponse.configSubsectionEnd");
     target = ::google::protobuf::internal::WireFormatLite::WriteStringToArray(

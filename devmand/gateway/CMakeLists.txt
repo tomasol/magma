@@ -172,6 +172,7 @@ add_library(devman_channel_cli
   ${PROJECT_SOURCE_DIR}/src/devmand/devices/cli/translation/GrpcReader.cpp
   ${PROJECT_SOURCE_DIR}/src/devmand/devices/cli/translation/GrpcWriter.cpp
   ${PROJECT_SOURCE_DIR}/src/devmand/devices/cli/translation/GrpcCliHandler.cpp
+  ${PROJECT_SOURCE_DIR}/src/devmand/devices/cli/translation/GrpcPlugin.cpp
 )
 
 target_link_libraries(devman_channel_cli

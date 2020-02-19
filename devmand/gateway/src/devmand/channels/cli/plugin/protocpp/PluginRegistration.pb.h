@@ -429,11 +429,29 @@ class WriterCapability : public ::google::protobuf::Message /* @@protoc_insertio
   bool subtree() const;
   void set_subtree(bool value);
 
+  // repeated string dependencies = 3;
+  int dependencies_size() const;
+  void clear_dependencies();
+  static const int kDependenciesFieldNumber = 3;
+  const ::std::string& dependencies(int index) const;
+  ::std::string* mutable_dependencies(int index);
+  void set_dependencies(int index, const ::std::string& value);
+  void set_dependencies(int index, const char* value);
+  void set_dependencies(int index, const char* value, size_t size);
+  ::std::string* add_dependencies();
+  void add_dependencies(const ::std::string& value);
+  void add_dependencies(const char* value);
+  void add_dependencies(const char* value, size_t size);
+  const ::google::protobuf::RepeatedPtrField<::std::string>& dependencies()
+      const;
+  ::google::protobuf::RepeatedPtrField<::std::string>* mutable_dependencies();
+
   // @@protoc_insertion_point(class_scope:devmand.channels.cli.plugin.WriterCapability)
  private:
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   bool _is_default_instance_;
   ::google::protobuf::internal::ArenaStringPtr path_;
+  ::google::protobuf::RepeatedPtrField<::std::string> dependencies_;
   bool subtree_;
   mutable int _cached_size_;
   friend void protobuf_AddDesc_PluginRegistration_2eproto();
@@ -525,39 +543,53 @@ class CapabilitiesResponse : public ::google::protobuf::Message /* @@protoc_inse
   void set_allocated_devicetype(
       ::devmand::channels::cli::plugin::DeviceType* devicetype);
 
-  // repeated .devmand.channels.cli.plugin.ReaderCapability readerCapabilities =
-  // 2;
-  int readercapabilities_size() const;
-  void clear_readercapabilities();
-  static const int kReaderCapabilitiesFieldNumber = 2;
-  const ::devmand::channels::cli::plugin::ReaderCapability& readercapabilities(
+  // repeated .devmand.channels.cli.plugin.ReaderCapability readers = 2;
+  int readers_size() const;
+  void clear_readers();
+  static const int kReadersFieldNumber = 2;
+  const ::devmand::channels::cli::plugin::ReaderCapability& readers(
       int index) const;
-  ::devmand::channels::cli::plugin::ReaderCapability*
-  mutable_readercapabilities(int index);
-  ::devmand::channels::cli::plugin::ReaderCapability* add_readercapabilities();
+  ::devmand::channels::cli::plugin::ReaderCapability* mutable_readers(
+      int index);
+  ::devmand::channels::cli::plugin::ReaderCapability* add_readers();
   ::google::protobuf::RepeatedPtrField<
       ::devmand::channels::cli::plugin::ReaderCapability>*
-  mutable_readercapabilities();
+  mutable_readers();
   const ::google::protobuf::RepeatedPtrField<
       ::devmand::channels::cli::plugin::ReaderCapability>&
-  readercapabilities() const;
+  readers() const;
 
-  // repeated .devmand.channels.cli.plugin.WriterCapability writerCapabilities =
-  // 3;
-  int writercapabilities_size() const;
-  void clear_writercapabilities();
-  static const int kWriterCapabilitiesFieldNumber = 3;
-  const ::devmand::channels::cli::plugin::WriterCapability& writercapabilities(
+  // repeated .devmand.channels.cli.plugin.ReaderCapability listReaders = 3;
+  int listreaders_size() const;
+  void clear_listreaders();
+  static const int kListReadersFieldNumber = 3;
+  const ::devmand::channels::cli::plugin::ReaderCapability& listreaders(
       int index) const;
-  ::devmand::channels::cli::plugin::WriterCapability*
-  mutable_writercapabilities(int index);
-  ::devmand::channels::cli::plugin::WriterCapability* add_writercapabilities();
+  ::devmand::channels::cli::plugin::ReaderCapability* mutable_listreaders(
+      int index);
+  ::devmand::channels::cli::plugin::ReaderCapability* add_listreaders();
+  ::google::protobuf::RepeatedPtrField<
+      ::devmand::channels::cli::plugin::ReaderCapability>*
+  mutable_listreaders();
+  const ::google::protobuf::RepeatedPtrField<
+      ::devmand::channels::cli::plugin::ReaderCapability>&
+  listreaders() const;
+
+  // repeated .devmand.channels.cli.plugin.WriterCapability writers = 4;
+  int writers_size() const;
+  void clear_writers();
+  static const int kWritersFieldNumber = 4;
+  const ::devmand::channels::cli::plugin::WriterCapability& writers(
+      int index) const;
+  ::devmand::channels::cli::plugin::WriterCapability* mutable_writers(
+      int index);
+  ::devmand::channels::cli::plugin::WriterCapability* add_writers();
   ::google::protobuf::RepeatedPtrField<
       ::devmand::channels::cli::plugin::WriterCapability>*
-  mutable_writercapabilities();
+  mutable_writers();
   const ::google::protobuf::RepeatedPtrField<
       ::devmand::channels::cli::plugin::WriterCapability>&
-  writercapabilities() const;
+  writers() const;
 
   // @@protoc_insertion_point(class_scope:devmand.channels.cli.plugin.CapabilitiesResponse)
  private:
@@ -566,10 +598,13 @@ class CapabilitiesResponse : public ::google::protobuf::Message /* @@protoc_inse
   ::devmand::channels::cli::plugin::DeviceType* devicetype_;
   ::google::protobuf::RepeatedPtrField<
       ::devmand::channels::cli::plugin::ReaderCapability>
-      readercapabilities_;
+      readers_;
+  ::google::protobuf::RepeatedPtrField<
+      ::devmand::channels::cli::plugin::ReaderCapability>
+      listreaders_;
   ::google::protobuf::RepeatedPtrField<
       ::devmand::channels::cli::plugin::WriterCapability>
-      writercapabilities_;
+      writers_;
   mutable int _cached_size_;
   friend void protobuf_AddDesc_PluginRegistration_2eproto();
   friend void protobuf_AssignDesc_PluginRegistration_2eproto();
@@ -811,6 +846,64 @@ inline void WriterCapability::set_subtree(bool value) {
   // @@protoc_insertion_point(field_set:devmand.channels.cli.plugin.WriterCapability.subtree)
 }
 
+// repeated string dependencies = 3;
+inline int WriterCapability::dependencies_size() const {
+  return dependencies_.size();
+}
+inline void WriterCapability::clear_dependencies() {
+  dependencies_.Clear();
+}
+inline const ::std::string& WriterCapability::dependencies(int index) const {
+  // @@protoc_insertion_point(field_get:devmand.channels.cli.plugin.WriterCapability.dependencies)
+  return dependencies_.Get(index);
+}
+inline ::std::string* WriterCapability::mutable_dependencies(int index) {
+  // @@protoc_insertion_point(field_mutable:devmand.channels.cli.plugin.WriterCapability.dependencies)
+  return dependencies_.Mutable(index);
+}
+inline void WriterCapability::set_dependencies(
+    int index,
+    const ::std::string& value) {
+  // @@protoc_insertion_point(field_set:devmand.channels.cli.plugin.WriterCapability.dependencies)
+  dependencies_.Mutable(index)->assign(value);
+}
+inline void WriterCapability::set_dependencies(int index, const char* value) {
+  dependencies_.Mutable(index)->assign(value);
+  // @@protoc_insertion_point(field_set_char:devmand.channels.cli.plugin.WriterCapability.dependencies)
+}
+inline void
+WriterCapability::set_dependencies(int index, const char* value, size_t size) {
+  dependencies_.Mutable(index)->assign(
+      reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_set_pointer:devmand.channels.cli.plugin.WriterCapability.dependencies)
+}
+inline ::std::string* WriterCapability::add_dependencies() {
+  // @@protoc_insertion_point(field_add_mutable:devmand.channels.cli.plugin.WriterCapability.dependencies)
+  return dependencies_.Add();
+}
+inline void WriterCapability::add_dependencies(const ::std::string& value) {
+  dependencies_.Add()->assign(value);
+  // @@protoc_insertion_point(field_add:devmand.channels.cli.plugin.WriterCapability.dependencies)
+}
+inline void WriterCapability::add_dependencies(const char* value) {
+  dependencies_.Add()->assign(value);
+  // @@protoc_insertion_point(field_add_char:devmand.channels.cli.plugin.WriterCapability.dependencies)
+}
+inline void WriterCapability::add_dependencies(const char* value, size_t size) {
+  dependencies_.Add()->assign(reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_add_pointer:devmand.channels.cli.plugin.WriterCapability.dependencies)
+}
+inline const ::google::protobuf::RepeatedPtrField<::std::string>&
+WriterCapability::dependencies() const {
+  // @@protoc_insertion_point(field_list:devmand.channels.cli.plugin.WriterCapability.dependencies)
+  return dependencies_;
+}
+inline ::google::protobuf::RepeatedPtrField<::std::string>*
+WriterCapability::mutable_dependencies() {
+  // @@protoc_insertion_point(field_mutable_list:devmand.channels.cli.plugin.WriterCapability.dependencies)
+  return &dependencies_;
+}
+
 // -------------------------------------------------------------------
 
 // CapabilitiesResponse
@@ -855,76 +948,109 @@ inline void CapabilitiesResponse::set_allocated_devicetype(
   // @@protoc_insertion_point(field_set_allocated:devmand.channels.cli.plugin.CapabilitiesResponse.deviceType)
 }
 
-// repeated .devmand.channels.cli.plugin.ReaderCapability readerCapabilities =
-// 2;
-inline int CapabilitiesResponse::readercapabilities_size() const {
-  return readercapabilities_.size();
+// repeated .devmand.channels.cli.plugin.ReaderCapability readers = 2;
+inline int CapabilitiesResponse::readers_size() const {
+  return readers_.size();
 }
-inline void CapabilitiesResponse::clear_readercapabilities() {
-  readercapabilities_.Clear();
+inline void CapabilitiesResponse::clear_readers() {
+  readers_.Clear();
 }
 inline const ::devmand::channels::cli::plugin::ReaderCapability&
-CapabilitiesResponse::readercapabilities(int index) const {
-  // @@protoc_insertion_point(field_get:devmand.channels.cli.plugin.CapabilitiesResponse.readerCapabilities)
-  return readercapabilities_.Get(index);
+CapabilitiesResponse::readers(int index) const {
+  // @@protoc_insertion_point(field_get:devmand.channels.cli.plugin.CapabilitiesResponse.readers)
+  return readers_.Get(index);
 }
 inline ::devmand::channels::cli::plugin::ReaderCapability*
-CapabilitiesResponse::mutable_readercapabilities(int index) {
-  // @@protoc_insertion_point(field_mutable:devmand.channels.cli.plugin.CapabilitiesResponse.readerCapabilities)
-  return readercapabilities_.Mutable(index);
+CapabilitiesResponse::mutable_readers(int index) {
+  // @@protoc_insertion_point(field_mutable:devmand.channels.cli.plugin.CapabilitiesResponse.readers)
+  return readers_.Mutable(index);
 }
 inline ::devmand::channels::cli::plugin::ReaderCapability*
-CapabilitiesResponse::add_readercapabilities() {
-  // @@protoc_insertion_point(field_add:devmand.channels.cli.plugin.CapabilitiesResponse.readerCapabilities)
-  return readercapabilities_.Add();
+CapabilitiesResponse::add_readers() {
+  // @@protoc_insertion_point(field_add:devmand.channels.cli.plugin.CapabilitiesResponse.readers)
+  return readers_.Add();
 }
 inline ::google::protobuf::RepeatedPtrField<
     ::devmand::channels::cli::plugin::ReaderCapability>*
-CapabilitiesResponse::mutable_readercapabilities() {
-  // @@protoc_insertion_point(field_mutable_list:devmand.channels.cli.plugin.CapabilitiesResponse.readerCapabilities)
-  return &readercapabilities_;
+CapabilitiesResponse::mutable_readers() {
+  // @@protoc_insertion_point(field_mutable_list:devmand.channels.cli.plugin.CapabilitiesResponse.readers)
+  return &readers_;
 }
 inline const ::google::protobuf::RepeatedPtrField<
     ::devmand::channels::cli::plugin::ReaderCapability>&
-CapabilitiesResponse::readercapabilities() const {
-  // @@protoc_insertion_point(field_list:devmand.channels.cli.plugin.CapabilitiesResponse.readerCapabilities)
-  return readercapabilities_;
+CapabilitiesResponse::readers() const {
+  // @@protoc_insertion_point(field_list:devmand.channels.cli.plugin.CapabilitiesResponse.readers)
+  return readers_;
 }
 
-// repeated .devmand.channels.cli.plugin.WriterCapability writerCapabilities =
-// 3;
-inline int CapabilitiesResponse::writercapabilities_size() const {
-  return writercapabilities_.size();
+// repeated .devmand.channels.cli.plugin.ReaderCapability listReaders = 3;
+inline int CapabilitiesResponse::listreaders_size() const {
+  return listreaders_.size();
 }
-inline void CapabilitiesResponse::clear_writercapabilities() {
-  writercapabilities_.Clear();
+inline void CapabilitiesResponse::clear_listreaders() {
+  listreaders_.Clear();
+}
+inline const ::devmand::channels::cli::plugin::ReaderCapability&
+CapabilitiesResponse::listreaders(int index) const {
+  // @@protoc_insertion_point(field_get:devmand.channels.cli.plugin.CapabilitiesResponse.listReaders)
+  return listreaders_.Get(index);
+}
+inline ::devmand::channels::cli::plugin::ReaderCapability*
+CapabilitiesResponse::mutable_listreaders(int index) {
+  // @@protoc_insertion_point(field_mutable:devmand.channels.cli.plugin.CapabilitiesResponse.listReaders)
+  return listreaders_.Mutable(index);
+}
+inline ::devmand::channels::cli::plugin::ReaderCapability*
+CapabilitiesResponse::add_listreaders() {
+  // @@protoc_insertion_point(field_add:devmand.channels.cli.plugin.CapabilitiesResponse.listReaders)
+  return listreaders_.Add();
+}
+inline ::google::protobuf::RepeatedPtrField<
+    ::devmand::channels::cli::plugin::ReaderCapability>*
+CapabilitiesResponse::mutable_listreaders() {
+  // @@protoc_insertion_point(field_mutable_list:devmand.channels.cli.plugin.CapabilitiesResponse.listReaders)
+  return &listreaders_;
+}
+inline const ::google::protobuf::RepeatedPtrField<
+    ::devmand::channels::cli::plugin::ReaderCapability>&
+CapabilitiesResponse::listreaders() const {
+  // @@protoc_insertion_point(field_list:devmand.channels.cli.plugin.CapabilitiesResponse.listReaders)
+  return listreaders_;
+}
+
+// repeated .devmand.channels.cli.plugin.WriterCapability writers = 4;
+inline int CapabilitiesResponse::writers_size() const {
+  return writers_.size();
+}
+inline void CapabilitiesResponse::clear_writers() {
+  writers_.Clear();
 }
 inline const ::devmand::channels::cli::plugin::WriterCapability&
-CapabilitiesResponse::writercapabilities(int index) const {
-  // @@protoc_insertion_point(field_get:devmand.channels.cli.plugin.CapabilitiesResponse.writerCapabilities)
-  return writercapabilities_.Get(index);
+CapabilitiesResponse::writers(int index) const {
+  // @@protoc_insertion_point(field_get:devmand.channels.cli.plugin.CapabilitiesResponse.writers)
+  return writers_.Get(index);
 }
 inline ::devmand::channels::cli::plugin::WriterCapability*
-CapabilitiesResponse::mutable_writercapabilities(int index) {
-  // @@protoc_insertion_point(field_mutable:devmand.channels.cli.plugin.CapabilitiesResponse.writerCapabilities)
-  return writercapabilities_.Mutable(index);
+CapabilitiesResponse::mutable_writers(int index) {
+  // @@protoc_insertion_point(field_mutable:devmand.channels.cli.plugin.CapabilitiesResponse.writers)
+  return writers_.Mutable(index);
 }
 inline ::devmand::channels::cli::plugin::WriterCapability*
-CapabilitiesResponse::add_writercapabilities() {
-  // @@protoc_insertion_point(field_add:devmand.channels.cli.plugin.CapabilitiesResponse.writerCapabilities)
-  return writercapabilities_.Add();
+CapabilitiesResponse::add_writers() {
+  // @@protoc_insertion_point(field_add:devmand.channels.cli.plugin.CapabilitiesResponse.writers)
+  return writers_.Add();
 }
 inline ::google::protobuf::RepeatedPtrField<
     ::devmand::channels::cli::plugin::WriterCapability>*
-CapabilitiesResponse::mutable_writercapabilities() {
-  // @@protoc_insertion_point(field_mutable_list:devmand.channels.cli.plugin.CapabilitiesResponse.writerCapabilities)
-  return &writercapabilities_;
+CapabilitiesResponse::mutable_writers() {
+  // @@protoc_insertion_point(field_mutable_list:devmand.channels.cli.plugin.CapabilitiesResponse.writers)
+  return &writers_;
 }
 inline const ::google::protobuf::RepeatedPtrField<
     ::devmand::channels::cli::plugin::WriterCapability>&
-CapabilitiesResponse::writercapabilities() const {
-  // @@protoc_insertion_point(field_list:devmand.channels.cli.plugin.CapabilitiesResponse.writerCapabilities)
-  return writercapabilities_;
+CapabilitiesResponse::writers() const {
+  // @@protoc_insertion_point(field_list:devmand.channels.cli.plugin.CapabilitiesResponse.writers)
+  return writers_;
 }
 
 #endif // !PROTOBUF_INLINE_NOT_IN_HEADERS

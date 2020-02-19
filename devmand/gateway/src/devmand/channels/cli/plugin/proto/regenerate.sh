@@ -31,21 +31,23 @@ for ((i=0; i<${#protoFileArray[@]}; i++)); do
 done
 
 
-# fix warnings:
-# unused parameter options
-find ${hostProtocppDir} -name '*.cc' | xargs sed -i "s/\(StubOptions& options.*\)/\1\n(void)options;/g"
-# unused parameter deterministic
-find ${hostProtocppDir} -name '*.cc' | xargs sed -i "s/\(bool deterministic.*\)/\1\n(void)deterministic;/g"
-# casting to int
-find ${hostProtocppDir} -name '*.cc' | xargs sed -i "s/[ ]\([^ ]\+\+length()\)/(int)\1/g"
-# unused definition
-find ${hostProtocppDir} -name '*.cc' | xargs sed -i "s/\(INTERNAL_SUPPRESS_PROTOBUF_FIELD_DEPRECATION.*\)/\1\n#ifdef INTERNAL_SUPPRESS_PROTOBUF_FIELD_DEPRECATION\n#endif/g"
-# unused parameter output in SerializeWithCachedSizes()
-find ${hostProtocppDir} -name '*.cc' | xargs sed -i "s/\(::google::protobuf::io::CodedOutputStream\* output.*) const {\)/\1\n(void)output;/g"
-# uint->int in for loop of CapabilitiesResponse::SerializeWithCachedSizes in PluginRegistration.pb.cpp:1277:61
-find ${hostProtocppDir} -name '*.cc' | xargs sed -i "s/\(for (unsigned int i = 0, n =\)/for (int i = 0, n =/g"
-
 # rename cc to cpp
 rename 's/\.cc$/\.cpp/' ${hostProtocppDir}/*.cc
+
+# fix warnings:
+# unused parameter options
+find ${hostProtocppDir} -name '*.cpp' | xargs sed -i "s/\(StubOptions& options.*\)/\1\n(void)options;/g"
+# unused parameter deterministic
+find ${hostProtocppDir} -name '*.cpp' | xargs sed -i "s/\(bool deterministic.*\)/\1\n(void)deterministic;/g"
+# unused definition
+find ${hostProtocppDir} -name '*.cpp' | xargs sed -i "s/\(INTERNAL_SUPPRESS_PROTOBUF_FIELD_DEPRECATION.*\)/\1\n#ifdef INTERNAL_SUPPRESS_PROTOBUF_FIELD_DEPRECATION\n#endif/g"
+# unused parameter output in SerializeWithCachedSizes()
+find ${hostProtocppDir} -name '*.cpp' | xargs sed -i "s/\(::google::protobuf::io::CodedOutputStream\* output.*) const {\)/\1\n(void)output;/g"
+# uint->int in for loop of CapabilitiesResponse::SerializeWithCachedSizes in PluginRegistration.pb.cpp:1277:61
+find ${hostProtocppDir} -name '*.cpp' | xargs sed -i "s/\(for (unsigned int i = 0, n =\)/for (int i = 0, n =/g"
+
 # format using clang-format
-find ${hostProtocppDir} \( -name "*.[hc]pp" -or -name "*.h" \) -exec clang-format -i --style=file {} \;
+find ${hostProtocppDir} \( -name "*.cpp" -or -name "*.h" \) -exec clang-format -i --style=file {} \;
+
+# casting to int
+find ${hostProtocppDir} -name '*.cpp' | xargs sed -i "s/\(.*length(),$\)/(int)\1/g"
