@@ -12,6 +12,9 @@
 #include <devmand/channels/Engine.h>
 #include <devmand/channels/cli/CliThreadWheelTimekeeper.h>
 #include <devmand/devices/cli/schema/ModelRegistry.h>
+#include <devmand/devices/cli/translation/PluginRegistry.h>
+#include <devmand/devices/cli/translation/ReaderRegistry.h>
+#include <devmand/devices/cli/translation/WriterRegistry.h>
 #include <folly/Executor.h>
 #include <folly/futures/ThreadWheelTimekeeper.h>
 #include <magma_logging.h>
@@ -24,6 +27,7 @@ namespace cli {
 using namespace std;
 using devmand::channels::cli::CliThreadWheelTimekeeper;
 using devmand::devices::cli::ModelRegistry;
+using namespace devmand::devices::cli;
 
 static atomic<bool> loggingInitialized(false);
 static atomic<bool> sshInitialized(false);
@@ -66,6 +70,7 @@ class Engine : public channels::Engine {
 
  private:
   shared_ptr<ModelRegistry> mreg;
+  unique_ptr<PluginRegistry> pluginRegistry;
 
  public:
   /*
@@ -75,6 +80,14 @@ class Engine : public channels::Engine {
       executorRequestType requestType) const;
 
   shared_ptr<ModelRegistry> getModelRegistry() const;
+
+  shared_ptr<DeviceContext> getDeviceContext(const DeviceType& type);
+
+  unique_ptr<ReaderRegistry> getReaderRegistry(
+      shared_ptr<DeviceContext> deviceCtx);
+
+  unique_ptr<WriterRegistry> getWriterRegistry(
+      shared_ptr<DeviceContext> deviceCtx);
 };
 
 } // namespace cli

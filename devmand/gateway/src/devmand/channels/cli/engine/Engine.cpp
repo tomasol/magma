@@ -8,15 +8,18 @@
 #include <devmand/channels/cli/CliThreadWheelTimekeeper.h>
 #include <devmand/channels/cli/Spd2Glog.h>
 #include <devmand/channels/cli/engine/Engine.h>
+#include <devmand/devices/cli/UbntInterfacePlugin.h>
+#include <devmand/devices/cli/UbntNetworksPlugin.h>
+#include <devmand/devices/cli/UbntStpPlugin.h>
 #include <event2/thread.h>
 #include <folly/executors/CPUThreadPoolExecutor.h>
 #include <folly/executors/IOThreadPoolExecutor.h>
 #include <folly/executors/thread_factory/NamedThreadFactory.h>
 #include <libssh/callbacks.h>
 #include <libssh/libssh.h>
+#include <libyang/libyang.h>
 #include <spdlog/spdlog.h>
 #include <iostream>
-#include <libyang/libyang.h>
 
 namespace devmand {
 namespace channels {
@@ -61,6 +64,20 @@ void Engine::initLogging(uint32_t verbosity, bool callInitMlog) {
 }
 
 static uint CPU_CORES = std::max(uint(4), std::thread::hardware_concurrency());
+
+static unique_ptr<PluginRegistry> loadPlugins(
+    shared_ptr<ModelRegistry> modelRegistry) {
+  unique_ptr<PluginRegistry> pReg = make_unique<PluginRegistry>();
+  pReg->registerPlugin(make_shared<UbntInterfacePlugin>(
+      modelRegistry->getBindingContext(Model::OPENCONFIG_2_4_3)));
+  pReg->registerPlugin(make_shared<UbntStpPlugin>(
+      modelRegistry->getBindingContext(Model::OPENCONFIG_2_4_3)));
+  pReg->registerPlugin(make_shared<UbntNetworksPlugin>(
+      modelRegistry->getBindingContext(Model::OPENCONFIG_2_4_3)));
+  // TODO read configuration, add remote plugins
+  return move(pReg);
+}
+
 /*
  * Keep alive cli layer needs separate executor for protecting against resource
  * starvation - connection failures should always be detected.
@@ -82,7 +99,8 @@ Engine::Engine()
       kaCliExecutor(std::make_shared<folly::CPUThreadPoolExecutor>(
           CPU_CORES,
           std::make_shared<folly::NamedThreadFactory>("kaCli"))),
-      mreg(make_shared<ModelRegistry>()) {
+      mreg(make_shared<ModelRegistry>()),
+      pluginRegistry(loadPlugins(mreg)) {
   // TODO use singleton instead of new ThreadWheelTimekeeper when folly is
   // initialized
   Engine::initSsh();
@@ -112,6 +130,28 @@ shared_ptr<folly::Executor> Engine::getExecutor(
 
 shared_ptr<ModelRegistry> Engine::getModelRegistry() const {
   return mreg;
+}
+
+shared_ptr<DeviceContext> Engine::getDeviceContext(const DeviceType& type) {
+  return pluginRegistry->getDeviceContext(type);
+}
+
+// TODO should this be singleton/cached?
+unique_ptr<ReaderRegistry> Engine::getReaderRegistry(
+    shared_ptr<DeviceContext> deviceCtx) {
+  ReaderRegistryBuilder rRegBuilder{
+      mreg->getSchemaContext(Model::OPENCONFIG_2_4_3)};
+  deviceCtx->provideReaders(rRegBuilder);
+  return rRegBuilder.build();
+}
+
+// TODO should this be singleton/cached?
+unique_ptr<WriterRegistry> Engine::getWriterRegistry(
+    shared_ptr<DeviceContext> deviceCtx) {
+  WriterRegistryBuilder wRegBuilder{
+      mreg->getSchemaContext(Model::OPENCONFIG_2_4_3)};
+  deviceCtx->provideWriters(wRegBuilder);
+  return wRegBuilder.build();
 }
 
 } // namespace cli

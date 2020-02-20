@@ -149,60 +149,6 @@ TEST_F(GrpcReaderTest, testDummyReader) {
   EXPECT_EQ(result["path"], path.str());
 }
 
-// integration test based on UbntInterfacePlugin::IfcConfigReader
-class InterfaceConfigReader : public ReaderPlugin::Service {
-  Status Read(
-      ServerContext* context,
-      ServerReaderWriter<ReadResponse, ReadRequest>* stream) {
-    (void)context;
-    MLOG(MDEBUG) << "Got Read";
-    ReadRequest readRequest;
-
-    bool gotActualReadRequest = false;
-    string ifcName;
-    while (stream->Read(&readRequest)) {
-      if (not gotActualReadRequest) {
-        if (readRequest.has_actualreadrequest()) {
-          MLOG(MDEBUG) << "Got actualreadrequest";
-          gotActualReadRequest = true;
-          // handle request
-          Path path = Path(readRequest.actualreadrequest().path());
-          ifcName = path.getKeysFromSegment("interface")["name"].getString();
-          sendCommandRequest(
-              "show running-config interface " + ifcName, stream);
-        } else {
-          MLOG(MWARNING) << "First request must be ActualReadRequest";
-          return Status(
-              StatusCode::INVALID_ARGUMENT,
-              "First request must be ActualReadRequest");
-        }
-      } else {
-        // handle command output
-        string output = readRequest.cliresponse().output();
-        MLOG(MDEBUG) << "Got cliresponse " << output;
-
-        // send final response
-        MLOG(MDEBUG) << "Sending actualReadResponse";
-        string json =
-            toJson(IfcConfigReader::parseInterfaceOutput(output, ifcName));
-        sendActualResponse(json, stream);
-        break;
-      }
-    }
-    return Status::OK;
-  }
-};
-
-TEST_F(GrpcReaderTest, DISABLED_testInterfaceConfigReader) {
-  const unsigned int port = 50051;
-  const string& address = "localhost:" + to_string(port);
-
-  MLOG(MDEBUG) << "Starting server";
-  InterfaceConfigReader service;
-  std::unique_ptr<Server> server = startServer(address, service);
-  server->Wait();
-}
-
 // integration test for debugging remote plugins
 
 TEST_F(GrpcReaderTest, DISABLED_client) {
