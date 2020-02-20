@@ -15,12 +15,10 @@ message DeviceType {
 
 message ReaderCapability {
   string path = 1;
-  bool subtree = 2;
 }
 message WriterCapability {
   string path = 1;
-  bool subtree = 2;
-  repeated string dependencies = 3;
+  repeated string dependencies = 2;
 }
 message CapabilitiesResponse {
   DeviceType deviceType = 1;

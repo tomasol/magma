@@ -57,13 +57,11 @@ DeviceType GrpcPlugin::getDeviceType() const {
 void GrpcPlugin::provideReaders(ReaderRegistryBuilder& registry) const {
   for (int i = 0; i < capabilities.readers_size(); i++ ) {
     Path path(capabilities.readers().Get(i).path());
-    // TODO subtree
     auto remoteReaderPlugin = make_shared<GrpcReader>(channel, id, executor);
     registry.add(path, remoteReaderPlugin);
   }
   for (int i = 0; i < capabilities.readers_size(); i++ ) {
     Path path(capabilities.listreaders().Get(i).path());
-    // TODO subtree
     auto remoteReaderPlugin = make_shared<GrpcListReader>(channel, id, executor);
     registry.addList(path, remoteReaderPlugin);
   }
@@ -77,7 +75,6 @@ void GrpcPlugin::provideWriters(WriterRegistryBuilder& registry) const {
     for (int depIdx = 0; depIdx < writerCapability.dependencies_size(); depIdx++) {
       dependencies.push_back(Path(writerCapability.dependencies(depIdx)));
     }
-    // TODO subtree
     auto remoteWriterPlugin = make_shared<GrpcWriter>(channel, id, executor);
     registry.add(path, remoteWriterPlugin, dependencies);
   }

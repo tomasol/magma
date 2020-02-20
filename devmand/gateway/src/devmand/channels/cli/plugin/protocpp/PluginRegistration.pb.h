@@ -320,18 +320,11 @@ class ReaderCapability : public ::google::protobuf::Message /* @@protoc_insertio
   ::std::string* release_path();
   void set_allocated_path(::std::string* path);
 
-  // optional bool subtree = 2;
-  void clear_subtree();
-  static const int kSubtreeFieldNumber = 2;
-  bool subtree() const;
-  void set_subtree(bool value);
-
   // @@protoc_insertion_point(class_scope:devmand.channels.cli.plugin.ReaderCapability)
  private:
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   bool _is_default_instance_;
   ::google::protobuf::internal::ArenaStringPtr path_;
-  bool subtree_;
   mutable int _cached_size_;
   friend void protobuf_AddDesc_PluginRegistration_2eproto();
   friend void protobuf_AssignDesc_PluginRegistration_2eproto();
@@ -423,16 +416,10 @@ class WriterCapability : public ::google::protobuf::Message /* @@protoc_insertio
   ::std::string* release_path();
   void set_allocated_path(::std::string* path);
 
-  // optional bool subtree = 2;
-  void clear_subtree();
-  static const int kSubtreeFieldNumber = 2;
-  bool subtree() const;
-  void set_subtree(bool value);
-
-  // repeated string dependencies = 3;
+  // repeated string dependencies = 2;
   int dependencies_size() const;
   void clear_dependencies();
-  static const int kDependenciesFieldNumber = 3;
+  static const int kDependenciesFieldNumber = 2;
   const ::std::string& dependencies(int index) const;
   ::std::string* mutable_dependencies(int index);
   void set_dependencies(int index, const ::std::string& value);
@@ -452,7 +439,6 @@ class WriterCapability : public ::google::protobuf::Message /* @@protoc_insertio
   bool _is_default_instance_;
   ::google::protobuf::internal::ArenaStringPtr path_;
   ::google::protobuf::RepeatedPtrField<::std::string> dependencies_;
-  bool subtree_;
   mutable int _cached_size_;
   friend void protobuf_AddDesc_PluginRegistration_2eproto();
   friend void protobuf_AssignDesc_PluginRegistration_2eproto();
@@ -769,19 +755,6 @@ inline void ReaderCapability::set_allocated_path(::std::string* path) {
   // @@protoc_insertion_point(field_set_allocated:devmand.channels.cli.plugin.ReaderCapability.path)
 }
 
-// optional bool subtree = 2;
-inline void ReaderCapability::clear_subtree() {
-  subtree_ = false;
-}
-inline bool ReaderCapability::subtree() const {
-  // @@protoc_insertion_point(field_get:devmand.channels.cli.plugin.ReaderCapability.subtree)
-  return subtree_;
-}
-inline void ReaderCapability::set_subtree(bool value) {
-  subtree_ = value;
-  // @@protoc_insertion_point(field_set:devmand.channels.cli.plugin.ReaderCapability.subtree)
-}
-
 // -------------------------------------------------------------------
 
 // WriterCapability
@@ -833,20 +806,7 @@ inline void WriterCapability::set_allocated_path(::std::string* path) {
   // @@protoc_insertion_point(field_set_allocated:devmand.channels.cli.plugin.WriterCapability.path)
 }
 
-// optional bool subtree = 2;
-inline void WriterCapability::clear_subtree() {
-  subtree_ = false;
-}
-inline bool WriterCapability::subtree() const {
-  // @@protoc_insertion_point(field_get:devmand.channels.cli.plugin.WriterCapability.subtree)
-  return subtree_;
-}
-inline void WriterCapability::set_subtree(bool value) {
-  subtree_ = value;
-  // @@protoc_insertion_point(field_set:devmand.channels.cli.plugin.WriterCapability.subtree)
-}
-
-// repeated string dependencies = 3;
+// repeated string dependencies = 2;
 inline int WriterCapability::dependencies_size() const {
   return dependencies_.size();
 }
