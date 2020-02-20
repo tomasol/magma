@@ -8,6 +8,7 @@
 #pragma once
 
 #define LOG_WITH_GLOG
+#include <magma_logging.h>
 
 #include <devmand/channels/Engine.h>
 #include <devmand/channels/cli/CliThreadWheelTimekeeper.h>
@@ -15,9 +16,9 @@
 #include <devmand/devices/cli/translation/PluginRegistry.h>
 #include <devmand/devices/cli/translation/ReaderRegistry.h>
 #include <devmand/devices/cli/translation/WriterRegistry.h>
+#include <devmand/magma/DevConf.h>
 #include <folly/Executor.h>
 #include <folly/futures/ThreadWheelTimekeeper.h>
-#include <magma_logging.h>
 #include <atomic>
 
 namespace devmand {
@@ -34,7 +35,7 @@ static atomic<bool> sshInitialized(false);
 
 class Engine : public channels::Engine {
  public:
-  Engine();
+  Engine(folly::dynamic pluginConfig);
   ~Engine() override;
   Engine(const Engine&) = delete;
   Engine& operator=(const Engine&) = delete;
@@ -52,6 +53,7 @@ class Engine : public channels::Engine {
   shared_ptr<folly::Executor> sshCliExecutor;
   shared_ptr<folly::Executor> commonExecutor;
   shared_ptr<folly::Executor> kaCliExecutor;
+  shared_ptr<folly::Executor> pluginExecutor;
 
   shared_ptr<CliThreadWheelTimekeeper> getTimekeeper();
 

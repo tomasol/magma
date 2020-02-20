@@ -13,4 +13,4 @@ devices:
         username: ubnt
         password: ubnt
         flavour: ubiquiti
-
+pluginConfig: /root/plugin.json

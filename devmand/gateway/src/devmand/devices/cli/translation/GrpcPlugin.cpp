@@ -5,24 +5,24 @@
 // LICENSE file in the root directory of this source tree. An additional grant
 // of patent rights can be found in the PATENTS file in the same directory.
 
+#include <devmand/channels/cli/plugin/protocpp/PluginRegistration.grpc.pb.h>
+#include <devmand/devices/cli/translation/GrpcListReader.h>
 #include <devmand/devices/cli/translation/GrpcPlugin.h>
 #include <devmand/devices/cli/translation/GrpcReader.h>
-#include <devmand/devices/cli/translation/GrpcListReader.h>
 #include <devmand/devices/cli/translation/GrpcWriter.h>
-#include <devmand/channels/cli/plugin/protocpp/PluginRegistration.grpc.pb.h>
 // TODO make async
 
 namespace devmand {
 namespace devices {
 namespace cli {
 
-using namespace folly;
-using namespace std;
 using namespace grpc;
 using namespace devmand::channels::cli::plugin;
-using namespace devmand::channels::cli;
 
-GrpcPlugin GrpcPlugin::create(shared_ptr<grpc::Channel> channel, const string id, shared_ptr<Executor> executor) {
+shared_ptr<GrpcPlugin> GrpcPlugin::create(
+    shared_ptr<grpc::Channel> channel,
+    const string id,
+    shared_ptr<Executor> executor) {
   // obtain capabilities via gRPC
   // TODO: remote server unavailability/reconnecting handling
   unique_ptr<devmand::channels::cli::plugin::PluginRegistration::Stub> stub(
@@ -32,47 +32,50 @@ GrpcPlugin GrpcPlugin::create(shared_ptr<grpc::Channel> channel, const string id
   CapabilitiesResponse response;
   Status status = stub->GetCapabilities(&context, request, &response);
   if (status.ok()) {
-    return GrpcPlugin(channel, id, executor, response);
+    return make_shared<GrpcPlugin>(GrpcPlugin(channel, id, executor, response));
   } else {
     MLOG(MERROR) << "[" << id << "] Error " << status.error_code() << ": "
-                   << status.error_message();
+                 << status.error_message();
     throw runtime_error("PluginRegistration RPC failed");
   }
 }
 
-GrpcPlugin::GrpcPlugin(shared_ptr<grpc::Channel> _channel,
+GrpcPlugin::GrpcPlugin(
+    shared_ptr<grpc::Channel> _channel,
     const string _id,
     shared_ptr<Executor> _executor,
-                       CapabilitiesResponse _capabilities) :
-channel(_channel),
-id(_id),
-executor(_executor),
-capabilities(_capabilities)
-{}
+    CapabilitiesResponse _capabilities)
+    : channel(_channel),
+      id(_id),
+      executor(_executor),
+      capabilities(_capabilities) {}
 
 DeviceType GrpcPlugin::getDeviceType() const {
-  return { capabilities.devicetype().device(), capabilities.devicetype().version() };
+  return {capabilities.devicetype().device(),
+          capabilities.devicetype().version()};
 }
 
 void GrpcPlugin::provideReaders(ReaderRegistryBuilder& registry) const {
-  for (int i = 0; i < capabilities.readers_size(); i++ ) {
+  for (int i = 0; i < capabilities.readers_size(); i++) {
     Path path(capabilities.readers().Get(i).path());
     auto remoteReaderPlugin = make_shared<GrpcReader>(channel, id, executor);
     registry.add(path, remoteReaderPlugin);
   }
-  for (int i = 0; i < capabilities.readers_size(); i++ ) {
+  for (int i = 0; i < capabilities.listreaders_size(); i++) {
     Path path(capabilities.listreaders().Get(i).path());
-    auto remoteReaderPlugin = make_shared<GrpcListReader>(channel, id, executor);
+    auto remoteReaderPlugin =
+        make_shared<GrpcListReader>(channel, id, executor);
     registry.addList(path, remoteReaderPlugin);
   }
 }
 
 void GrpcPlugin::provideWriters(WriterRegistryBuilder& registry) const {
-  for (int i = 0; i < capabilities.writers_size(); i++ ) {
+  for (int i = 0; i < capabilities.writers_size(); i++) {
     WriterCapability writerCapability = capabilities.writers().Get(i);
     Path path(writerCapability.path());
     vector<Path> dependencies;
-    for (int depIdx = 0; depIdx < writerCapability.dependencies_size(); depIdx++) {
+    for (int depIdx = 0; depIdx < writerCapability.dependencies_size();
+         depIdx++) {
       dependencies.push_back(Path(writerCapability.dependencies(depIdx)));
     }
     auto remoteWriterPlugin = make_shared<GrpcWriter>(channel, id, executor);
@@ -80,6 +83,6 @@ void GrpcPlugin::provideWriters(WriterRegistryBuilder& registry) const {
   }
 }
 
-}
-}
-}
+} // namespace cli
+} // namespace devices
+} // namespace devmand
