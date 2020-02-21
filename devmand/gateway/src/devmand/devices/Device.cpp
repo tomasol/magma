@@ -14,6 +14,7 @@
 #include <devmand/Application.h>
 #include <devmand/Config.h>
 #include <devmand/error/ErrorHandler.h>
+#include <folly/FileUtil.h>
 
 namespace devmand {
 namespace devices {
@@ -89,6 +90,7 @@ void Device::updateSharedView(SharedUnifiedView& sharedUnifiedView) {
               }
 
               LOG(INFO) << "state for " << idL << " is " << folly::toJson(data);
+              folly::writeFileAtomic("/cache/devmand/build/device_state.json", folly::toPrettyJson(data));
             });
           }));
 }

@@ -43,7 +43,7 @@ class Engine : public channels::Engine {
   Engine& operator=(Engine&&) = delete;
 
   static void initLogging(
-      uint32_t verbosity = MINFO,
+      uint32_t verbosity = MDEBUG,
       bool callInitMlog = false);
   static void closeLogging();
   static void initSsh();
