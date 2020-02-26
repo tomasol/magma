@@ -104,6 +104,13 @@ TEST_F(PathTest, isLastSegmentKeyed) {
   ASSERT_TRUE(Path("/foo/bar[key='val']").isLastSegmentKeyed());
 }
 
+TEST_F(PathTest, getFirstModuleName) {
+  ASSERT_EQ(Path::ROOT.getFirstModuleName(), none);
+  ASSERT_EQ(Path("/foo").getFirstModuleName(), none);
+  ASSERT_EQ(
+      Path("/foo/m1:bar/m2:baz").getFirstModuleName(), Optional<string>("m1"));
+}
+
 TEST_F(PathTest, invalidPath) {
   EXPECT_THROW(Path(""), InvalidPathException);
   EXPECT_THROW(Path("openconfig-interfaces:interfaces"), InvalidPathException);

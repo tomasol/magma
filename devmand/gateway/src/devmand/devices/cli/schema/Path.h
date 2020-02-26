@@ -43,6 +43,7 @@ class Path {
   const Path unprefixAllSegments() const;
   bool isChildOfUnprefixed(const Path& parent) const;
   bool isLastSegmentKeyed() const;
+  Optional<string> getFirstModuleName() const;
   u_long getDepth() const;
   bool isChildOf(const Path& parent) const;
   const Path getParent() const;

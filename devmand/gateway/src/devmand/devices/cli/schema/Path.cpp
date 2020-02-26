@@ -159,6 +159,17 @@ bool Path::isLastSegmentKeyed() const {
   return unkeyed().getLastSegment() != getLastSegment();
 }
 
+Optional<string> Path::getFirstModuleName() const {
+  vector<string> segments = getSegments();
+  for (unsigned int i = 0; i < segments.size(); ++i) {
+    smatch match;
+    if (regex_match(segments[i], match, PREFIXED_SEGMENT)) {
+      return Optional<string>(match[1]);
+    }
+  }
+  return none;
+}
+
 static const auto KEYS_IN_PATH = regex("\\[([^\\]]+)\\]");
 
 const Path Path::unkeyed() const {
