@@ -112,6 +112,46 @@ const Path Path::prefixAllSegments() const {
   return Path(newPath.str());
 }
 
+const Path Path::unprefixAllSegments() const {
+  if (ROOT == *this) {
+    return ROOT;
+  }
+
+  vector<string> unkeyedSegments = unkeyed().getSegments();
+
+  string pathCopy = path;
+  stringstream newPath;
+  newPath << PATH_SEPARATOR;
+
+  for (unsigned int i = 0; i < unkeyedSegments.size(); ++i) {
+    smatch match;
+    if (regex_match(unkeyedSegments[i], match, PREFIXED_SEGMENT)) {
+      newPath << match[2];
+    } else {
+      newPath << unkeyedSegments[i];
+    }
+
+    if (i == unkeyedSegments.size() - 1) {
+      newPath << pathCopy.substr(unkeyedSegments[i].length() + 1);
+      break;
+    }
+
+    pathCopy = pathCopy.substr(unkeyedSegments[i].length() + 1);
+
+    unsigned long nextSegmentStart =
+        pathCopy.find(PATH_SEPARATOR + unkeyedSegments[i + 1]);
+    newPath << pathCopy.substr(0, nextSegmentStart) << PATH_SEPARATOR;
+
+    pathCopy = pathCopy.substr(nextSegmentStart);
+  }
+
+  return Path(newPath.str());
+}
+
+bool Path::isChildOfUnprefixed(const Path& parent) const {
+  return unprefixAllSegments().isChildOf(parent.unprefixAllSegments());
+}
+
 static const auto KEYS_IN_PATH = regex("\\[([^\\]]+)\\]");
 
 const Path Path::unkeyed() const {
