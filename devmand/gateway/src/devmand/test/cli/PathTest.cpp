@@ -98,6 +98,12 @@ TEST_F(PathTest, isChildOfUnprefixed) {
   ASSERT_FALSE(ip.isChildOfUnprefixed(unprefixedChild));
 }
 
+TEST_F(PathTest, isLastSegmentKeyed) {
+  ASSERT_FALSE(Path::ROOT.isLastSegmentKeyed());
+  ASSERT_FALSE(Path("/foo").isLastSegmentKeyed());
+  ASSERT_TRUE(Path("/foo/bar[key='val']").isLastSegmentKeyed());
+}
+
 TEST_F(PathTest, invalidPath) {
   EXPECT_THROW(Path(""), InvalidPathException);
   EXPECT_THROW(Path("openconfig-interfaces:interfaces"), InvalidPathException);

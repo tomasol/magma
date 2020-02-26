@@ -152,6 +152,13 @@ bool Path::isChildOfUnprefixed(const Path& parent) const {
   return unprefixAllSegments().isChildOf(parent.unprefixAllSegments());
 }
 
+bool Path::isLastSegmentKeyed() const {
+  if (ROOT == *this) {
+    return false;
+  }
+  return unkeyed().getLastSegment() != getLastSegment();
+}
+
 static const auto KEYS_IN_PATH = regex("\\[([^\\]]+)\\]");
 
 const Path Path::unkeyed() const {
