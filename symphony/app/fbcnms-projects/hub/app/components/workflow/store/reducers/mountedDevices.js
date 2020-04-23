@@ -1,15 +1,16 @@
-import { MOUNTED_DEVICES } from "../actions/mountedDevices";
+// @flow
+import {MOUNTED_DEVICES} from '../actions/mountedDevices';
 
 const initialState = {
-  devices: []
+  devices: [],
 };
 
 const reducer = (state = initialState, action) => {
   switch (action.type) {
     case MOUNTED_DEVICES: {
-      let { devices } = action;
+      let {devices} = action;
       devices = devices ? devices : [];
-      return { ...state, devices };
+      return {...state, devices};
     }
     default:
       break;

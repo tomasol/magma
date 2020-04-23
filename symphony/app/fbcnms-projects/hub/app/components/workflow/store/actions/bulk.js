@@ -1,28 +1,29 @@
-import { HttpClient as http } from "../../common/HttpClient";
-import { round } from "lodash/math";
-import { fetchNewData, fetchParentWorkflows } from "./searchExecs";
-import { conductorApiUrlPrefix } from "../../constants";
+// @flow
+import {conductorApiUrlPrefix} from '../../constants';
+import {fetchNewData, fetchParentWorkflows} from './searchExecs';
+import {HttpClient as http} from '../../common/HttpClient';
+import {round} from 'lodash/math';
 
-export const IS_FLAT = "IS_FLAT";
-export const REQUEST_BULK_OPERATION = "REQUEST_BULK_OPERATION";
+export const IS_FLAT = 'IS_FLAT';
+export const REQUEST_BULK_OPERATION = 'REQUEST_BULK_OPERATION';
 export const RECEIVE_BULK_OPERATION_RESPONSE =
-  "RECEIVE_BULK_OPERATION_RESPONSE";
-export const FAIL_BULK_OPERATION = "FAIL_BULK_OPERATION";
-export const RESET_BULK_OPERATION_RESULT = "RESET_BULK_OPERATION_RESULT";
-export const UPDATE_LOADING_BAR = "UPDATE_LOADING_BAR";
+  'RECEIVE_BULK_OPERATION_RESPONSE';
+export const FAIL_BULK_OPERATION = 'FAIL_BULK_OPERATION';
+export const RESET_BULK_OPERATION_RESULT = 'RESET_BULK_OPERATION_RESULT';
+export const UPDATE_LOADING_BAR = 'UPDATE_LOADING_BAR';
 
 export const requestBulkOperation = () => {
-  return { type: REQUEST_BULK_OPERATION };
+  return {type: REQUEST_BULK_OPERATION};
 };
 
 export const receiveBulkOperationResponse = (
   successfulResults,
   errorResults,
-  defaultPages
+  defaultPages,
 ) => {
   return (dispatch, getState) => {
     dispatch(storeResponse(successfulResults, errorResults));
-    const { isFlat } = getState().bulkReducer;
+    const {isFlat} = getState().bulkReducer;
     isFlat
       ? dispatch(fetchNewData(1, defaultPages))
       : dispatch(fetchParentWorkflows(1, defaultPages));
@@ -34,20 +35,20 @@ export const storeResponse = (successfulResults, errorResults) => {
   return {
     type: RECEIVE_BULK_OPERATION_RESPONSE,
     successfulResults,
-    errorResults
+    errorResults,
   };
 };
 
 export const failBulkOperation = error => {
-  return { type: FAIL_BULK_OPERATION, error };
+  return {type: FAIL_BULK_OPERATION, error};
 };
 
 export const resetBulkOperationResult = () => {
-  return { type: RESET_BULK_OPERATION_RESULT };
+  return {type: RESET_BULK_OPERATION_RESULT};
 };
 
 export const updateLoadingBar = percentage => {
-  return { type: UPDATE_LOADING_BAR, percentage };
+  return {type: UPDATE_LOADING_BAR, percentage};
 };
 
 export const checkDeleted = (deletedWfs, workflows, defaultPages) => {
@@ -57,72 +58,72 @@ export const checkDeleted = (deletedWfs, workflows, defaultPages) => {
     } else {
       setTimeout(
         () => dispatch(checkDeleted(deletedWfs, workflows, defaultPages)),
-        200
+        200,
       );
     }
   };
 };
 
 export const performBulkOperation = (operation, workflows, defaultPages) => {
-  const url = conductorApiUrlPrefix + "/bulk/" + operation;
-  let deletedWfs = [];
+  const url = conductorApiUrlPrefix + '/bulk/' + operation;
+  const deletedWfs = [];
 
   return dispatch => {
     dispatch(requestBulkOperation());
     try {
       switch (operation) {
-        case "retry":
-        case "restart":
+        case 'retry':
+        case 'restart':
           http.post(url, workflows).then(res => {
-            const { bulkSuccessfulResults, bulkErrorResults } = res.body.text
+            const {bulkSuccessfulResults, bulkErrorResults} = res.body.text
               ? JSON.parse(res.body.text)
               : [];
             dispatch(
               receiveBulkOperationResponse(
                 bulkSuccessfulResults,
                 bulkErrorResults,
-                defaultPages
-              )
+                defaultPages,
+              ),
             );
           });
           break;
-        case "pause":
-        case "resume":
+        case 'pause':
+        case 'resume':
           http.put(url, workflows).then(res => {
-            const { bulkSuccessfulResults, bulkErrorResults } = res.body.text
+            const {bulkSuccessfulResults, bulkErrorResults} = res.body.text
               ? JSON.parse(res.body.text)
               : [];
             dispatch(
               receiveBulkOperationResponse(
                 bulkSuccessfulResults,
                 bulkErrorResults,
-                defaultPages
-              )
+                defaultPages,
+              ),
             );
           });
           break;
-        case "terminate":
+        case 'terminate':
           http.delete(url, workflows).then(res => {
-            const { bulkSuccessfulResults, bulkErrorResults } = res.body.text
+            const {bulkSuccessfulResults, bulkErrorResults} = res.body.text
               ? JSON.parse(res.body.text)
               : [];
             dispatch(
               receiveBulkOperationResponse(
                 bulkSuccessfulResults,
                 bulkErrorResults,
-                defaultPages
-              )
+                defaultPages,
+              ),
             );
           });
           break;
-        case "delete":
+        case 'delete':
           workflows.map(wf => {
-            http.delete(conductorApiUrlPrefix + "/workflow/" + wf).then(() => {
+            http.delete(conductorApiUrlPrefix + '/workflow/' + wf).then(() => {
               deletedWfs.push(wf);
               dispatch(
                 updateLoadingBar(
-                  round((deletedWfs.length / workflows.length) * 100)
-                )
+                  round((deletedWfs.length / workflows.length) * 100),
+                ),
               );
             });
             return null;
@@ -130,7 +131,7 @@ export const performBulkOperation = (operation, workflows, defaultPages) => {
           dispatch(checkDeleted(deletedWfs, workflows, defaultPages));
           break;
         default:
-          dispatch(failBulkOperation("Invalid operation requested."));
+          dispatch(failBulkOperation('Invalid operation requested.'));
       }
     } catch (e) {
       dispatch(failBulkOperation(e.message));
@@ -139,5 +140,5 @@ export const performBulkOperation = (operation, workflows, defaultPages) => {
 };
 
 export const setView = isFlat => {
-  return { type: IS_FLAT, isFlat };
+  return {type: IS_FLAT, isFlat};
 };

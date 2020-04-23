@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
-import { Modal, Button, Tab, Tabs, ButtonGroup } from "react-bootstrap";
-import DefaultsDescsTab from "./DefaultsDescsTab";
-import OutputParamsTab from "./OutputParamsTab";
-import GeneralParamsTab from "./GeneralParamsTab";
-import { getLabelsFromString } from "../builder-utils";
+// @flow
+import DefaultsDescsTab from './DefaultsDescsTab';
+import GeneralParamsTab from './GeneralParamsTab';
+import OutputParamsTab from './OutputParamsTab';
+import React, {useEffect, useState} from 'react';
+import {Button, ButtonGroup, Modal, Tab, Tabs} from 'react-bootstrap';
+import {getLabelsFromString} from '../builder-utils';
 
 const GeneralInfoModal = props => {
   const [isWfNameValid, setWfNameValid] = useState(false);
@@ -35,15 +36,15 @@ const GeneralInfoModal = props => {
   };
 
   const handleInput = (value, key) => {
-    let finalWf = { ...finalWorkflow };
+    let finalWf = {...finalWorkflow};
 
-    if (key === "name") {
+    if (key === 'name') {
       validateWorkflowName(value);
     }
 
     finalWf = {
       ...finalWf,
-      [key]: value
+      [key]: value,
     };
 
     setFinalWf(finalWf);
@@ -51,7 +52,7 @@ const GeneralInfoModal = props => {
 
   const validateWorkflowName = name => {
     let isValid = name.length >= 1;
-    let workflows = props.workflows || [];
+    const workflows = props.workflows || [];
 
     workflows.forEach(wf => {
       if (wf.name === name) {
@@ -62,8 +63,8 @@ const GeneralInfoModal = props => {
   };
 
   const getExistingLabels = () => {
-    let workflows = props.workflows || [];
-    let labels = [];
+    const workflows = props.workflows || [];
+    const labels = [];
     workflows.forEach(wf => {
       if (wf.description) {
         labels.push(...getLabelsFromString(wf.description));
@@ -73,40 +74,40 @@ const GeneralInfoModal = props => {
   };
 
   const handleOutputParam = (key, value) => {
-    let finalWf = { ...finalWorkflow };
-    let outputParameters = finalWf.outputParameters;
+    let finalWf = {...finalWorkflow};
+    const outputParameters = finalWf.outputParameters;
 
     finalWf = {
       ...finalWf,
       outputParameters: {
         ...outputParameters,
-        [key]: value
-      }
+        [key]: value,
+      },
     };
 
     setFinalWf(finalWf);
   };
 
   const handleCustomParam = param => {
-    let finalWf = { ...finalWorkflow };
-    let outputParameters = finalWf.outputParameters;
+    let finalWf = {...finalWorkflow};
+    const outputParameters = finalWf.outputParameters;
 
     finalWf = {
       ...finalWf,
       outputParameters: {
         ...outputParameters,
-        [param]: "provide path"
-      }
+        [param]: 'provide path',
+      },
     };
 
     setFinalWf(finalWf);
   };
 
   const handleCustomDefaultAndDesc = (param, defaultValue, description) => {
-    let finalWf = { ...finalWorkflow };
-    let inputParameters = finalWf.inputParameters || [];
+    let finalWf = {...finalWorkflow};
+    const inputParameters = finalWf.inputParameters || [];
     // eslint-disable-next-line no-useless-concat
-    let entry = `${param}` + `[${description}]` + `[${defaultValue}]`;
+    const entry = `${param}` + `[${description}]` + `[${defaultValue}]`;
     let isUnique = true;
 
     if (inputParameters.length > 0) {
@@ -122,13 +123,13 @@ const GeneralInfoModal = props => {
       inputParameters.push(entry);
     }
 
-    finalWf = { ...finalWf, inputParameters };
+    finalWf = {...finalWf, inputParameters};
     setFinalWf(finalWf);
   };
 
   const deleteDefaultAndDesc = selectedParam => {
-    let finalWf = { ...finalWorkflow };
-    let inputParameters = finalWf.inputParameters || [];
+    let finalWf = {...finalWorkflow};
+    const inputParameters = finalWf.inputParameters || [];
 
     inputParameters.forEach((param, i) => {
       if (param.match(/^(.*?)\[/)[1] === selectedParam) {
@@ -136,17 +137,17 @@ const GeneralInfoModal = props => {
       }
     });
 
-    finalWf = { ...finalWf, inputParameters };
+    finalWf = {...finalWf, inputParameters};
     setFinalWf(finalWf);
   };
 
   const deleteOutputParam = selectedParam => {
-    let finalWf = { ...finalWorkflow };
-    let outputParameters = finalWf.outputParameters || [];
+    let finalWf = {...finalWorkflow};
+    const outputParameters = finalWf.outputParameters || [];
 
     delete outputParameters[selectedParam];
 
-    finalWf = { ...finalWf, outputParameters };
+    finalWf = {...finalWf, outputParameters};
     setFinalWf(finalWf);
   };
 
@@ -154,15 +155,14 @@ const GeneralInfoModal = props => {
     <Modal
       size="lg"
       show={props.show}
-      onHide={isNameLocked ? handleClose : () => false}
-    >
+      onHide={isNameLocked ? handleClose : () => false}>
       <Modal.Header>
         <Modal.Title>
-          {isNameLocked ? "Edit general informations" : "Create new workflow"}
+          {isNameLocked ? 'Edit general informations' : 'Create new workflow'}
         </Modal.Title>
       </Modal.Header>
-      <Modal.Body style={{ padding: "30px" }}>
-        <Tabs style={{ marginBottom: "20px" }}>
+      <Modal.Body style={{padding: '30px'}}>
+        <Tabs style={{marginBottom: '20px'}}>
           <Tab eventKey={1} title="General">
             <GeneralParamsTab
               finalWf={finalWorkflow}
@@ -190,7 +190,7 @@ const GeneralInfoModal = props => {
             />
           </Tab>
         </Tabs>
-        <ButtonGroup style={{ width: "100%", marginTop: "20px" }}>
+        <ButtonGroup style={{width: '100%', marginTop: '20px'}}>
           {!isNameLocked ? (
             <Button variant="outline-secondary" onClick={props.redirectOnExit}>
               Cancel

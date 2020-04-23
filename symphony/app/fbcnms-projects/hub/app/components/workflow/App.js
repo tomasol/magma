@@ -1,19 +1,20 @@
-import React from "react";
-import { Provider } from "react-redux";
-import { BrowserRouter, Route, Switch } from "react-router-dom";
-import { applyMiddleware, combineReducers, compose, createStore } from "redux";
-import thunk from "redux-thunk";
-import DiagramBuilder from "./pages/diagramBuilder/DiagramBuilder";
-import WorkflowList from "./pages/workflowList/WorkflowList";
-import buildReducer from "./store/reducers/builder";
-import bulkReducer from "./store/reducers/bulk";
-import mountedDeviceReducer from "./store/reducers/mountedDevices";
-import searchReducer from "./store/reducers/searchExecs";
-import { frontendUrlPrefix } from "./constants";
+// @flow
+import './css/awesomefonts.css';
 import './css/bootstrap.min.css';
 import './css/mono-blue.min.css';
 import './css/neat.css';
-import './css/awesomefonts.css';
+import DiagramBuilder from './pages/diagramBuilder/DiagramBuilder';
+import React from 'react';
+import WorkflowList from './pages/workflowList/WorkflowList';
+import buildReducer from './store/reducers/builder';
+import bulkReducer from './store/reducers/bulk';
+import mountedDeviceReducer from './store/reducers/mountedDevices';
+import searchReducer from './store/reducers/searchExecs';
+import thunk from 'redux-thunk';
+import {BrowserRouter, Route, Switch} from 'react-router-dom';
+import {Provider} from 'react-redux';
+import {applyMiddleware, combineReducers, compose, createStore} from 'redux';
+import {frontendUrlPrefix} from './constants';
 
 const rootReducer = combineReducers({
   bulkReducer,
@@ -26,7 +27,7 @@ const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
 
 const store = createStore(
   rootReducer,
-  composeEnhancers(applyMiddleware(thunk))
+  composeEnhancers(applyMiddleware(thunk)),
 );
 
 function App(props) {
@@ -40,14 +41,21 @@ function App(props) {
         <Switch>
           <Route
             exact
-            path={[frontendUrlPrefix + "/builder", frontendUrlPrefix + "/builder/:name/:version"]}
-            render={(props) => (
+            path={[
+              frontendUrlPrefix + '/builder',
+              frontendUrlPrefix + '/builder/:name/:version',
+            ]}
+            render={props => (
               <DiagramBuilder hideHeader={hideHeader} {...props} />
             )}
           />
           <Route
             exact
-            path={[frontendUrlPrefix + "/:type", frontendUrlPrefix + "/:type/:wfid", "/"]}
+            path={[
+              frontendUrlPrefix + '/:type',
+              frontendUrlPrefix + '/:type/:wfid',
+              '/',
+            ]}
             component={WorkflowList}
           />
         </Switch>

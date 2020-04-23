@@ -1,31 +1,25 @@
-import React from "react";
-import {
-  Button,
-  ButtonGroup,
-  Col,
-  Form,
-  InputGroup,
-  Row
-} from "react-bootstrap";
-import { Typeahead } from "react-bootstrap-typeahead";
-import { workflowDescriptions } from "../../../constants";
-import { getLabelsFromString } from "../builder-utils";
+// @flow
+import React from 'react';
+import {Button, ButtonGroup, Col, Form, InputGroup, Row} from 'react-bootstrap';
+import {Typeahead} from 'react-bootstrap-typeahead';
+import {getLabelsFromString} from '../builder-utils';
+import {workflowDescriptions} from '../../../constants';
 
 const GeneralParamsTab = props => {
-  const { isWfNameLocked, isWfNameValid } = props;
+  const {isWfNameLocked, isWfNameValid} = props;
   const hiddenParams = [
-    "name",
-    "description",
-    "schemaVersion",
-    "workflowStatusListenerEnabled",
-    "tasks",
-    "outputParameters",
-    "inputParameters",
-    "updateTime"
+    'name',
+    'description',
+    'schemaVersion',
+    'workflowStatusListenerEnabled',
+    'tasks',
+    'outputParameters',
+    'inputParameters',
+    'updateTime',
   ];
 
   const handleSubmit = e => {
-    if (e.key === "Enter" || e === "Enter") {
+    if (e.key === 'Enter' || e === 'Enter') {
       props.handleSubmit(e);
     }
   };
@@ -42,8 +36,8 @@ const GeneralParamsTab = props => {
         <Form.Control
           disabled
           type="input"
-          onChange={e => props.handleInput(e.target.value, "name")}
-          value={props.finalWf["name"]}
+          onChange={e => props.handleInput(e.target.value, 'name')}
+          value={props.finalWf['name']}
         />
       </InputGroup>
     </Form.Group>
@@ -59,41 +53,41 @@ const GeneralParamsTab = props => {
           isValid={isWfNameValid}
           isInvalid={!isWfNameValid}
           type="input"
-          onChange={e => props.handleInput(e.target.value, "name")}
-          value={props.finalWf["name"]}
+          onChange={e => props.handleInput(e.target.value, 'name')}
+          value={props.finalWf['name']}
         />
-        <Form.Control.Feedback type={isWfNameValid ? "valid" : "invalid"}>
+        <Form.Control.Feedback type={isWfNameValid ? 'valid' : 'invalid'}>
           {isWfNameValid
-            ? "unique name of workflow"
-            : props.finalWf["description"].length < 1
-            ? "unique name of workflow"
-            : "workflow with this name already exits"}
+            ? 'unique name of workflow'
+            : props.finalWf['description'].length < 1
+            ? 'unique name of workflow'
+            : 'workflow with this name already exits'}
         </Form.Control.Feedback>
       </InputGroup>
     </Form.Group>
   );
 
   const description = () => {
-    let desc = "";
+    let desc = '';
     let labels = [];
     let existingLabels = [];
 
-    if (props.finalWf["description"]) {
-      desc = props.finalWf["description"].split(" - ")[0];
-      labels = getLabelsFromString(props.finalWf["description"]);
+    if (props.finalWf['description']) {
+      desc = props.finalWf['description'].split(' - ')[0];
+      labels = getLabelsFromString(props.finalWf['description']);
       existingLabels = Array.from(props.getExistingLabels());
     }
 
     return (
       <Form.Group>
-        <InputGroup style={{ marginBottom: "8px" }}>
+        <InputGroup style={{marginBottom: '8px'}}>
           <InputGroup.Prepend>
             <InputGroup.Text>description:</InputGroup.Text>
           </InputGroup.Prepend>
           <Form.Control
             type="input"
             onChange={e =>
-              props.handleInput(e.target.value + " - " + labels, "description")
+              props.handleInput(e.target.value + ' - ' + labels, 'description')
             }
             value={desc}
           />
@@ -108,16 +102,16 @@ const GeneralParamsTab = props => {
           onChange={e =>
             props.handleInput(
               desc +
-                " - " +
+                ' - ' +
                 e.map(item => (item.label ? item.label.toUpperCase() : item)),
-              "description"
+              'description',
             )
           }
           options={existingLabels}
           placeholder="Add labels..."
         />
         <Form.Text className="text-muted">
-          {workflowDescriptions["description"]}
+          {workflowDescriptions['description']}
         </Form.Text>
       </Form.Group>
     );
@@ -134,14 +128,12 @@ const GeneralParamsTab = props => {
           <ButtonGroup>
             <Button
               variant="outline-primary"
-              onClick={() => props.handleInput(left[1], item[0])}
-            >
+              onClick={() => props.handleInput(left[1], item[0])}>
               {left[0]}
             </Button>
             <Button
               variant="outline-primary"
-              onClick={() => props.handleInput(right[1], item[0])}
-            >
+              onClick={() => props.handleInput(right[1], item[0])}>
               {right[0]}
             </Button>
           </ButtonGroup>
@@ -160,21 +152,21 @@ const GeneralParamsTab = props => {
       <Row>
         {Object.entries(props.finalWf).map((item, i) => {
           if (!hiddenParams.includes(item[0])) {
-            if (item[0] === "version") {
+            if (item[0] === 'version') {
               return (
                 <Col sm={6} key={`col2-${i}`}>
                   {buttonWrappedField(
                     item,
-                    ["-", item[1] - 1],
-                    ["+", item[1] + 1]
+                    ['-', item[1] - 1],
+                    ['+', item[1] + 1],
                   )}
                 </Col>
               );
             }
-            if (item[0] === "restartable") {
+            if (item[0] === 'restartable') {
               return (
                 <Col sm={6} key={`col2-${i}`}>
-                  {buttonWrappedField(item, ["<", !item[1]], [">", !item[1]])}
+                  {buttonWrappedField(item, ['<', !item[1]], ['>', !item[1]])}
                 </Col>
               );
             } else {

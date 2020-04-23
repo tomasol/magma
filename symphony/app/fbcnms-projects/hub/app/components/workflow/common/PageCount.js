@@ -1,5 +1,6 @@
-import React, { Component } from "react";
-import Pagination from "react-bootstrap/Pagination";
+// @flow
+import Pagination from 'react-bootstrap/Pagination';
+import React, {Component} from 'react';
 
 class PageCount extends Component {
   constructor(props) {
@@ -9,40 +10,39 @@ class PageCount extends Component {
 
   render() {
     return (
-      <Pagination style={{ float: "left" }}>
+      <Pagination style={{float: 'left'}}>
         <Pagination.Item
           active={this.props.defaultPages === 20}
           onClick={e => {
-            let dataSize = this.props.dataSize;
+            const dataSize = this.props.dataSize;
             let size = ~~(dataSize / 20);
-            let pagesCount = dataSize === 0 ? 0 : dataSize % 20 ? ++size : size;
+            const pagesCount =
+              dataSize === 0 ? 0 : dataSize % 20 ? ++size : size;
             this.props.handler(20, pagesCount);
-          }}
-        >
-          20{" "}
+          }}>
+          20{' '}
         </Pagination.Item>
         <Pagination.Item
           active={this.props.defaultPages === 50}
           onClick={e => {
-            let dataSize = this.props.dataSize;
+            const dataSize = this.props.dataSize;
             let size = ~~(dataSize / 50);
-            let pagesCount = dataSize === 0 ? 0 : dataSize % 50 ? ++size : size;
+            const pagesCount =
+              dataSize === 0 ? 0 : dataSize % 50 ? ++size : size;
             this.props.handler(50, pagesCount);
-          }}
-        >
-          50{" "}
+          }}>
+          50{' '}
         </Pagination.Item>
         <Pagination.Item
           active={this.props.defaultPages === 100}
           onClick={e => {
-            let dataSize = this.props.dataSize;
+            const dataSize = this.props.dataSize;
             let size = ~~(dataSize / 100);
-            let pagesCount =
+            const pagesCount =
               dataSize === 0 ? 0 : dataSize % 100 ? ++size : size;
             this.props.handler(100, pagesCount);
-          }}
-        >
-          100{" "}
+          }}>
+          100{' '}
         </Pagination.Item>
       </Pagination>
     );

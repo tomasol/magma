@@ -1,8 +1,9 @@
-import defaultTo from "lodash/fp/defaultTo";
-import React, { Component } from "react";
-import { Col, Row } from "react-bootstrap";
-import Grapher from "../../../../../common/Grapher";
-import Workflow2Graph from "../../../../../common/wfegraph";
+// @flow
+import Grapher from '../../../../../common/Grapher';
+import React, {Component} from 'react';
+import Workflow2Graph from '../../../../../common/wfegraph';
+import defaultTo from 'lodash/fp/defaultTo';
+import {Col, Row} from 'react-bootstrap';
 
 class WorkflowDia extends Component {
   constructor(props) {
@@ -14,17 +15,17 @@ class WorkflowDia extends Component {
   static getGraphState(props) {
     const wfe2graph = new Workflow2Graph();
     const subwfs = defaultTo({})(props.subworkflows);
-    const wfe = defaultTo({ tasks: [] })(props.wfe);
-    const { edges, vertices } = wfe2graph.convert(wfe, props.meta);
+    const wfe = defaultTo({tasks: []})(props.wfe);
+    const {edges, vertices} = wfe2graph.convert(wfe, props.meta);
     const subworkflows = {};
 
     for (const refname in subwfs) {
-      let submeta = subwfs[refname].meta;
-      let subwfe = subwfs[refname].wfe;
+      const submeta = subwfs[refname].meta;
+      const subwfe = subwfs[refname].wfe;
       subworkflows[refname] = wfe2graph.convert(subwfe, submeta);
     }
 
-    return { edges, vertices, subworkflows };
+    return {edges, vertices, subworkflows};
   }
 
   componentWillReceiveProps(nextProps) {
@@ -32,13 +33,13 @@ class WorkflowDia extends Component {
   }
 
   render() {
-    const { edges, vertices, subworkflows } = this.state;
+    const {edges, vertices, subworkflows} = this.state;
 
     return (
-      <div style={{ overflow: "scroll" }}>
+      <div style={{overflow: 'scroll'}}>
         {!this.props.def ? (
           <div>
-            <Row style={{ textAlign: "center" }}>
+            <Row style={{textAlign: 'center'}}>
               <Col>
                 <h2>Execution Flow</h2>
               </Col>

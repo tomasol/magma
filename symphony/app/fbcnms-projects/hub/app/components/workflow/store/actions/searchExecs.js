@@ -1,54 +1,56 @@
-import { sortBy } from "lodash";
-import { HttpClient as http } from "../../common/HttpClient";
-import { conductorApiUrlPrefix } from "../../constants";
+// @flow
+import {conductorApiUrlPrefix} from '../../constants';
+import {HttpClient as http} from '../../common/HttpClient';
+import {sortBy} from 'lodash';
 
-export const RECEIVE_NEW_DATA = "RECEIVE_NEW_DATA";
-export const HIERARCHY_NEW_DATA = "HIERARCHY_NEW_DATA";
-export const UPDATE_LABEL = "UPDATE_LABEL";
-export const UPDATE_QUERY = "UPDATE_QUERY";
-export const DATA_SIZE = "DATA_SIZE";
-export const CHECKED_WORKFLOWS = "CHECKED_WORKFLOWS";
+export const RECEIVE_NEW_DATA = 'RECEIVE_NEW_DATA';
+export const HIERARCHY_NEW_DATA = 'HIERARCHY_NEW_DATA';
+export const UPDATE_LABEL = 'UPDATE_LABEL';
+export const UPDATE_QUERY = 'UPDATE_QUERY';
+export const DATA_SIZE = 'DATA_SIZE';
+export const CHECKED_WORKFLOWS = 'CHECKED_WORKFLOWS';
 
 export const updateSize = size => {
-  return { type: DATA_SIZE, size };
+  return {type: DATA_SIZE, size};
 };
 
 export const updateLabel = label => {
-  return { type: UPDATE_LABEL, label };
+  return {type: UPDATE_LABEL, label};
 };
 
 export const updateQuery = query => {
-  return { type: UPDATE_QUERY, query };
+  return {type: UPDATE_QUERY, query};
 };
 
-const createQuery = ({ query, label }) => {
-  let q = "",
-    search = "";
+const createQuery = ({query, label}) => {
+  let q = '',
+    search = '';
   if (query) {
     for (let i = 0; i < query.length; i++) {
-      search += "[" + query[i].toUpperCase() + query[i].toLowerCase() + "]";
+      search += '[' + query[i].toUpperCase() + query[i].toLowerCase() + ']';
     }
-    q += "(workflowId:" + query + "+workflowType:/.*" + search + ".*/)";
+    q += '(workflowId:' + query + '+workflowType:/.*' + search + '.*/)';
   }
   if (label.length) {
-    if (query) q += "AND";
-    q += "(status:" + label + ")";
+    if (query) q += 'AND';
+    q += '(status:' + label + ')';
   }
   return q;
 };
 
 export const fetchNewData = (viewedPage, defaultPages) => {
   return (dispatch, getState) => {
-    let q = createQuery(getState().searchReducer);
-    let page = (viewedPage - 1) * defaultPages;
+    const q = createQuery(getState().searchReducer);
+    const page = (viewedPage - 1) * defaultPages;
     http
       .get(
-        conductorApiUrlPrefix + "/executions/?q=&h=&freeText=" +
+        conductorApiUrlPrefix +
+          '/executions/?q=&h=&freeText=' +
           q +
-          "&start=" +
+          '&start=' +
           page +
-          "&size=" +
-          defaultPages
+          '&size=' +
+          defaultPages,
       )
       .then(res => {
         if (res.result) {
@@ -65,31 +67,32 @@ export const fetchNewData = (viewedPage, defaultPages) => {
 };
 
 export const receiveNewData = data => {
-  return { type: RECEIVE_NEW_DATA, data };
+  return {type: RECEIVE_NEW_DATA, data};
 };
 
 export const fetchParentWorkflows = (viewedPage, defaultPages) => {
   return (dispatch, getState) => {
-    let page = viewedPage - 1;
+    const page = viewedPage - 1;
 
-    const { checkedWfs, size } = getState().searchReducer;
-    let q = createQuery(getState().searchReducer);
+    const {checkedWfs, size} = getState().searchReducer;
+    const q = createQuery(getState().searchReducer);
     http
       .get(
-        conductorApiUrlPrefix + "/hierarchical/?freeText=" +
+        conductorApiUrlPrefix +
+          '/hierarchical/?freeText=' +
           q +
-          "&start=" +
+          '&start=' +
           checkedWfs[page] +
-          "&size=" +
-          defaultPages
+          '&size=' +
+          defaultPages,
       )
       .then(res => {
         if (res) {
           let parents = res.parents ? res.parents : [];
-          let children = res.children ? res.children : [];
+          const children = res.children ? res.children : [];
           if (
             res.count < res.hits &&
-            (typeof checkedWfs[viewedPage] === "undefined" ||
+            (typeof checkedWfs[viewedPage] === 'undefined' ||
               checkedWfs.length === 1)
           ) {
             checkedWfs.push(res.count);
@@ -104,25 +107,25 @@ export const fetchParentWorkflows = (viewedPage, defaultPages) => {
 };
 
 export const receiveHierarchicalData = (parents, children) => {
-  return { type: HIERARCHY_NEW_DATA, parents, children };
+  return {type: HIERARCHY_NEW_DATA, parents, children};
 };
 
 export const checkedWorkflows = checkedWfs => {
-  return { type: CHECKED_WORKFLOWS, checkedWfs };
+  return {type: CHECKED_WORKFLOWS, checkedWfs};
 };
 
 export const updateParents = childInput => {
   return (dispatch, getState) => {
-    const { parents, children } = getState().searchReducer;
-    let dataset = parents;
+    const {parents, children} = getState().searchReducer;
+    const dataset = parents;
     dataset.forEach((wfs, i) => {
       if (childInput.some(e => e.parentWorkflowId === wfs.workflowId)) {
         let unfoldChildren = childInput.filter(
-          wf => wf.parentWorkflowId === wfs["workflowId"]
+          wf => wf.parentWorkflowId === wfs['workflowId'],
         );
         unfoldChildren = sortBy(unfoldChildren, wf => new Date(wf.startTime));
         unfoldChildren.forEach((wf, index) =>
-          dataset.splice(index + 1 + i, 0, wf)
+          dataset.splice(index + 1 + i, 0, wf),
         );
       }
     });
@@ -132,7 +135,7 @@ export const updateParents = childInput => {
 
 export const deleteParents = childInput => {
   return (dispatch, getState) => {
-    const { parents, children } = getState().searchReducer;
+    const {parents, children} = getState().searchReducer;
     let dataset = parents;
     childInput.forEach(wfs => {
       dataset = dataset.filter(p => p.workflowId !== wfs.workflowId);

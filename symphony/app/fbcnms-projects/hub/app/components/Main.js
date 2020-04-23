@@ -21,13 +21,13 @@ import RouterIcon from '@material-ui/icons/Router';
 import Shuffle from '@material-ui/icons/Shuffle';
 import Text from '@fbcnms/ui/components/design-system/Text';
 import TextInput from '@fbcnms/ui/components/design-system/Input/TextInput';
+import WorkflowApp from './workflow/App';
 import nullthrows from '@fbcnms/util/nullthrows';
 import {Redirect, Route, Switch} from 'react-router-dom';
 import {getProjectLinks} from '@fbcnms/projects/projects';
 import {makeStyles} from '@material-ui/styles';
 import {shouldShowSettings} from '@fbcnms/magmalte/app/components/Settings';
 import {useRelativeUrl} from '@fbcnms/ui/hooks/useRouter';
-import WorkflowApp from "./workflow/App"
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -57,7 +57,7 @@ function NavBarItems() {
       path="/hub/workflows/defs"
       icon={<Shuffle />}
       onClick={() => {}}
-    />
+    />,
   ];
 }
 
@@ -91,7 +91,7 @@ function Main(isWorkflow) {
   return () => {
     const {user, tabs, ssoEnabled} = useContext(AppContext);
     const classes = useStyles();
-    let subApp = isWorkflow ? <WorkflowApp/> : <CreateServiceForm/>;
+    const subApp = isWorkflow ? <WorkflowApp /> : <CreateServiceForm />;
     return (
       <div className={classes.root}>
         <AppSideBar
@@ -104,12 +104,10 @@ function Main(isWorkflow) {
           })}
           user={nullthrows(user)}
         />
-        <AppContent>
-          {subApp}
-        </AppContent>
+        <AppContent>{subApp}</AppContent>
       </div>
     );
-  }
+  };
 }
 
 export default () => {

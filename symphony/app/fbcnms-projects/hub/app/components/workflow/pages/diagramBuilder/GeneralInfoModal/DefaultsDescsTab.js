@@ -1,7 +1,8 @@
-import React, { useState } from "react";
-import { Button, Col, Form, InputGroup } from "react-bootstrap";
-import { getWfInputsRegex } from "../builder-utils";
-import _ from "lodash";
+// @flow
+import React, {useState} from 'react';
+import _ from 'lodash';
+import {Button, Col, Form, InputGroup} from 'react-bootstrap';
+import {getWfInputsRegex} from '../builder-utils';
 
 const createInputParamsList = props => {
   const existingInputParameters = props.finalWf.inputParameters || [];
@@ -21,21 +22,21 @@ const DefaultsDescsTab = props => {
   const [selectedParam, setSelectedParam] = useState(inputParamsList[0]);
 
   const getDescriptionAndDefault = () => {
-    let inputParameters = props.finalWf.inputParameters || [];
-    let result = [];
+    const inputParameters = props.finalWf.inputParameters || [];
+    const result = [];
 
     inputParameters.forEach(param => {
       if (param.match(/^(.*?)\[/)[1] === selectedParam) {
         param.match(/\[(.*?)]/g).forEach(group => {
-          result.push(group.replace(/[[\]']+/g, ""));
+          result.push(group.replace(/[[\]']+/g, ''));
         });
       }
     });
-    return result.length > 0 ? result : ["", ""];
+    return result.length > 0 ? result : ['', ''];
   };
 
-  let currentDescription = getDescriptionAndDefault(selectedParam)[0];
-  let currentDefault = getDescriptionAndDefault(selectedParam)[1];
+  const currentDescription = getDescriptionAndDefault(selectedParam)[0];
+  const currentDefault = getDescriptionAndDefault(selectedParam)[1];
 
   return (
     <div>
@@ -48,8 +49,7 @@ const DefaultsDescsTab = props => {
             <Form.Control
               disabled={inputParamsList.length === 0}
               onClick={e => setSelectedParam(e.target.value)}
-              as="select"
-            >
+              as="select">
               {inputParamsList.map(param => (
                 <option>{param}</option>
               ))}
@@ -59,8 +59,7 @@ const DefaultsDescsTab = props => {
                 disabled={inputParamsList.length === 0}
                 title="delete parameter's default and description"
                 onClick={() => props.deleteDefaultAndDesc(selectedParam)}
-                variant="outline-danger"
-              >
+                variant="outline-danger">
                 <i className="fas fa-times" />
               </Button>
             </InputGroup.Append>
@@ -77,7 +76,7 @@ const DefaultsDescsTab = props => {
                 props.handleCustomDefaultAndDesc(
                   selectedParam,
                   e.target.value,
-                  currentDescription
+                  currentDescription,
                 )
               }
             />
@@ -92,7 +91,7 @@ const DefaultsDescsTab = props => {
                 props.handleCustomDefaultAndDesc(
                   selectedParam,
                   currentDefault,
-                  e.target.value
+                  e.target.value,
                 )
               }
             />

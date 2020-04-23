@@ -1,9 +1,10 @@
-import React from "react";
-import { Label } from "semantic-ui-react";
-import { wfLabelsColor } from "../constants";
+// @flow
+import React from 'react';
+import {Label} from 'semantic-ui-react';
+import {wfLabelsColor} from '../constants';
 
 const WfLabels = props => {
-  let color =
+  const color =
     props.index >= wfLabelsColor.length
       ? wfLabelsColor[0]
       : wfLabelsColor[props.index];
@@ -15,9 +16,8 @@ const WfLabels = props => {
       }}
       circular
       size="tiny"
-      style={{ backgroundColor: color, color: "white" }}
-      {...props}
-    >
+      style={{backgroundColor: color, color: 'white'}}
+      {...props}>
       <p>{props.label}</p>
     </Label>
   );

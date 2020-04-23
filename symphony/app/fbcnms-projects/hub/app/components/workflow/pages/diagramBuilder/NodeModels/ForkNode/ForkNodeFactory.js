@@ -1,16 +1,17 @@
-import * as SRD from "@projectstorm/react-diagrams";
-import { ForkNode } from "./ForkNode";
-import { ForkNodeModel } from "./ForkNodeModel";
-import * as React from "react";
+// @flow
+import * as React from 'react';
+import * as SRD from '@projectstorm/react-diagrams';
+import {ForkNode} from './ForkNode';
+import {ForkNodeModel} from './ForkNodeModel';
 
 export class ForkNodeFactory extends SRD.AbstractNodeFactory {
   constructor() {
-    super("fork");
+    super('fork');
   }
 
   generateReactWidget(
     diagramEngine: SRD.DiagramEngine,
-    node: SRD.NodeModel
+    node: SRD.NodeModel,
   ): JSX.Element {
     return <ForkNode node={node} />;
   }

@@ -1,5 +1,15 @@
-import moment from "moment";
-import React, { Component } from "react";
+// @flow
+import './WorkflowExec.css';
+import 'react-bootstrap-typeahead/css/Typeahead.css';
+import * as bulkActions from '../../../store/actions/bulk';
+import * as searchActions from '../../../store/actions/searchExecs';
+import ButtonToolbar from 'react-bootstrap/ButtonToolbar';
+import DetailsModal from './DetailsModal/DetailsModal';
+import PageCount from '../../../common/PageCount';
+import PageSelect from '../../../common/PageSelect';
+import React, {Component} from 'react';
+import WorkflowBulk from './WorkflowBulk/WorkflowBulk';
+import moment from 'moment';
 import {
   Button,
   Col,
@@ -8,20 +18,11 @@ import {
   Row,
   Table,
   ToggleButton,
-  ToggleButtonGroup
-} from "react-bootstrap";
-import { Typeahead } from "react-bootstrap-typeahead";
-import "react-bootstrap-typeahead/css/Typeahead.css";
-import ButtonToolbar from "react-bootstrap/ButtonToolbar";
-import { connect } from "react-redux";
-import PageCount from "../../../common/PageCount";
-import PageSelect from "../../../common/PageSelect";
-import * as bulkActions from "../../../store/actions/bulk";
-import * as searchActions from "../../../store/actions/searchExecs";
-import DetailsModal from "./DetailsModal/DetailsModal";
-import WorkflowBulk from "./WorkflowBulk/WorkflowBulk";
-import "./WorkflowExec.css";
-import { HttpClient as http } from "../../../common/HttpClient";
+  ToggleButtonGroup,
+} from 'react-bootstrap';
+import {Typeahead} from 'react-bootstrap-typeahead';
+import {connect} from 'react-redux';
+import {HttpClient as http} from '../../../common/HttpClient';
 
 class WorkflowExec extends Component {
   constructor(props) {
@@ -39,7 +40,7 @@ class WorkflowExec extends Component {
       viewedPage: 1,
       datasetLength: 0,
       timeout: 0,
-      sort: [2, 2, 2]
+      sort: [2, 2, 2],
     };
     this.table = React.createRef();
   }
@@ -50,7 +51,7 @@ class WorkflowExec extends Component {
       ? this.props.fetchNewData(this.state.viewedPage, this.state.defaultPages)
       : this.props.fetchParentWorkflows(
           this.state.viewedPage,
-          this.state.defaultPages
+          this.state.defaultPages,
         );
   }
 
@@ -61,18 +62,18 @@ class WorkflowExec extends Component {
         wfId: this.props.query,
         detailsModal: false,
         closeDetails: true,
-        viewedPage: 1
+        viewedPage: 1,
       });
       if (this.props.query) {
         this.props.updateByQuery(this.props.query);
       }
     }
 
-    let { data, query, parents, size } = this.props.searchReducer;
-    let dataset = this.state.allData ? data : parents;
+    const {data, query, parents, size} = this.props.searchReducer;
+    const dataset = this.state.allData ? data : parents;
     if (
       dataset.length === 1 &&
-      query !== "" &&
+      query !== '' &&
       !this.state.detailsModal &&
       this.state.closeDetails &&
       this.props.query
@@ -84,7 +85,7 @@ class WorkflowExec extends Component {
       let pagesCount = ~~(size / this.state.defaultPages);
       this.setState({
         pagesCount: size % this.state.defaultPages ? ++pagesCount : pagesCount,
-        datasetLength: size
+        datasetLength: size,
       });
     }
 
@@ -98,7 +99,7 @@ class WorkflowExec extends Component {
         this.props.checkedWorkflows([0]);
         this.props.fetchParentWorkflows(
           this.state.viewedPage,
-          this.state.defaultPages
+          this.state.defaultPages,
         );
         this.update([], []);
       }
@@ -111,10 +112,10 @@ class WorkflowExec extends Component {
 
   clearView() {
     this.state.openParentWfs.forEach(parent =>
-      this.showChildrenWorkflows(parent, null, null)
+      this.showChildrenWorkflows(parent, null, null),
     );
-    this.props.updateByQuery("");
-    this.props.updateByLabel("");
+    this.props.updateByQuery('');
+    this.props.updateByLabel('');
     this._typeahead.clear();
     this.update([], []);
   }
@@ -122,12 +123,12 @@ class WorkflowExec extends Component {
   update(openParents, showChildren) {
     this.setState({
       openParentWfs: openParents,
-      showChildren: showChildren
+      showChildren: showChildren,
     });
   }
 
   showChildrenWorkflows(workflow, closeParentWfs, closeChildWfs) {
-    let childrenDataset = this.props.searchReducer.children;
+    const childrenDataset = this.props.searchReducer.children;
     if (childrenDataset.length) {
       childrenDataset.forEach((wf, index) => (wf.index = index));
     }
@@ -140,44 +141,44 @@ class WorkflowExec extends Component {
     if (
       openParents.filter(wfs => wfs.startTime === workflow.startTime).length
     ) {
-      let closeParents = openParents.filter(
-        wf => wf.parentWorkflowId === workflow.workflowId
+      const closeParents = openParents.filter(
+        wf => wf.parentWorkflowId === workflow.workflowId,
       );
       this.props.deleteParents(
-        showChildren.filter(wf => wf.parentWorkflowId === workflow.workflowId)
+        showChildren.filter(wf => wf.parentWorkflowId === workflow.workflowId),
       );
       openParents = openParents.filter(
-        wfs => wfs.startTime !== workflow.startTime
+        wfs => wfs.startTime !== workflow.startTime,
       );
       showChildren = showChildren.filter(
-        wf => wf.parentWorkflowId !== workflow.workflowId
+        wf => wf.parentWorkflowId !== workflow.workflowId,
       );
       closeParents.length
         ? closeParents.forEach(open =>
-            this.showChildrenWorkflows(open, openParents, showChildren)
+            this.showChildrenWorkflows(open, openParents, showChildren),
           )
         : this.update(openParents, showChildren);
     } else {
       openParents.push(workflow);
       showChildren = showChildren.concat(
         childrenDataset.filter(
-          wf => wf.parentWorkflowId === workflow.workflowId
-        )
+          wf => wf.parentWorkflowId === workflow.workflowId,
+        ),
       );
       this.props.updateParents(
-        showChildren.filter(wf => wf.parentWorkflowId === workflow.workflowId)
+        showChildren.filter(wf => wf.parentWorkflowId === workflow.workflowId),
       );
       this.update(openParents, showChildren);
     }
   }
 
   indent(wf, i, size) {
-    let indentSize = size ? size : 6;
+    const indentSize = size ? size : 6;
     if (wf[i].parentWorkflowId) {
       let layers = 0;
       if (
         this.state.showChildren.some(
-          child => child.workflowId === wf[i].parentWorkflowId
+          child => child.workflowId === wf[i].parentWorkflowId,
         )
       ) {
         let parent = wf[i];
@@ -187,11 +188,11 @@ class WorkflowExec extends Component {
             wf[wf.findIndex(id => id.workflowId === parent.parentWorkflowId)];
           if (layers > 10) break;
         }
-        return layers * indentSize + "px";
+        return layers * indentSize + 'px';
       }
-      return indentSize + "px";
+      return indentSize + 'px';
     }
-    return "0px";
+    return '0px';
   }
 
   setCountPages(defaultPages, pagesCount) {
@@ -202,14 +203,14 @@ class WorkflowExec extends Component {
       this.props.checkedWorkflows([0]);
       this.props.fetchParentWorkflows(1, defaultPages);
       this.state.openParentWfs.forEach(parent =>
-        this.showChildrenWorkflows(parent, null, null)
+        this.showChildrenWorkflows(parent, null, null),
       );
       this.update([], []);
     }
     this.setState({
       defaultPages: defaultPages,
       pagesCount: pagesCount,
-      viewedPage: 1
+      viewedPage: 1,
     });
   }
 
@@ -219,24 +220,24 @@ class WorkflowExec extends Component {
     } else {
       this.props.fetchParentWorkflows(page, this.state.defaultPages);
       this.state.openParentWfs.forEach(parent =>
-        this.showChildrenWorkflows(parent, null, null)
+        this.showChildrenWorkflows(parent, null, null),
       );
       this.update([], []);
     }
     this.setState({
       viewedPage: page,
-      sort: [2, 2, 2]
+      sort: [2, 2, 2],
     });
   }
 
   dynamicSort(property) {
     let sortOrder = true;
-    if (property[0] === "-") {
+    if (property[0] === '-') {
       sortOrder = false;
       property = property.substr(1);
     }
     return (a, b) => {
-      if (!a["parentWorkflowId"] && !b["parentWorkflowId"]) {
+      if (!a['parentWorkflowId'] && !b['parentWorkflowId']) {
         return !sortOrder
           ? b[property].localeCompare(a[property])
           : a[property].localeCompare(b[property]);
@@ -245,24 +246,24 @@ class WorkflowExec extends Component {
   }
 
   repeat() {
-    let { data, parents, children } = this.props.searchReducer;
-    let childSet = children;
-    let parentsId = childSet ? childSet.map(wf => wf.parentWorkflowId) : [];
-    let output = [];
+    const {data, parents, children} = this.props.searchReducer;
+    const childSet = children;
+    const parentsId = childSet ? childSet.map(wf => wf.parentWorkflowId) : [];
+    const output = [];
     let dataset = this.state.allData ? data : parents;
-    let sort = this.state.sort;
+    const sort = this.state.sort;
     for (let i = 0; i < sort.length; i++) {
       if (i === 0 && sort[i] !== 2)
         dataset = dataset.sort(
-          this.dynamicSort(sort[i] ? "-workflowType" : "workflowType")
+          this.dynamicSort(sort[i] ? '-workflowType' : 'workflowType'),
         );
       if (i === 1 && sort[i] !== 2)
         dataset = dataset.sort(
-          this.dynamicSort(sort[i] ? "-startTime" : "startTime")
+          this.dynamicSort(sort[i] ? '-startTime' : 'startTime'),
         );
       if (i === 2 && sort[i] !== 2)
         dataset = dataset.sort(
-          this.dynamicSort(sort[i] ? "-endTime" : "endTime")
+          this.dynamicSort(sort[i] ? '-endTime' : 'endTime'),
         );
     }
     for (let i = 0; i < dataset.length; i++) {
@@ -272,19 +273,18 @@ class WorkflowExec extends Component {
           id={`row-${i}`}
           className={
             this.state.showChildren.some(
-              wf => wf.workflowId === dataset[i]["workflowId"]
+              wf => wf.workflowId === dataset[i]['workflowId'],
             ) && !this.state.allData
-              ? "childWf"
+              ? 'childWf'
               : null
-          }
-        >
+          }>
           <td>
             <Form.Check
               checked={this.state.selectedWfs.includes(
-                dataset[i]["workflowId"]
+                dataset[i]['workflowId'],
               )}
               onChange={e => this.selectWf(e)}
-              style={{ marginLeft: "20px" }}
+              style={{marginLeft: '20px'}}
               id={`chb-${i}`}
             />
           </td>
@@ -295,13 +295,12 @@ class WorkflowExec extends Component {
                 this,
                 dataset[i],
                 null,
-                null
+                null,
               )}
-              style={{ textIndent: this.indent(dataset, i) }}
-            >
-              {parentsId.includes(dataset[i]["workflowId"]) ? (
+              style={{textIndent: this.indent(dataset, i)}}>
+              {parentsId.includes(dataset[i]['workflowId']) ? (
                 this.state.openParentWfs.filter(
-                  wf => wf["startTime"] === dataset[i]["startTime"]
+                  wf => wf['startTime'] === dataset[i]['startTime'],
                 ).length ? (
                   <i className="fas fa-minus" />
                 ) : (
@@ -311,26 +310,25 @@ class WorkflowExec extends Component {
             </td>
           )}
           <td
-            onClick={this.showDetailsModal.bind(this, dataset[i]["workflowId"])}
+            onClick={this.showDetailsModal.bind(this, dataset[i]['workflowId'])}
             className="clickable"
             style={{
               textIndent: this.indent(dataset, i, 20),
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis"
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
             }}
-            title={dataset[i]["workflowType"]}
-          >
-            {dataset[i]["workflowType"]}
+            title={dataset[i]['workflowType']}>
+            {dataset[i]['workflowType']}
           </td>
-          <td>{dataset[i]["status"]}</td>
+          <td>{dataset[i]['status']}</td>
           <td>
-            {moment(dataset[i]["startTime"]).format("MM/DD/YYYY, HH:mm:ss:SSS")}
+            {moment(dataset[i]['startTime']).format('MM/DD/YYYY, HH:mm:ss:SSS')}
           </td>
           <td>
-            {moment(dataset[i]["endTime"]).format("MM/DD/YYYY, HH:mm:ss:SSS")}
+            {moment(dataset[i]['endTime']).format('MM/DD/YYYY, HH:mm:ss:SSS')}
           </td>
-        </tr>
+        </tr>,
       );
     }
     return output;
@@ -342,33 +340,33 @@ class WorkflowExec extends Component {
     this.setState({
       allData: !this.state.allData,
       viewedPage: 1,
-      sort: [2, 2, 2]
+      sort: [2, 2, 2],
     });
   }
 
   selectWf(e) {
-    const { data, parents } = this.props.searchReducer;
-    let dataset = this.state.allData ? data : parents;
-    let rowNum = e.target.id.split("-")[1];
+    const {data, parents} = this.props.searchReducer;
+    const dataset = this.state.allData ? data : parents;
+    const rowNum = e.target.id.split('-')[1];
 
     let wfIds = this.state.selectedWfs;
-    let wfId = dataset[rowNum]["workflowId"];
+    const wfId = dataset[rowNum]['workflowId'];
 
     if (wfIds.includes(wfId)) {
-      let idx = wfIds.indexOf(wfId);
+      const idx = wfIds.indexOf(wfId);
       if (idx !== -1) wfIds.splice(idx, 1);
     } else {
       wfIds.push(wfId);
       if (!this.state.allData) wfIds = this.selectChildrenWf(wfId, wfIds);
     }
     this.setState({
-      selectedWfs: wfIds
+      selectedWfs: wfIds,
     });
   }
 
   selectChildrenWf(parentId, wfIds) {
-    const { children } = this.props.searchReducer;
-    let newWfIds = children
+    const {children} = this.props.searchReducer;
+    const newWfIds = children
       .filter(wf => wf.parentWorkflowId === parentId)
       .map(wf => wf.workflowId);
     for (let i = 0; i < newWfIds.length; i++)
@@ -377,33 +375,33 @@ class WorkflowExec extends Component {
   }
 
   selectAllWfs() {
-    const { data, parents, children } = this.props.searchReducer;
-    let hiddenChildren = children.filter(
+    const {data, parents, children} = this.props.searchReducer;
+    const hiddenChildren = children.filter(
       obj =>
-        !this.state.showChildren.some(obj2 => obj.startTime === obj2.startTime)
+        !this.state.showChildren.some(obj2 => obj.startTime === obj2.startTime),
     );
-    let dataset = this.state.allData ? data : parents.concat(hiddenChildren);
-    let wfIds = [];
+    const dataset = this.state.allData ? data : parents.concat(hiddenChildren);
+    const wfIds = [];
 
     if (this.state.selectedWfs.length > 0) {
-      this.setState({ selectedWfs: [] });
+      this.setState({selectedWfs: []});
     } else {
       dataset.map(entry => {
-        if (!this.state.selectedWfs.includes(entry["workflowId"])) {
-          wfIds.push(entry["workflowId"]);
+        if (!this.state.selectedWfs.includes(entry['workflowId'])) {
+          wfIds.push(entry['workflowId']);
         }
         return null;
       });
-      this.setState({ selectedWfs: wfIds });
+      this.setState({selectedWfs: wfIds});
     }
   }
 
   showDetailsModal(workflowId) {
-    let wfId = workflowId !== undefined ? workflowId : null;
+    const wfId = workflowId !== undefined ? workflowId : null;
     this.setState({
       detailsModal: !this.state.detailsModal,
       wfId: wfId,
-      closeDetails: !this.state.detailsModal
+      closeDetails: !this.state.detailsModal,
     });
   }
 
@@ -411,7 +409,7 @@ class WorkflowExec extends Component {
     this.props.updateByQuery(e);
     if (!this.state.allData) {
       this.state.openParentWfs.forEach(parent =>
-        this.showChildrenWorkflows(parent, null, null)
+        this.showChildrenWorkflows(parent, null, null),
       );
       this.update([], []);
       this.props.updateSize(1);
@@ -426,7 +424,7 @@ class WorkflowExec extends Component {
 
     this.setState({
       viewedPage: 1,
-      sort: [2, 2, 2]
+      sort: [2, 2, 2],
     });
   }
 
@@ -436,7 +434,7 @@ class WorkflowExec extends Component {
       this.props.fetchNewData(1, this.state.defaultPages);
     } else {
       this.state.openParentWfs.forEach(parent =>
-        this.showChildrenWorkflows(parent, null, null)
+        this.showChildrenWorkflows(parent, null, null),
       );
       this.update([], []);
       this.props.updateSize(1);
@@ -445,12 +443,12 @@ class WorkflowExec extends Component {
     }
     this.setState({
       viewedPage: 1,
-      sort: [2, 2, 2]
+      sort: [2, 2, 2],
     });
   }
 
   sortWf(number) {
-    let sort = this.state.sort;
+    const sort = this.state.sort;
     for (let i = 0; i < sort.length; i++) {
       i === number
         ? (sort[i] = sort[i] === 2 ? 0 : sort[i] === 0 ? 1 : 0)
@@ -458,12 +456,12 @@ class WorkflowExec extends Component {
     }
     if (!this.state.allData) {
       this.state.openParentWfs.forEach(parent =>
-        this.showChildrenWorkflows(parent, null, null)
+        this.showChildrenWorkflows(parent, null, null),
       );
       this.update([], []);
     }
     this.setState({
-      sort: sort
+      sort: sort,
     });
   }
 
@@ -473,7 +471,7 @@ class WorkflowExec extends Component {
   }
 
   render() {
-    let detailsModal = this.state.detailsModal ? (
+    const detailsModal = this.state.detailsModal ? (
       <DetailsModal
         wfId={this.state.wfId}
         modalHandler={this.showDetailsModal.bind(this)}
@@ -483,7 +481,7 @@ class WorkflowExec extends Component {
             : this.props.fetchParentWorkflows.bind(
                 this,
                 1,
-                this.state.defaultPages
+                this.state.defaultPages,
               )
         }
         show={this.state.detailsModal}
@@ -501,15 +499,14 @@ class WorkflowExec extends Component {
           bulkOperation={this.clearView.bind(this)}
         />
 
-        <hr style={{ marginTop: "-20px" }} />
-        <ButtonToolbar style={{ marginBottom: "15px", marginRight: "15px" }}>
-          <div style={{ paddingTop: "5px" }}>Workflow view</div>&nbsp;&nbsp;
+        <hr style={{marginTop: '-20px'}} />
+        <ButtonToolbar style={{marginBottom: '15px', marginRight: '15px'}}>
+          <div style={{paddingTop: '5px'}}>Workflow view</div>&nbsp;&nbsp;
           <ToggleButtonGroup
             type="radio"
             value={this.state.allData ? 1 : 0}
             name="Workflow view"
-            onChange={this.changeView.bind(this)}
-          >
+            onChange={this.changeView.bind(this)}>
             <ToggleButton size="sm" variant="outline-secondary" value={0}>
               Hierarchy
             </ToggleButton>
@@ -527,12 +524,12 @@ class WorkflowExec extends Component {
               onChange={e => this.changeLabels(e)}
               labelKey="name"
               options={[
-                "RUNNING",
-                "COMPLETED",
-                "FAILED",
-                "TIMED_OUT",
-                "TERMINATED",
-                "PAUSED"
+                'RUNNING',
+                'COMPLETED',
+                'FAILED',
+                'TIMED_OUT',
+                'TERMINATED',
+                'PAUSED',
               ]}
               placeholder="Search by status."
               ref={ref => (this._typeahead = ref)}
@@ -549,13 +546,12 @@ class WorkflowExec extends Component {
           </Col>
           <Button
             className="primary"
-            style={{ marginBottom: "15px", marginRight: "15px" }}
+            style={{marginBottom: '15px', marginRight: '15px'}}
             onClick={() => {
               this.changeLabels([]);
               this._typeahead.clear();
-              this.changeQuery("");
-            }}
-          >
+              this.changeQuery('');
+            }}>
             <i className="fas fa-times" />
           </Button>
         </Row>
@@ -571,8 +567,8 @@ class WorkflowExec extends Component {
                     <i
                       className={
                         this.state.sort[0]
-                          ? "fas fa-sort-up"
-                          : "fas fa-sort-down"
+                          ? 'fas fa-sort-up'
+                          : 'fas fa-sort-down'
                       }
                     />
                   ) : null}
@@ -584,8 +580,8 @@ class WorkflowExec extends Component {
                     <i
                       className={
                         this.state.sort[1]
-                          ? "fas fa-sort-down"
-                          : "fas fa-sort-up"
+                          ? 'fas fa-sort-down'
+                          : 'fas fa-sort-up'
                       }
                     />
                   ) : null}
@@ -596,8 +592,8 @@ class WorkflowExec extends Component {
                     <i
                       className={
                         this.state.sort[2]
-                          ? "fas fa-sort-down"
-                          : "fas fa-sort-up"
+                          ? 'fas fa-sort-down'
+                          : 'fas fa-sort-up'
                       }
                     />
                   ) : null}
@@ -607,7 +603,7 @@ class WorkflowExec extends Component {
             <tbody className="execTableRows">{this.repeat()}</tbody>
           </Table>
         </div>
-        <Container style={{ marginTop: "5px" }}>
+        <Container style={{marginTop: '5px'}}>
           <Row>
             <Col sm={2}>
               <PageCount
@@ -634,7 +630,7 @@ class WorkflowExec extends Component {
 
 const mapStateToProps = state => {
   return {
-    searchReducer: state.searchReducer
+    searchReducer: state.searchReducer,
   };
 };
 
@@ -651,11 +647,8 @@ const mapDispatchToProps = dispatch => {
     updateSize: size => dispatch(searchActions.updateSize(size)),
     checkedWorkflows: checkedWfs =>
       dispatch(searchActions.checkedWorkflows(checkedWfs)),
-    setView: value => dispatch(bulkActions.setView(value))
+    setView: value => dispatch(bulkActions.setView(value)),
   };
 };
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(WorkflowExec);
+export default connect(mapStateToProps, mapDispatchToProps)(WorkflowExec);

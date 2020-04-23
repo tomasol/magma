@@ -1,23 +1,24 @@
-import React, { useEffect } from "react";
-import logo from "./logo-min.png";
-import x from "./X_icon_RGB-min.png";
-import { Navbar } from "react-bootstrap";
-import { Button, Dropdown, Icon, Popup } from "semantic-ui-react";
-import { NavLink, withRouter } from "react-router-dom";
-import { motion } from "framer-motion";
-import "./BuilderHeader.css";
+// @flow
+import './BuilderHeader.css';
+import React, {useEffect} from 'react';
+import logo from './logo-min.png';
+import x from './X_icon_RGB-min.png';
+import {Button, Dropdown, Icon, Popup} from 'semantic-ui-react';
+import {NavLink, withRouter} from 'react-router-dom';
+import {Navbar} from 'react-bootstrap';
+import {motion} from 'framer-motion';
 
 const XLetter = () => (
   <motion.img
     key={x}
     src={x}
-    initial={{ opacity: 1, x: 82, scale: 0.9 }}
+    initial={{opacity: 1, x: 82, scale: 0.9}}
     animate={{
       x: 0,
       scale: 1.1,
-      rotate: 180
+      rotate: 180,
     }}
-    transition={{ duration: 0.5, delay: 1.1 }}
+    transition={{duration: 0.5, delay: 1.1}}
   />
 );
 
@@ -25,43 +26,40 @@ const Logo = () => (
   <motion.img
     key={logo}
     src={logo}
-    initial={{ opacity: 1, x: -30 }}
+    initial={{opacity: 1, x: -30}}
     animate={{
-      opacity: 0
+      opacity: 0,
     }}
-    transition={{ duration: 0.2, delay: 1 }}
+    transition={{duration: 0.2, delay: 1}}
   />
 );
 
 const Title = () => (
   <motion.div
-    initial={{ opacity: 0, x: -120 }}
+    initial={{opacity: 0, x: -120}}
     animate={{
       opacity: 1,
-      x: -80
+      x: -80,
     }}
-    transition={{ duration: 0.5, delay: 1.3 }}
-  >
+    transition={{duration: 0.5, delay: 1.3}}>
     <h3>Workflow Builder</h3>
   </motion.div>
 );
 
 const ControlsButton = props => (
   <motion.div
-    initial={{ opacity: 0 }}
+    initial={{opacity: 0}}
     animate={{
-      opacity: 1
+      opacity: 1,
     }}
-    transition={{ duration: 1, delay: 1 }}
-  >
-    <Button.Group basic inverted size="small" style={{ marginRight: "20px" }}>
+    transition={{duration: 1, delay: 1}}>
+    <Button.Group basic inverted size="small" style={{marginRight: '20px'}}>
       <motion.div
-        initial={{ opacity: 0 }}
+        initial={{opacity: 0}}
         animate={{
-          opacity: 1
+          opacity: 1,
         }}
-        transition={{ duration: 0.8, delay: 1 }}
-      >
+        transition={{duration: 0.8, delay: 1}}>
         <Popup
           trigger={<Button onClick={props.showNewModal} icon="file" />}
           header="New"
@@ -93,14 +91,13 @@ const ControlsButton = props => (
       </motion.div>
     </Button.Group>
 
-    <Button.Group basic inverted size="small" style={{ marginRight: "20px" }}>
+    <Button.Group basic inverted size="small" style={{marginRight: '20px'}}>
       <motion.div
-        initial={{ opacity: 0 }}
+        initial={{opacity: 0}}
         animate={{
-          opacity: 1
+          opacity: 1,
         }}
-        transition={{ duration: 0.8, delay: 1.1 }}
-      >
+        transition={{duration: 0.8, delay: 1.1}}>
         <Button
           title="Zoom out"
           onClick={() =>
@@ -109,10 +106,9 @@ const ControlsButton = props => (
           icon="zoom-out"
         />
         <Dropdown
-          text={props.workflowDiagram.getZoomLevel().toFixed(1) + "%"}
+          text={props.workflowDiagram.getZoomLevel().toFixed(1) + '%'}
           button
-          style={{ paddingLeft: "10px", paddingRight: "10px" }}
-        >
+          style={{paddingLeft: '10px', paddingRight: '10px'}}>
           <Dropdown.Menu>
             {[25, 50, 75, 100, 125].map(level => {
               return (
@@ -133,14 +129,13 @@ const ControlsButton = props => (
       </motion.div>
     </Button.Group>
 
-    <Button.Group basic inverted size="small" style={{ marginRight: "20px" }}>
+    <Button.Group basic inverted size="small" style={{marginRight: '20px'}}>
       <motion.div
-        initial={{ opacity: 0 }}
+        initial={{opacity: 0}}
         animate={{
-          opacity: 1
+          opacity: 1,
         }}
-        transition={{ duration: 0.8, delay: 1.2 }}
-      >
+        transition={{duration: 0.8, delay: 1.2}}>
         <Popup
           trigger={
             <Button
@@ -177,7 +172,13 @@ const ControlsButton = props => (
           trigger={
             <Button
               onClick={props.setLocked}
-              icon={props.workflowDiagram.isLocked() ? <Icon className="lock" style={{color: "red"}}/>  : "unlock"}
+              icon={
+                props.workflowDiagram.isLocked() ? (
+                  <Icon className="lock" style={{color: 'red'}} />
+                ) : (
+                  'unlock'
+                )
+              }
             />
           }
           header={
@@ -193,22 +194,21 @@ const ControlsButton = props => (
           }
           content={
             props.workflowDiagram.isLocked()
-              ? "Unlock diagram state (currently locked)"
-              : "Lock diagram state (currently unlocked)"
+              ? 'Unlock diagram state (currently locked)'
+              : 'Lock diagram state (currently unlocked)'
           }
           basic
         />
       </motion.div>
     </Button.Group>
 
-    <Button.Group basic inverted size="small" style={{ marginRight: "20px" }}>
+    <Button.Group basic inverted size="small" style={{marginRight: '20px'}}>
       <motion.div
-        initial={{ opacity: 0 }}
+        initial={{opacity: 0}}
         animate={{
-          opacity: 1
+          opacity: 1,
         }}
-        transition={{ duration: 0.8, delay: 1.3 }}
-      >
+        transition={{duration: 0.8, delay: 1.3}}>
         <Popup
           trigger={<Button onClick={props.showGeneralInfoModal} icon="edit" />}
           header="Edit general"
@@ -226,14 +226,13 @@ const ControlsButton = props => (
       </motion.div>
     </Button.Group>
 
-    <Button.Group size="small" style={{ marginRight: "20px" }}>
+    <Button.Group size="small" style={{marginRight: '20px'}}>
       <motion.div
-        initial={{ opacity: 0 }}
+        initial={{opacity: 0}}
         animate={{
-          opacity: 1
+          opacity: 1,
         }}
-        transition={{ duration: 0.8, delay: 1.4 }}
-      >
+        transition={{duration: 0.8, delay: 1.4}}>
         <Popup
           trigger={<Button icon="play" onClick={props.saveAndExecute} />}
           header={
@@ -251,17 +250,17 @@ const ControlsButton = props => (
 
 const BuilderHeader = props => {
   useEffect(() => {
-    document.addEventListener("click", handleClickInside, true);
+    document.addEventListener('click', handleClickInside, true);
     return () => {
-      document.removeEventListener("click", handleClickInside, true);
+      document.removeEventListener('click', handleClickInside, true);
     };
-  }, []);
+  }, [handleClickInside]);
 
   const handleClickInside = event => {
-    const headerEl = document.getElementById("builder-header");
-    const sideMenu = document.getElementById("sidebar-secondary");
-    const expandBtn = document.getElementById("expand");
-    const deleteBtn = document.getElementById("delete");
+    const headerEl = document.getElementById('builder-header');
+    const sideMenu = document.getElementById('sidebar-secondary');
+    const expandBtn = document.getElementById('expand');
+    const deleteBtn = document.getElementById('delete');
 
     // workaround to prevent deleting nodes while typing (e.g. pressing delete)
     // focus on node is lost when sidebar or header is clicked
@@ -269,7 +268,8 @@ const BuilderHeader = props => {
       headerEl &&
       sideMenu &&
       (headerEl.contains(event.target) || sideMenu.contains(event.target)) &&
-      (!expandBtn.contains(event.target) && !deleteBtn.contains(event.target))
+      !expandBtn.contains(event.target) &&
+      !deleteBtn.contains(event.target)
     ) {
       props.workflowDiagram.getDiagramModel().clearSelection();
       props.workflowDiagram.renderDiagram();
@@ -277,10 +277,10 @@ const BuilderHeader = props => {
   };
 
   const openFileUpload = () => {
-    document.getElementById("upload-file").click();
+    document.getElementById('upload-file').click();
     document
-      .getElementById("upload-file")
-      .addEventListener("change", props.submitFile);
+      .getElementById('upload-file')
+      .addEventListener('change', props.submitFile);
   };
 
   return (
@@ -312,8 +312,7 @@ const BuilderHeader = props => {
           basic
           inverted
           animated="vertical"
-          onClick={props.showExitModal}
-        >
+          onClick={props.showExitModal}>
           <Button.Content hidden>Exit</Button.Content>
           <Button.Content visible>
             <Icon name="x" />

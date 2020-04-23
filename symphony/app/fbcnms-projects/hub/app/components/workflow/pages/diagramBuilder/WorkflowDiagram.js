@@ -1,9 +1,15 @@
-import * as _ from "lodash";
-import defaultTo from "lodash/fp/defaultTo";
-import { HttpClient as http } from "../../common/HttpClient";
-import Workflow2Graph from "../../common/wfegraph";
-import { conductorApiUrlPrefix } from "../../constants";
-import { Application } from "./Application";
+// @flow
+import * as _ from 'lodash';
+import Workflow2Graph from '../../common/wfegraph';
+import defaultTo from 'lodash/fp/defaultTo';
+import {Application} from './Application';
+import {CircleEndNodeModel} from './NodeModels/EndNode/CircleEndNodeModel';
+import {CircleStartNodeModel} from './NodeModels/StartNode/CircleStartNodeModel';
+import {DecisionNodeModel} from './NodeModels/DecisionNode/DecisionNodeModel';
+import {DefaultNodeModel} from './NodeModels/DefaultNodeModel/DefaultNodeModel';
+import {ForkNodeModel} from './NodeModels/ForkNode/ForkNodeModel';
+import {JoinNodeModel} from './NodeModels/JoinNode/JoinNodeModel';
+import {conductorApiUrlPrefix} from '../../constants';
 import {
   getEndNode,
   getLinksArray,
@@ -11,26 +17,21 @@ import {
   getWfInputs,
   handleDecideNode,
   handleForkNode,
-  linkNodes,
   handleRawNode,
-} from "./builder-utils";
-import { DecisionNodeModel } from "./NodeModels/DecisionNode/DecisionNodeModel";
-import { DefaultNodeModel } from "./NodeModels/DefaultNodeModel/DefaultNodeModel";
-import { CircleEndNodeModel } from "./NodeModels/EndNode/CircleEndNodeModel";
-import { ForkNodeModel } from "./NodeModels/ForkNode/ForkNodeModel";
-import { JoinNodeModel } from "./NodeModels/JoinNode/JoinNodeModel";
-import { CircleStartNodeModel } from "./NodeModels/StartNode/CircleStartNodeModel";
+  linkNodes,
+} from './builder-utils';
+import {HttpClient as http} from '../../common/HttpClient';
 
 const nodeColors = {
-  subWorkflow: "rgb(34,144,255)",
-  simpleTask: "rgb(134,210,255)",
-  systemTask: "rgb(11,60,139)",
-  lambdaTask: "rgb(240,219,79)",
-  terminateTask: "rgb(255,30,0)",
-  rawTask: "rgb(137,141,148)",
-  httpTask: "rgb(80,255,163)",
-  eventTask: "rgb(137,59,255)",
-  waitTask: "rgb(171,171,171)",
+  subWorkflow: 'rgb(34,144,255)',
+  simpleTask: 'rgb(134,210,255)',
+  systemTask: 'rgb(11,60,139)',
+  lambdaTask: 'rgb(240,219,79)',
+  terminateTask: 'rgb(255,30,0)',
+  rawTask: 'rgb(137,141,148)',
+  httpTask: 'rgb(80,255,163)',
+  eventTask: 'rgb(137,59,255)',
+  waitTask: 'rgb(171,171,171)',
 };
 
 export class WorkflowDiagram {
@@ -79,7 +80,7 @@ export class WorkflowDiagram {
   }
 
   setZoomLevel(percentage) {
-    let offset = this.diagramModel.getZoomLevel() > percentage ? 100 : -100;
+    const offset = this.diagramModel.getZoomLevel() > percentage ? 100 : -100;
     this.diagramModel.setZoomLevel(percentage);
     this.diagramModel.setOffsetX(this.diagramModel.getOffsetX() + offset);
     this.renderDiagram();
@@ -90,14 +91,14 @@ export class WorkflowDiagram {
   }
 
   deleteSelected() {
-    _.values(this.diagramModel.getNodes()).forEach((node) => {
+    _.values(this.diagramModel.getNodes()).forEach(node => {
       if (node.isSelected()) {
         node.remove();
         this.diagramModel.removeNode(node);
       }
     });
 
-    _.values(this.diagramModel.getLinks()).forEach((link) => {
+    _.values(this.diagramModel.getLinks()).forEach(link => {
       if (link.isSelected()) {
         this.diagramModel.removeLink(link);
       }
@@ -115,10 +116,10 @@ export class WorkflowDiagram {
 
   getGraphState(definition) {
     const wfe2graph = new Workflow2Graph();
-    const wfe = defaultTo({ tasks: [] })(null);
-    const { edges, vertices } = wfe2graph.convert(wfe, definition);
+    const wfe = defaultTo({tasks: []})(null);
+    const {edges, vertices} = wfe2graph.convert(wfe, definition);
 
-    return { edges, vertices };
+    return {edges, vertices};
   }
 
   /**
@@ -130,16 +131,16 @@ export class WorkflowDiagram {
     return new Promise((resolve, reject) => {
       const definition = this.parseDiagramToJSON(finalWorkflow);
 
-      const eventNodes = this.getMatchingTaskNameNodes("EVENT_TASK");
+      const eventNodes = this.getMatchingTaskNameNodes('EVENT_TASK');
       const eventHandlers = this.createEventHandlers(eventNodes);
 
       this.registerEventHandlers(eventHandlers).then(() => {
         http
-          .put(conductorApiUrlPrefix + "/metadata", [definition])
+          .put(conductorApiUrlPrefix + '/metadata', [definition])
           .then(() => {
             resolve(definition);
           })
-          .catch((err) => {
+          .catch(err => {
             const errObject = JSON.parse(err.response.text);
             if (errObject.validationErrors) {
               reject(errObject.validationErrors[0]);
@@ -154,13 +155,13 @@ export class WorkflowDiagram {
       if (eventHandlers.length < 1) {
         resolve();
       }
-      eventHandlers.forEach((eventHandler) => {
+      eventHandlers.forEach(eventHandler => {
         http
-          .post(conductorApiUrlPrefix + "/event", eventHandler)
-          .then((res) => {
+          .post(conductorApiUrlPrefix + '/event', eventHandler)
+          .then(res => {
             resolve(res);
           })
-          .catch((err) => {
+          .catch(err => {
             reject(err);
           });
       });
@@ -168,21 +169,21 @@ export class WorkflowDiagram {
   }
 
   createEventHandlers(eventNodes) {
-    return eventNodes.map((node) => {
+    return eventNodes.map(node => {
       let {
         action,
         targetWorkflowId,
         targetTaskRefName,
       } = node.extras.inputs.inputParameters;
-      let sink = node.extras.inputs.sink;
-      let wfName = this.definition.name;
-      let taskRefName = node.extras.inputs.taskReferenceName;
+      const sink = node.extras.inputs.sink;
+      const wfName = this.definition.name;
+      const taskRefName = node.extras.inputs.taskReferenceName;
 
-      let targetWorkflowIdPlaceholder = targetWorkflowId.match(
-        /(?<=workflow\.input\.)([a-zA-Z0-9-_]+)/gim
+      const targetWorkflowIdPlaceholder = targetWorkflowId.match(
+        /(?<=workflow\.input\.)([a-zA-Z0-9-_]+)/gim,
       )?.[0];
-      let targetTaskRefNamePlaceholder = targetTaskRefName.match(
-        /(?<=workflow\.input\.)([a-zA-Z0-9-_]+)/gim
+      const targetTaskRefNamePlaceholder = targetTaskRefName.match(
+        /(?<=workflow\.input\.)([a-zA-Z0-9-_]+)/gim,
       )?.[0];
 
       targetWorkflowId = targetWorkflowIdPlaceholder
@@ -193,15 +194,15 @@ export class WorkflowDiagram {
         ? `\$\{${targetTaskRefNamePlaceholder}\}`
         : targetTaskRefName;
 
-      let output = {};
-      Object.entries(node.extras.inputs.inputParameters).forEach((entry) => {
+      const output = {};
+      Object.entries(node.extras.inputs.inputParameters).forEach(entry => {
         if (
-          !["action", "targetTaskRefName", "targetWorkflowId"].includes(
-            entry[0]
+          !['action', 'targetTaskRefName', 'targetWorkflowId'].includes(
+            entry[0],
           )
         ) {
-          let outputPlaceholder = entry[1].match(
-            /(?<=workflow\.input\.)([a-zA-Z0-9-_]+)/gim
+          const outputPlaceholder = entry[1].match(
+            /(?<=workflow\.input\.)([a-zA-Z0-9-_]+)/gim,
           )?.[0];
 
           output[entry[0]] = outputPlaceholder
@@ -238,7 +239,7 @@ export class WorkflowDiagram {
     const tasks = definition.tasks;
     this.clearDiagram();
 
-    tasks.forEach((task) => {
+    tasks.forEach(task => {
       this.createNode(task);
     });
 
@@ -258,48 +259,48 @@ export class WorkflowDiagram {
   }
 
   dropNewNode(e) {
-    const data = JSON.parse(e.dataTransfer.getData("storm-diagram-node"));
+    const data = JSON.parse(e.dataTransfer.getData('storm-diagram-node'));
     const points = this.diagramEngine.getRelativeMousePoint(e);
-    const task = { name: data.name, ...data.wfObject };
-    const { diagramModel, diagramEngine } = this;
+    const task = {name: data.name, ...data.wfObject};
+    const {diagramModel, diagramEngine} = this;
 
     let node = null;
 
     switch (data.type) {
-      case "default":
+      case 'default':
         node = this.placeDefaultNode(task, points.x, points.y);
         break;
-      case "start":
+      case 'start':
         node = this.placeStartNode(points.x, points.y);
         break;
-      case "end":
+      case 'end':
         node = this.placeEndNode(points.x, points.y);
         break;
-      case "fork":
+      case 'fork':
         node = this.placeForkNode(task, points.x, points.y);
         break;
-      case "join":
+      case 'join':
         node = this.placeJoinNode(task, points.x, points.y);
         break;
-      case "decision":
+      case 'decision':
         node = this.placeDecisionNode(task, points.x, points.y);
         break;
-      case "lambda":
+      case 'lambda':
         node = this.placeLambdaNode(task, points.x, points.y);
         break;
-      case "terminate":
+      case 'terminate':
         node = this.placeTerminateNode(task, points.x, points.y);
         break;
-      case "raw":
+      case 'raw':
         node = this.placeRawNode(task, points.x, points.y);
         break;
-      case "http":
+      case 'http':
         node = this.placeHTTPNode(task, points.x, points.y);
         break;
-      case "event":
+      case 'event':
         node = this.placeEventNode(task, points.x, points.y);
         break;
-      case "wait":
+      case 'wait':
         node = this.placeWaitNode(task, points.x, points.y);
         break;
       default:
@@ -317,11 +318,11 @@ export class WorkflowDiagram {
    * Clears canvas (removes nodes and link)
    */
   clearDiagram() {
-    _.values(this.diagramModel.getNodes()).forEach((node) => {
+    _.values(this.diagramModel.getNodes()).forEach(node => {
       this.diagramModel.removeNode(node);
     });
 
-    _.values(this.diagramModel.getLinks()).forEach((link) => {
+    _.values(this.diagramModel.getLinks()).forEach(link => {
       this.diagramModel.removeLink(link);
     });
   }
@@ -334,7 +335,7 @@ export class WorkflowDiagram {
     this.diagramEngine.setDiagramModel(this.diagramModel);
     this.diagramModel.addAll(
       this.placeStartNode(600, 300),
-      this.placeEndNode(900, 300)
+      this.placeEndNode(900, 300),
     );
     return this;
   }
@@ -351,20 +352,20 @@ export class WorkflowDiagram {
     const startNode = this.placeStartNode(firstNode.x - 150, firstNode.y);
     const endNode = this.placeEndNode(
       lastNode.x + this.getNodeWidth(lastNode) + 150,
-      lastNode.y
+      lastNode.y,
     );
-    const { edges } = this.getGraphState(this.definition);
+    const {edges} = this.getGraphState(this.definition);
     const lastNodes = [];
 
     // decision special case
-    if (_.last(this.definition.tasks).type === "DECISION") {
-      edges.forEach((edge) => {
-        if (edge.to === "final" && edge.type !== "decision") {
+    if (_.last(this.definition.tasks).type === 'DECISION') {
+      edges.forEach(edge => {
+        if (edge.to === 'final' && edge.type !== 'decision') {
           lastNodes.push(this.getMatchingTaskRefNode(edge.from));
         }
       });
 
-      lastNodes.forEach((node) => {
+      lastNodes.forEach(node => {
         diagramModel.addLink(this.linkNodes(node, endNode));
       });
 
@@ -373,7 +374,7 @@ export class WorkflowDiagram {
 
     this.diagramModel.addAll(
       this.linkNodes(startNode, firstNode),
-      this.linkNodes(lastNode, endNode)
+      this.linkNodes(lastNode, endNode),
     );
     diagramModel.addAll(startNode, endNode);
 
@@ -381,26 +382,26 @@ export class WorkflowDiagram {
   }
 
   placeStartNode(x, y) {
-    if (this.diagramModel.getNode("start")) {
+    if (this.diagramModel.getNode('start')) {
       return null;
     }
-    const node = new CircleStartNodeModel("Start");
+    const node = new CircleStartNodeModel('Start');
     node.setPosition(x, y);
     return node;
   }
 
   placeEndNode(x, y) {
-    if (this.diagramModel.getNode("end")) {
+    if (this.diagramModel.getNode('end')) {
       return null;
     }
-    const node = new CircleEndNodeModel("End");
+    const node = new CircleEndNodeModel('End');
     node.setPosition(x, y);
     return node;
   }
 
   placeDefaultNode(task, x, y) {
     const color =
-      task.type === "SUB_WORKFLOW"
+      task.type === 'SUB_WORKFLOW'
         ? nodeColors.subWorkflow
         : nodeColors.simpleTask;
     const node = new DefaultNodeModel(task.name, color, task);
@@ -409,62 +410,66 @@ export class WorkflowDiagram {
   }
 
   placeForkNode = (task, x, y) => {
-    let node = new ForkNodeModel(task.name, nodeColors.systemTask, task);
+    const node = new ForkNodeModel(task.name, nodeColors.systemTask, task);
     node.setPosition(x, y);
     return node;
   };
 
   placeJoinNode = (task, x, y) => {
-    let node = new JoinNodeModel(task.name, nodeColors.systemTask, task);
+    const node = new JoinNodeModel(task.name, nodeColors.systemTask, task);
     node.setPosition(x, y);
     return node;
   };
 
   placeDecisionNode = (task, x, y) => {
-    let node = new DecisionNodeModel(task.name, nodeColors.systemTask, task);
+    const node = new DecisionNodeModel(task.name, nodeColors.systemTask, task);
     node.setPosition(x, y);
     return node;
   };
 
   placeLambdaNode = (task, x, y) => {
-    let node = new DefaultNodeModel(task.name, nodeColors.lambdaTask, task);
+    const node = new DefaultNodeModel(task.name, nodeColors.lambdaTask, task);
     node.setPosition(x, y);
     return node;
   };
 
   placeTerminateNode = (task, x, y) => {
-    let node = new DefaultNodeModel(task.name, nodeColors.terminateTask, task);
+    const node = new DefaultNodeModel(
+      task.name,
+      nodeColors.terminateTask,
+      task,
+    );
     node.setPosition(x, y);
     return node;
   };
 
   placeRawNode = (task, x, y) => {
-    let node = new DefaultNodeModel(task.name, nodeColors.rawTask, task);
+    const node = new DefaultNodeModel(task.name, nodeColors.rawTask, task);
     node.setPosition(x, y);
     return node;
   };
 
   placeHTTPNode = (task, x, y) => {
-    let node = new DefaultNodeModel(task.name, nodeColors.httpTask, task);
+    const node = new DefaultNodeModel(task.name, nodeColors.httpTask, task);
     node.setPosition(x, y);
     return node;
   };
 
   placeEventNode = (task, x, y) => {
-    let node = new DefaultNodeModel(task.name, nodeColors.eventTask, task);
+    const node = new DefaultNodeModel(task.name, nodeColors.eventTask, task);
     node.setPosition(x, y);
     return node;
   };
 
   placeWaitNode = (task, x, y) => {
-    let node = new DefaultNodeModel(task.name, nodeColors.waitTask, task);
+    const node = new DefaultNodeModel(task.name, nodeColors.waitTask, task);
     node.setPosition(x, y);
     return node;
   };
 
   getMostRightNodeX() {
     let max = 0;
-    this.getNodes().forEach((node) => {
+    this.getNodes().forEach(node => {
       if (node.x > max) {
         max = node.x;
       }
@@ -486,46 +491,46 @@ export class WorkflowDiagram {
    */
   getMatchingTaskRefNode(taskRefName) {
     return _.toArray(this.getNodes()).find(
-      (x) => x.extras.inputs.taskReferenceName === taskRefName
+      x => x.extras.inputs.taskReferenceName === taskRefName,
     );
   }
 
   getMatchingTaskNameNodes(taskName) {
-    return _.toArray(this.getNodes()).filter((x) => x.name === taskName);
+    return _.toArray(this.getNodes()).filter(x => x.name === taskName);
   }
 
   /**
    * Links all nodes that are in diagram
    */
   linkAllNodes() {
-    const { edges } = this.getGraphState(this.definition);
+    const {edges} = this.getGraphState(this.definition);
 
-    edges.forEach((edge) => {
-      if (edge.from !== "start" && edge.to !== "final") {
+    edges.forEach(edge => {
+      if (edge.from !== 'start' && edge.to !== 'final') {
         switch (edge.type) {
-          case "simple": {
+          case 'simple': {
             const fromNode = this.getMatchingTaskRefNode(edge.from);
             const toNode = this.getMatchingTaskRefNode(edge.to);
             this.diagramModel.addLink(this.linkNodes(fromNode, toNode));
             break;
           }
-          case "FORK": {
+          case 'FORK': {
             const fromNode = this.getMatchingTaskRefNode(edge.from);
             const toNode = this.getMatchingTaskRefNode(edge.to);
 
             this.diagramModel.addLink(this.linkNodes(fromNode, toNode));
             break;
           }
-          case "decision": {
+          case 'decision': {
             const fromNode = this.getMatchingTaskRefNode(edge.from);
             const toNode = this.getMatchingTaskRefNode(edge.to);
-            let whichPort = "failPort";
+            let whichPort = 'failPort';
 
             if (!_.isEmpty(fromNode.ports.failPort.links)) {
-              whichPort = "neutralPort";
+              whichPort = 'neutralPort';
             }
             this.diagramModel.addLink(
-              this.linkNodes(fromNode, toNode, whichPort)
+              this.linkNodes(fromNode, toNode, whichPort),
             );
             break;
           }
@@ -545,44 +550,44 @@ export class WorkflowDiagram {
    */
   linkNodes(node1, node2, whichPort) {
     if (
-      node1.type === "fork" ||
-      node1.type === "join" ||
-      node1.type === "start"
+      node1.type === 'fork' ||
+      node1.type === 'join' ||
+      node1.type === 'start'
     ) {
-      const fork_join_start_outPort = node1.getPort("right");
+      const fork_join_start_outPort = node1.getPort('right');
 
-      if (node2.type === "default") {
+      if (node2.type === 'default') {
         return fork_join_start_outPort.link(node2.getInPorts()[0]);
       }
-      if (node2.type === "decision") {
-        return fork_join_start_outPort.link(node2.getPort("inputPort"));
+      if (node2.type === 'decision') {
+        return fork_join_start_outPort.link(node2.getPort('inputPort'));
       }
-      if (["fork", "join", "end"].includes(node2.type)) {
-        return fork_join_start_outPort.link(node2.getPort("left"));
+      if (['fork', 'join', 'end'].includes(node2.type)) {
+        return fork_join_start_outPort.link(node2.getPort('left'));
       }
-    } else if (node1.type === "default") {
+    } else if (node1.type === 'default') {
       const defaultOutPort = node1.getOutPorts()[0];
 
-      if (node2.type === "default") {
+      if (node2.type === 'default') {
         return defaultOutPort.link(node2.getInPorts()[0]);
       }
-      if (node2.type === "decision") {
-        return defaultOutPort.link(node2.getPort("inputPort"));
+      if (node2.type === 'decision') {
+        return defaultOutPort.link(node2.getPort('inputPort'));
       }
-      if (["fork", "join", "end"].includes(node2.type)) {
-        return defaultOutPort.link(node2.getPort("left"));
+      if (['fork', 'join', 'end'].includes(node2.type)) {
+        return defaultOutPort.link(node2.getPort('left'));
       }
-    } else if (node1.type === "decision") {
+    } else if (node1.type === 'decision') {
       const currentPort = node1.getPort(whichPort);
 
-      if (node2.type === "default") {
+      if (node2.type === 'default') {
         return currentPort.link(node2.getInPorts()[0]);
       }
-      if (node2.type === "decision") {
-        return currentPort.link(node2.getPort("inputPort"));
+      if (node2.type === 'decision') {
+        return currentPort.link(node2.getPort('inputPort'));
       }
-      if (["fork", "join", "end"].includes(node2.type)) {
-        return currentPort.link(node2.getPort("left"));
+      if (['fork', 'join', 'end'].includes(node2.type)) {
+        return currentPort.link(node2.getPort('left'));
       }
     }
   }
@@ -617,7 +622,7 @@ export class WorkflowDiagram {
       y = branchY;
     }
 
-    return { x, y };
+    return {x, y};
   }
 
   /**
@@ -638,11 +643,11 @@ export class WorkflowDiagram {
     branchSpread,
     branchMargin,
     branchNum,
-    forkDepth
+    forkDepth,
   ) {
-    let yOffset = branchTask.type === "FORK_JOIN" ? 25 - k * 11 : 27;
-    yOffset = branchTask.type === "JOIN" ? 25 - (k - 1) * 11 : yOffset;
-    yOffset = branchTask.type === "DECISION" ? 25 - k * 11 : yOffset;
+    let yOffset = branchTask.type === 'FORK_JOIN' ? 25 - k * 11 : 27;
+    yOffset = branchTask.type === 'JOIN' ? 25 - (k - 1) * 11 : yOffset;
+    yOffset = branchTask.type === 'DECISION' ? 25 - k * 11 : yOffset;
 
     const branchPosY =
       parentNode.y +
@@ -657,9 +662,9 @@ export class WorkflowDiagram {
 
     console.log(branchTask);
     console.log(lastNode.x);
-    let branchPosX = lastNode.x + 150 + (this.getNodeWidth(lastNode) + 50);
+    const branchPosX = lastNode.x + 150 + (this.getNodeWidth(lastNode) + 50);
 
-    return { branchPosX, branchPosY };
+    return {branchPosX, branchPosY};
   }
 
   /**
@@ -671,8 +676,8 @@ export class WorkflowDiagram {
    */
   createNode(task, branchX, branchY, forkDepth = 1) {
     switch (task.type) {
-      case "FORK_JOIN": {
-        const { x, y } = this.calculatePosition(branchX, branchY);
+      case 'FORK_JOIN': {
+        const {x, y} = this.calculatePosition(branchX, branchY);
         const branchCount = task.forkTasks.length;
         const branchMargin = 100;
         const nodeHeight = 47;
@@ -687,22 +692,22 @@ export class WorkflowDiagram {
 
         task.forkTasks.forEach((branch, branchNum) => {
           branch.forEach((branchTask, k) => {
-            const { branchPosX, branchPosY } = this.calculateNestedPosition(
+            const {branchPosX, branchPosY} = this.calculateNestedPosition(
               branchTask,
               node,
               k,
               branchSpread,
               branchMargin,
               branchNum,
-              forkDepth
+              forkDepth,
             );
             this.createNode(branchTask, branchPosX, branchPosY, forkDepth + 1);
           });
         });
         break;
       }
-      case "DECISION": {
-        const { x, y } = this.calculatePosition(branchX, branchY);
+      case 'DECISION': {
+        const {x, y} = this.calculatePosition(branchX, branchY);
         const caseCount = _.values(task.decisionCases).length + 1;
         const branchMargin = 100;
         const nodeHeight = 47;
@@ -713,80 +718,80 @@ export class WorkflowDiagram {
         const branchSpread =
           (caseCount * nodeHeight + (caseCount - 1) * branchMargin) / forkDepth;
 
-        let branches = [
+        const branches = [
           Object.values(task.decisionCases)[0],
           task.defaultCase,
-        ].map((el) => {
+        ].map(el => {
           return el === undefined ? [] : el;
         });
 
         branches.forEach((caseBranch, caseNum) => {
           caseBranch.forEach((branchTask, k) => {
-            const { branchPosX, branchPosY } = this.calculateNestedPosition(
+            const {branchPosX, branchPosY} = this.calculateNestedPosition(
               branchTask,
               node,
               k,
               branchSpread,
               branchMargin,
               caseNum,
-              forkDepth
+              forkDepth,
             );
             this.createNode(branchTask, branchPosX, branchPosY, forkDepth + 1);
           });
         });
         break;
       }
-      case "JOIN": {
-        const { x, y } = this.calculatePosition(branchX, branchY);
+      case 'JOIN': {
+        const {x, y} = this.calculatePosition(branchX, branchY);
         const node = this.placeJoinNode(task, x, y);
         this.diagramModel.addNode(node);
         break;
       }
-      case "LAMBDA": {
-        const { x, y } = this.calculatePosition(branchX, branchY);
+      case 'LAMBDA': {
+        const {x, y} = this.calculatePosition(branchX, branchY);
         const node = this.placeLambdaNode(task, x, y);
         this.diagramModel.addNode(node);
         break;
       }
-      case "TERMINATE": {
-        const { x, y } = this.calculatePosition(branchX, branchY);
+      case 'TERMINATE': {
+        const {x, y} = this.calculatePosition(branchX, branchY);
         const node = this.placeTerminateNode(task, x, y);
         this.diagramModel.addNode(node);
         break;
       }
-      case "HTTP": {
-        const { x, y } = this.calculatePosition(branchX, branchY);
+      case 'HTTP': {
+        const {x, y} = this.calculatePosition(branchX, branchY);
         const node = this.placeHTTPNode(task, x, y);
         this.diagramModel.addNode(node);
         break;
       }
-      case "EVENT": {
-        const { x, y } = this.calculatePosition(branchX, branchY);
+      case 'EVENT': {
+        const {x, y} = this.calculatePosition(branchX, branchY);
         const node = this.placeEventNode(task, x, y);
         this.diagramModel.addNode(node);
         break;
       }
-      case "WAIT": {
-        const { x, y } = this.calculatePosition(branchX, branchY);
+      case 'WAIT': {
+        const {x, y} = this.calculatePosition(branchX, branchY);
         const node = this.placeWaitNode(task, x, y);
         this.diagramModel.addNode(node);
         break;
       }
-      case "SIMPLE":
-      case "SUB_WORKFLOW": {
-        const { x, y } = this.calculatePosition(branchX, branchY);
+      case 'SIMPLE':
+      case 'SUB_WORKFLOW': {
+        const {x, y} = this.calculatePosition(branchX, branchY);
         const node = this.placeDefaultNode(task, x, y);
         this.diagramModel.addNode(node);
         break;
       }
       default: {
-        const { x, y } = this.calculatePosition(branchX, branchY);
+        const {x, y} = this.calculatePosition(branchX, branchY);
         const rawTask = {
-          name: "RAW",
+          name: 'RAW',
           inputParameters: {
-            raw: JSON.stringify(task)
-          }
-        }
+            raw: JSON.stringify(task),
+          },
+        };
         const node = this.placeRawNode(rawTask, x, y);
         this.diagramModel.addNode(node);
         break;
@@ -800,35 +805,35 @@ export class WorkflowDiagram {
    */
   parseDiagramToJSON(finalWorkflow) {
     let parentNode = getStartNode(this.getLinks());
-    let endNode = getEndNode(this.getLinks());
-    let linksArray = this.getLinks();
-    let tasks = [];
-    let limit = 20;
+    const endNode = getEndNode(this.getLinks());
+    const linksArray = this.getLinks();
+    const tasks = [];
+    const limit = 20;
     let i = 0;
 
     if (!parentNode) {
-      throw new Error("Start node is not connected.");
+      throw new Error('Start node is not connected.');
     }
     if (!endNode) {
-      throw new Error("End node is not connected.");
+      throw new Error('End node is not connected.');
     }
 
-    while (parentNode.type !== "end" && i !== limit) {
+    while (parentNode.type !== 'end' && i !== limit) {
       for (let i = 0; i < linksArray.length; i++) {
-        let link = linksArray[i];
+        const link = linksArray[i];
 
         if (link.sourcePort.parent === parentNode) {
           switch (link.targetPort.type) {
-            case "fork":
-              let { forkNode, joinNode } = handleForkNode(
-                link.targetPort.getNode()
+            case 'fork':
+              const {forkNode, joinNode} = handleForkNode(
+                link.targetPort.getNode(),
               );
               tasks.push(forkNode.extras.inputs, joinNode.extras.inputs);
               parentNode = joinNode;
               break;
-            case "decision":
-              let { decideNode, firstNeutralNode } = handleDecideNode(
-                link.targetPort.getNode()
+            case 'decision':
+              const {decideNode, firstNeutralNode} = handleDecideNode(
+                link.targetPort.getNode(),
               );
               tasks.push(decideNode.extras.inputs);
               if (firstNeutralNode) {
@@ -838,12 +843,12 @@ export class WorkflowDiagram {
                 parentNode = firstNeutralNode;
               }
               break;
-            case "end":
+            case 'end':
               parentNode = link.targetPort.parent;
               break;
             default:
               parentNode = link.targetPort.parent;
-              if (parentNode.name === "RAW") {
+              if (parentNode.name === 'RAW') {
                 tasks.push(handleRawNode(parentNode.extras.inputs));
               } else {
                 tasks.push(parentNode.extras.inputs);
@@ -855,7 +860,7 @@ export class WorkflowDiagram {
       i = i + 1;
     }
 
-    let finalWf = { ...finalWorkflow };
+    const finalWf = {...finalWorkflow};
 
     // handle input params
     if (Object.keys(getWfInputs(finalWf)).length < 1) {
@@ -874,58 +879,56 @@ export class WorkflowDiagram {
    * selected nodes definition.
    */
   expandSelectedNodes() {
-    const selectedNodes = this.diagramModel
-      .getSelectedItems()
-      .filter((item) => {
-        return item.getType() === "default";
-      });
+    const selectedNodes = this.diagramModel.getSelectedItems().filter(item => {
+      return item.getType() === 'default';
+    });
 
-    selectedNodes.forEach((selectedNode) => {
+    selectedNodes.forEach(selectedNode => {
       if (!selectedNode.extras.inputs.subWorkflowParam) {
         throw new Error("Simple task can't be expanded");
       }
 
-      const { name, version } = selectedNode.extras.inputs.subWorkflowParam;
-      const inputLinkArray = getLinksArray("in", selectedNode);
-      const outputLinkArray = getLinksArray("out", selectedNode);
+      const {name, version} = selectedNode.extras.inputs.subWorkflowParam;
+      const inputLinkArray = getLinksArray('in', selectedNode);
+      const outputLinkArray = getLinksArray('out', selectedNode);
 
       if (!inputLinkArray || !outputLinkArray) {
-        throw new Error("Selected node is not connected.");
+        throw new Error('Selected node is not connected.');
       }
 
-      const inputLinkParents = inputLinkArray.map((inputLink) => {
+      const inputLinkParents = inputLinkArray.map(inputLink => {
         return inputLink.sourcePort.getNode();
       });
 
-      const outputLinkParents = outputLinkArray.map((outputLink) => {
+      const outputLinkParents = outputLinkArray.map(outputLink => {
         return outputLink.targetPort.getNode();
       });
 
       http
         .get(
-          conductorApiUrlPrefix + "/metadata/workflow/" + name + "/" + version
+          conductorApiUrlPrefix + '/metadata/workflow/' + name + '/' + version,
         )
-        .then((res) => {
+        .then(res => {
           const subworkflowDiagram = new WorkflowDiagram(
             new Application(),
             res.result,
-            selectedNode
+            selectedNode,
           );
 
           subworkflowDiagram.createDiagram();
 
-          const { edges } = this.getGraphState(res.result);
+          const {edges} = this.getGraphState(res.result);
           const firstNode = subworkflowDiagram.getMatchingTaskRefNode(
-            edges[0].to
+            edges[0].to,
           );
           const lastNodes = [];
 
           // decision special case
-          if (_.last(res.result.tasks).type === "DECISION") {
-            edges.forEach((edge) => {
-              if (edge.to === "final") {
+          if (_.last(res.result.tasks).type === 'DECISION') {
+            edges.forEach(edge => {
+              if (edge.to === 'final') {
                 lastNodes.push(
-                  subworkflowDiagram.getMatchingTaskRefNode(edge.from)
+                  subworkflowDiagram.getMatchingTaskRefNode(edge.from),
                 );
               }
             });
@@ -936,11 +939,11 @@ export class WorkflowDiagram {
           selectedNode.remove();
           this.diagramModel.removeNode(selectedNode);
 
-          inputLinkArray.forEach((link) => {
+          inputLinkArray.forEach(link => {
             this.diagramModel.removeLink(link);
           });
 
-          outputLinkArray.forEach((link) => {
+          outputLinkArray.forEach(link => {
             this.diagramModel.removeLink(link);
           });
 
@@ -948,13 +951,13 @@ export class WorkflowDiagram {
             return linkNodes(
               node,
               firstNode,
-              inputLinkArray[i].sourcePort.name
+              inputLinkArray[i].sourcePort.name,
             );
           });
 
-          let newLinksLast = [];
-          outputLinkParents.forEach((node) => {
-            lastNodes.forEach((n) => {
+          const newLinksLast = [];
+          outputLinkParents.forEach(node => {
+            lastNodes.forEach(n => {
               newLinksLast.push(linkNodes(n, node));
             });
           });
@@ -963,7 +966,7 @@ export class WorkflowDiagram {
             ...subworkflowDiagram.getNodes(),
             ...subworkflowDiagram.getLinks(),
             ...newLinksFirst,
-            ...newLinksLast
+            ...newLinksLast,
           );
           this.diagramEngine.setDiagramModel(this.diagramModel);
           this.diagramEngine.repaintCanvas();

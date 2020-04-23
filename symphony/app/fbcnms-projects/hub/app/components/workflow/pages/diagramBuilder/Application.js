@@ -1,20 +1,21 @@
-import * as SRD from "@projectstorm/react-diagrams";
-import { SimplePortFactory } from "./NodeModels/SimplePortFactory";
-import { CircleStartPortModel } from "./NodeModels/StartNode/CircleStartPortModel";
-import { CircleStartNodeFactory } from "./NodeModels/StartNode/CircleStartNodeFactory";
-import { CircleEndPortModel } from "./NodeModels/EndNode/CircleEndPortModel";
-import { CircleEndNodeFactory } from "./NodeModels/EndNode/CircleEndNodeFactory";
-import { ForkNodeFactory } from "./NodeModels/ForkNode/ForkNodeFactory";
-import { ForkNodePortModel } from "./NodeModels/ForkNode/ForkNodePortModel";
-import { JoinNodePortModel } from "./NodeModels/JoinNode/JoinNodePortModel";
-import { JoinNodeFactory } from "./NodeModels/JoinNode/JoinNodeFactory";
-import { DecisionNodePortModel } from "./NodeModels/DecisionNode/DecisionNodePortModel";
-import { DecisionNodeFactory } from "./NodeModels/DecisionNode/DecisionNodeFactory";
+// @flow
+import * as SRD from '@projectstorm/react-diagrams';
+import {CircleEndNodeFactory} from './NodeModels/EndNode/CircleEndNodeFactory';
+import {CircleEndPortModel} from './NodeModels/EndNode/CircleEndPortModel';
+import {CircleStartNodeFactory} from './NodeModels/StartNode/CircleStartNodeFactory';
+import {CircleStartPortModel} from './NodeModels/StartNode/CircleStartPortModel';
+import {DecisionNodeFactory} from './NodeModels/DecisionNode/DecisionNodeFactory';
+import {DecisionNodePortModel} from './NodeModels/DecisionNode/DecisionNodePortModel';
+import {ForkNodeFactory} from './NodeModels/ForkNode/ForkNodeFactory';
+import {ForkNodePortModel} from './NodeModels/ForkNode/ForkNodePortModel';
+import {JoinNodeFactory} from './NodeModels/JoinNode/JoinNodeFactory';
+import {JoinNodePortModel} from './NodeModels/JoinNode/JoinNodePortModel';
+import {SimplePortFactory} from './NodeModels/SimplePortFactory';
 
-import { DefaultNodeFactory } from "@projectstorm/react-diagrams";
-import { DefaultLinkFactory } from "@projectstorm/react-diagrams";
-import { DefaultLabelFactory } from "@projectstorm/react-diagrams";
-import { DefaultPortModel } from "./NodeModels/DefaultNodeModel/DefaultPortModel";
+import {DefaultLabelFactory} from '@projectstorm/react-diagrams';
+import {DefaultLinkFactory} from '@projectstorm/react-diagrams';
+import {DefaultNodeFactory} from '@projectstorm/react-diagrams';
+import {DefaultPortModel} from './NodeModels/DefaultNodeModel/DefaultPortModel';
 
 export class Application {
   activeModel;
@@ -27,22 +28,22 @@ export class Application {
     this.diagramEngine.registerLabelFactory(new DefaultLabelFactory());
 
     this.diagramEngine.registerPortFactory(
-      new SimplePortFactory("default", config => new DefaultPortModel())
+      new SimplePortFactory('default', config => new DefaultPortModel()),
     );
     this.diagramEngine.registerPortFactory(
-      new SimplePortFactory("start", config => new CircleStartPortModel())
+      new SimplePortFactory('start', config => new CircleStartPortModel()),
     );
     this.diagramEngine.registerPortFactory(
-      new SimplePortFactory("end", config => new CircleEndPortModel())
+      new SimplePortFactory('end', config => new CircleEndPortModel()),
     );
     this.diagramEngine.registerPortFactory(
-      new SimplePortFactory("fork", config => new ForkNodePortModel())
+      new SimplePortFactory('fork', config => new ForkNodePortModel()),
     );
     this.diagramEngine.registerPortFactory(
-      new SimplePortFactory("join", config => new JoinNodePortModel())
+      new SimplePortFactory('join', config => new JoinNodePortModel()),
     );
     this.diagramEngine.registerPortFactory(
-      new SimplePortFactory("decision", config => new DecisionNodePortModel())
+      new SimplePortFactory('decision', config => new DecisionNodePortModel()),
     );
 
     this.diagramEngine.registerNodeFactory(new DefaultNodeFactory());

@@ -1,24 +1,24 @@
-import * as React from "react";
-import { PortWidget } from "@projectstorm/react-diagrams";
+// @flow
+import * as React from 'react';
+import {PortWidget} from '@projectstorm/react-diagrams';
 
 export class JoinNode extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      size: 80
+      size: 80,
     };
   }
 
   render() {
     return (
       <div
-        className={"join-node"}
+        className={'join-node'}
         style={{
-          position: "relative",
+          position: 'relative',
           width: this.state.size,
-          height: this.state.size
-        }}
-      >
+          height: this.state.size,
+        }}>
         <svg
           width={this.state.size}
           height={this.state.size}
@@ -30,38 +30,37 @@ export class JoinNode extends React.Component {
            <polygon fill="${this.props.node.color}" points="50 15,15 15,15 65,50 65,65 40"/>
                 <text x="26" y="45" fill="white" font-size="13px" >join</text>
           </g>
-        `
+        `,
           }}
         />
 
-        <div className="srd-node-glow"
-             style={{
-               position: "absolute",
-               zIndex: -1,
-               left: 35,
-               top: 40
-             }}
+        <div
+          className="srd-node-glow"
+          style={{
+            position: 'absolute',
+            zIndex: -1,
+            left: 35,
+            top: 40,
+          }}
         />
 
         <div
           style={{
-            position: "absolute",
+            position: 'absolute',
             zIndex: 10,
             left: 5,
-            top: this.state.size / 2 - 12
-          }}
-        >
+            top: this.state.size / 2 - 12,
+          }}>
           <PortWidget name="left" node={this.props.node} />
         </div>
 
         <div
           style={{
-            position: "absolute",
+            position: 'absolute',
             zIndex: 10,
             left: this.state.size - 28,
-            top: this.state.size / 2 - 12
-          }}
-        >
+            top: this.state.size / 2 - 12,
+          }}>
           <PortWidget name="right" node={this.props.node} />
         </div>
       </div>

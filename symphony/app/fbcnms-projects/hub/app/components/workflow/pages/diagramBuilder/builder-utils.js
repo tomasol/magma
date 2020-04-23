@@ -1,22 +1,25 @@
-import * as _ from "lodash";
+// @flow
+import * as _ from 'lodash';
 
 export const getWfInputsRegex = wf => {
-  let def = JSON.stringify(wf);
-  let inputsArray = [...new Set(def.match(/(?<=workflow\.input\.)([a-zA-Z0-9-_]+)/gim))];
-  let inputParameters = {};
+  const def = JSON.stringify(wf);
+  const inputsArray = [
+    ...new Set(def.match(/(?<=workflow\.input\.)([a-zA-Z0-9-_]+)/gim)),
+  ];
+  const inputParameters = {};
 
   inputsArray.forEach(el => {
-    inputParameters[el] = "${workflow.input." + el + "}";
+    inputParameters[el] = '${workflow.input.' + el + '}';
   });
 
   return inputParameters;
 };
 
 export const getTaskInputsRegex = t => {
-  let inputParameters = {};
+  const inputParameters = {};
   if (t.inputKeys) {
     t.inputKeys.forEach(el => {
-      inputParameters[el] = "${workflow.input." + el + "}";
+      inputParameters[el] = '${workflow.input.' + el + '}';
     });
   }
 
@@ -30,7 +33,7 @@ export const hash = () =>
     .substr(2, 4);
 
 export const encode = s => {
-  let out = [];
+  const out = [];
   for (let i = 0; i < s.length; i++) {
     out[i] = s.charCodeAt(i);
   }
@@ -38,21 +41,21 @@ export const encode = s => {
 };
 
 export const getLabelsFromString = str => {
-  let labelsString = str
-    .split("-")
+  const labelsString = str
+    .split('-')
     .pop()
-    .replace(/ /g, "");
-  return labelsString === "" ? [] : labelsString.split(",");
+    .replace(/ /g, '');
+  return labelsString === '' ? [] : labelsString.split(',');
 };
 
 export const getWfInputs = wf => {
-  let taskArray = wf.tasks;
-  let inputParams = [];
+  const taskArray = wf.tasks;
+  const inputParams = [];
   let inputParameters = {};
 
   taskArray.forEach(task => {
     if (task !== undefined) {
-      let nonSystemTask = fn(task, "inputParameters");
+      const nonSystemTask = fn(task, 'inputParameters');
 
       if (_.isArray(nonSystemTask)) {
         nonSystemTask.forEach(el => {
@@ -67,7 +70,7 @@ export const getWfInputs = wf => {
   });
 
   for (let i = 0; i < inputParams.length; i++) {
-    inputParameters = { ...inputParameters, ...inputParams[i] };
+    inputParameters = {...inputParameters, ...inputParams[i]};
   }
 
   return inputParameters;
@@ -79,21 +82,21 @@ export const fn = (obj, key) => {
 
   return _.flatten(
     _.map(obj, function(v) {
-      return typeof v == "object" ? fn(v, key) : [];
+      return typeof v == 'object' ? fn(v, key) : [];
     }),
-    true
+    true,
   );
 };
 
 export const getLinksArray = (type, node) => {
   let linksArray = [];
   _.values(node.ports).forEach(port => {
-    if (type === "in" || type === "inputPort") {
-      if (port.in || port.name === "left") {
+    if (type === 'in' || type === 'inputPort') {
+      if (port.in || port.name === 'left') {
         linksArray = _.values(port.links);
       }
-    } else if (type === "out") {
-      if (!port.in || port.name === "right") {
+    } else if (type === 'out') {
+      if (!port.in || port.name === 'right') {
         linksArray = _.values(port.links);
       }
     }
@@ -103,8 +106,8 @@ export const getLinksArray = (type, node) => {
 
 export const getStartNode = links => {
   for (let i = 0; i < _.values(links).length; i++) {
-    let link = _.values(links)[i];
-    if (link.sourcePort.type === "start") {
+    const link = _.values(links)[i];
+    if (link.sourcePort.type === 'start') {
       return link.sourcePort.parent;
     }
   }
@@ -112,64 +115,66 @@ export const getStartNode = links => {
 
 export const getEndNode = links => {
   for (let i = 0; i < _.values(links).length; i++) {
-    let link = _.values(links)[i];
-    if (link.targetPort.type === "end") {
+    const link = _.values(links)[i];
+    if (link.targetPort.type === 'end') {
       return link.targetPort.parent;
     }
   }
 };
 
-export const handleRawNode = (rawNode) => {
+export const handleRawNode = rawNode => {
   if (!rawNode.inputParameters.raw) {
-    throw new Error("Invalid raw task definition. No content");
+    throw new Error('Invalid raw task definition. No content');
   }
 
   try {
     return JSON.parse(rawNode.inputParameters.raw);
   } catch (e) {
     const content = rawNode.inputParameters.raw.substring(0, 100);
-    throw new Error(`Invalid raw task definition for: ${content}. Reason: ${e.message}`);
+    throw new Error(
+      `Invalid raw task definition for: ${content}. Reason: ${e.message}`,
+    );
   }
 };
 
 export const handleForkNode = forkNode => {
   let joinNode = null;
-  let forkTasks = [];
-  let joinOn = [];
-  let forkBranches = forkNode.ports.right.links;
+  const forkTasks = [];
+  const joinOn = [];
+  const forkBranches = forkNode.ports.right.links;
 
   //for each branch chain tasks
   _.values(forkBranches).forEach(link => {
-    let tmpBranch = [];
+    const tmpBranch = [];
     let parent = link.targetPort.getNode();
     let current = link.targetPort.getNode();
 
     //iterate trough tasks in each branch till join node
     while (current) {
-      let outputLinks = getLinksArray("out", current);
+      const outputLinks = getLinksArray('out', current);
       switch (current.type) {
-        case "join":
+        case 'join':
           joinOn.push(parent.extras.inputs.taskReferenceName);
           joinNode = current;
           current = null;
           break;
-        case "fork":
-          let innerForkNode = handleForkNode(current).forkNode;
-          let innerJoinNode = handleForkNode(current).joinNode;
-          let innerJoinOutLinks = getLinksArray("out", innerJoinNode);
+        case 'fork':
+          const innerForkNode = handleForkNode(current).forkNode;
+          const innerJoinNode = handleForkNode(current).joinNode;
+          const innerJoinOutLinks = getLinksArray('out', innerJoinNode);
           tmpBranch.push(
             innerForkNode.extras.inputs,
-            innerJoinNode.extras.inputs
+            innerJoinNode.extras.inputs,
           );
           parent = innerJoinNode;
           current = innerJoinOutLinks[0].targetPort.getNode();
           break;
-        case "decision":
-          let { decideNode, firstNeutralNode } = handleDecideNode(current);
+        case 'decision':
+          const {decideNode, firstNeutralNode} = handleDecideNode(current);
           tmpBranch.push(decideNode.extras.inputs);
           current = firstNeutralNode;
           break;
-        case "default":
+        case 'default':
           tmpBranch.push(current.extras.inputs);
           parent = current;
           if (outputLinks.length > 0) {
@@ -188,47 +193,47 @@ export const handleForkNode = forkNode => {
   forkNode.extras.inputs.forkTasks = forkTasks;
   joinNode.extras.inputs.joinOn = joinOn;
 
-  return { forkNode, joinNode };
+  return {forkNode, joinNode};
 };
 
 export const handleDecideNode = decideNode => {
-  let failBranchLink = _.values(decideNode.ports.failPort.links)[0];
-  let neutralBranchLink = _.values(decideNode.ports.neutralPort.links)[0];
+  const failBranchLink = _.values(decideNode.ports.failPort.links)[0];
+  const neutralBranchLink = _.values(decideNode.ports.neutralPort.links)[0];
   let firstNeutralNode = null;
 
   [failBranchLink, neutralBranchLink].forEach((branch, i) => {
-    let branchArray = [];
+    const branchArray = [];
 
     if (branch) {
       let currentNode = branch.targetPort.getNode();
-      let inputLinks = getLinksArray("in", currentNode);
-      let outputLink = getLinksArray("out", currentNode)[0];
+      let inputLinks = getLinksArray('in', currentNode);
+      let outputLink = getLinksArray('out', currentNode)[0];
 
       while (
         (inputLinks.length === 1 ||
-          currentNode.type === "join" ||
-          currentNode.type === "fork") &&
+          currentNode.type === 'join' ||
+          currentNode.type === 'fork') &&
         outputLink
       ) {
         switch (currentNode.type) {
-          case "fork":
-            let { forkNode, joinNode } = handleForkNode(currentNode);
+          case 'fork':
+            const {forkNode, joinNode} = handleForkNode(currentNode);
             branchArray.push(forkNode.extras.inputs, joinNode.extras.inputs);
             currentNode = getLinksArray(
-              "out",
-              joinNode
+              'out',
+              joinNode,
             )[0].targetPort.getNode();
             break;
-          case "decision":
-            let innerDecideNode = handleDecideNode(currentNode).decideNode;
-            let innerFirstNeutralNode = handleDecideNode(currentNode)
+          case 'decision':
+            const innerDecideNode = handleDecideNode(currentNode).decideNode;
+            const innerFirstNeutralNode = handleDecideNode(currentNode)
               .firstNeutralNode;
             branchArray.push(innerDecideNode.extras.inputs);
             if (innerFirstNeutralNode && innerFirstNeutralNode.extras.inputs) {
               branchArray.push(innerFirstNeutralNode.extras.inputs);
               currentNode = getLinksArray(
-                "out",
-                innerFirstNeutralNode
+                'out',
+                innerFirstNeutralNode,
               )[0].targetPort.getNode();
             } else {
               currentNode = innerFirstNeutralNode;
@@ -239,14 +244,14 @@ export const handleDecideNode = decideNode => {
             currentNode = outputLink.targetPort.getNode();
             break;
         }
-        inputLinks = getLinksArray("in", currentNode);
-        outputLink = getLinksArray("out", currentNode)[0];
+        inputLinks = getLinksArray('in', currentNode);
+        outputLink = getLinksArray('out', currentNode)[0];
       }
 
       firstNeutralNode = currentNode;
     }
 
-    let casesValues = Object.keys(decideNode.extras.inputs.decisionCases);
+    const casesValues = Object.keys(decideNode.extras.inputs.decisionCases);
 
     switch (i) {
       case 0:
@@ -260,67 +265,67 @@ export const handleDecideNode = decideNode => {
     }
   });
 
-  return { decideNode, firstNeutralNode };
+  return {decideNode, firstNeutralNode};
 };
 
 export const linkNodes = (node1, node2, whichPort) => {
   if (
-    node1.type === "fork" ||
-    node1.type === "join" ||
-    node1.type === "start"
+    node1.type === 'fork' ||
+    node1.type === 'join' ||
+    node1.type === 'start'
   ) {
-    const fork_join_start_outPort = node1.getPort("right");
+    const fork_join_start_outPort = node1.getPort('right');
 
-    if (node2.type === "default") {
+    if (node2.type === 'default') {
       return fork_join_start_outPort.link(node2.getInPorts()[0]);
     }
-    if (node2.type === "fork") {
-      return fork_join_start_outPort.link(node2.getPort("left"));
+    if (node2.type === 'fork') {
+      return fork_join_start_outPort.link(node2.getPort('left'));
     }
-    if (node2.type === "join") {
-      return fork_join_start_outPort.link(node2.getPort("left"));
+    if (node2.type === 'join') {
+      return fork_join_start_outPort.link(node2.getPort('left'));
     }
-    if (node2.type === "decision") {
-      return fork_join_start_outPort.link(node2.getPort("inputPort"));
+    if (node2.type === 'decision') {
+      return fork_join_start_outPort.link(node2.getPort('inputPort'));
     }
-    if (node2.type === "end") {
-      return fork_join_start_outPort.link(node2.getPort("left"));
+    if (node2.type === 'end') {
+      return fork_join_start_outPort.link(node2.getPort('left'));
     }
-  } else if (node1.type === "default") {
+  } else if (node1.type === 'default') {
     const defaultOutPort = node1.getOutPorts()[0];
 
-    if (node2.type === "default") {
+    if (node2.type === 'default') {
       return defaultOutPort.link(node2.getInPorts()[0]);
     }
-    if (node2.type === "fork") {
-      return defaultOutPort.link(node2.getPort("left"));
+    if (node2.type === 'fork') {
+      return defaultOutPort.link(node2.getPort('left'));
     }
-    if (node2.type === "join") {
-      return defaultOutPort.link(node2.getPort("left"));
+    if (node2.type === 'join') {
+      return defaultOutPort.link(node2.getPort('left'));
     }
-    if (node2.type === "decision") {
-      return defaultOutPort.link(node2.getPort("inputPort"));
+    if (node2.type === 'decision') {
+      return defaultOutPort.link(node2.getPort('inputPort'));
     }
-    if (node2.type === "end") {
-      return defaultOutPort.link(node2.getPort("left"));
+    if (node2.type === 'end') {
+      return defaultOutPort.link(node2.getPort('left'));
     }
-  } else if (node1.type === "decision") {
+  } else if (node1.type === 'decision') {
     const currentPort = node1.getPort(whichPort);
 
-    if (node2.type === "default") {
+    if (node2.type === 'default') {
       return currentPort.link(node2.getInPorts()[0]);
     }
-    if (node2.type === "fork") {
-      return currentPort.link(node2.getPort("left"));
+    if (node2.type === 'fork') {
+      return currentPort.link(node2.getPort('left'));
     }
-    if (node2.type === "join") {
-      return currentPort.link(node2.getPort("left"));
+    if (node2.type === 'join') {
+      return currentPort.link(node2.getPort('left'));
     }
-    if (node2.type === "decision") {
-      return currentPort.link(node2.getPort("inputPort"));
+    if (node2.type === 'decision') {
+      return currentPort.link(node2.getPort('inputPort'));
     }
-    if (node2.type === "end") {
-      return currentPort.link(node2.getPort("left"));
+    if (node2.type === 'end') {
+      return currentPort.link(node2.getPort('left'));
     }
   }
 };

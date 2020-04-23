@@ -1,26 +1,25 @@
-import React from "react";
-import { Col, Container, Modal, Row, Tab, Tabs } from "react-bootstrap";
-import Highlight from "react-highlight.js";
+// @flow
+import Highlight from 'react-highlight.js';
+import React from 'react';
+import {Col, Container, Modal, Row, Tab, Tabs} from 'react-bootstrap';
 const TaskModal = props => {
-  let task = props.task;
-  let show = props.show;
+  const task = props.task;
+  const show = props.show;
   return (
     <Modal
-      style={{ marginTop: "-20px" }}
+      style={{marginTop: '-20px'}}
       size="lg"
       scrollable
       show={show}
-      onHide={props.handle}
-    >
+      onHide={props.handle}>
       <Modal.Header closeButton>
         <Modal.Title>
           {task.taskType} ({task.status})
           <div
             style={{
-              color: "#ff0000",
-              display: task.status === "FAILED" ? "" : "none"
-            }}
-          >
+              color: '#ff0000',
+              display: task.status === 'FAILED' ? '' : 'none',
+            }}>
             {task.reasonForIncompletion}
           </div>
         </Modal.Title>
@@ -29,7 +28,7 @@ const TaskModal = props => {
         <Tabs defaultActiveKey={1}>
           <Tab eventKey={1} title="Summary">
             <Container>
-              <Row style={{ marginTop: "20px", marginBottom: "20px" }}>
+              <Row style={{marginTop: '20px', marginBottom: '20px'}}>
                 <Col sm={8}>
                   <b>Task Ref. Name:&nbsp;&nbsp;</b>
                   {task.referenceTaskName}
@@ -38,7 +37,7 @@ const TaskModal = props => {
                   <b>Callback After:&nbsp;&nbsp;</b>
                   {task.callbackAfterSeconds
                     ? task.callbackAfterSeconds
-                    : 0}{" "}
+                    : 0}{' '}
                   (second)
                   <br />
                   <b>Poll Count:&nbsp;&nbsp;</b>
@@ -46,7 +45,7 @@ const TaskModal = props => {
                 </Col>
               </Row>
               <hr />
-              <Row style={{ marginBottom: "15px" }}>
+              <Row style={{marginBottom: '15px'}}>
                 <b>
                   Input
                   <i
@@ -58,14 +57,14 @@ const TaskModal = props => {
               </Row>
               <Row>
                 <code>
-                  <pre style={{ width: "770px" }} id="t_input">
+                  <pre style={{width: '770px'}} id="t_input">
                     <Highlight language="json">
                       {JSON.stringify(task.inputData, null, 3)}
                     </Highlight>
                   </pre>
                 </code>
               </Row>
-              <Row style={{ marginBottom: "15px" }}>
+              <Row style={{marginBottom: '15px'}}>
                 <b>
                   Output
                   <i
@@ -77,7 +76,7 @@ const TaskModal = props => {
               </Row>
               <Row>
                 <code>
-                  <pre style={{ width: "770px" }} id="t_output">
+                  <pre style={{width: '770px'}} id="t_output">
                     <Highlight language="json">
                       {JSON.stringify(task.outputData, null, 3)}
                     </Highlight>
@@ -100,12 +99,11 @@ const TaskModal = props => {
             <code>
               <pre
                 style={{
-                  maxHeight: "500px",
-                  marginTop: "20px",
-                  backgroundColor: "#eaeef3"
+                  maxHeight: '500px',
+                  marginTop: '20px',
+                  backgroundColor: '#eaeef3',
                 }}
-                id="t_json"
-              >
+                id="t_json">
                 {JSON.stringify(task, null, 3)}
               </pre>
             </code>
@@ -121,10 +119,7 @@ const TaskModal = props => {
               />
             </b>
             <code>
-              <pre
-                style={{ maxHeight: "500px", marginTop: "20px" }}
-                id="t_logs"
-              >
+              <pre style={{maxHeight: '500px', marginTop: '20px'}} id="t_logs">
                 <Highlight language="json">
                   {JSON.stringify(task.logs, null, 3)}
                 </Highlight>

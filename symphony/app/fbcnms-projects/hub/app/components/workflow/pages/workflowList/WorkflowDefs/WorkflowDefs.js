@@ -1,4 +1,12 @@
-import React, { Component } from "react";
+// @flow
+import 'react-bootstrap-typeahead/css/Typeahead.css';
+import DefinitionModal from './DefinitonModal/DefinitionModal';
+import DiagramModal from './DiagramModal/DiagramModal';
+import InputModal from './InputModal/InputModal';
+import PageCount from '../../../common/PageCount';
+import PageSelect from '../../../common/PageSelect';
+import React, {Component} from 'react';
+import WfLabels from '../../../common/WfLabels';
 import {
   Accordion,
   Button,
@@ -7,25 +15,18 @@ import {
   Container,
   Form,
   Row,
-  Table
-} from "react-bootstrap";
-import { Typeahead } from "react-bootstrap-typeahead";
-import "react-bootstrap-typeahead/css/Typeahead.css";
-import { withRouter } from "react-router-dom";
-import PageCount from "../../../common/PageCount";
-import PageSelect from "../../../common/PageSelect";
-import WfLabels from "../../../common/WfLabels";
-import DefinitionModal from "./DefinitonModal/DefinitionModal";
-import DiagramModal from "./DiagramModal/DiagramModal";
-import InputModal from "./InputModal/InputModal";
-import { HttpClient as http } from "../../../common/HttpClient";
-import { conductorApiUrlPrefix, frontendUrlPrefix } from "../../../constants";
+  Table,
+} from 'react-bootstrap';
+import {Typeahead} from 'react-bootstrap-typeahead';
+import {conductorApiUrlPrefix, frontendUrlPrefix} from '../../../constants';
+import {HttpClient as http} from '../../../common/HttpClient';
+import {withRouter} from 'react-router-dom';
 
 class WorkflowDefs extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      keywords: "",
+      keywords: '',
       labels: [],
       data: [],
       table: [],
@@ -36,7 +37,7 @@ class WorkflowDefs extends Component {
       defaultPages: 20,
       pagesCount: 1,
       viewedPage: 1,
-      allLabels: []
+      allLabels: [],
     };
     this.table = React.createRef();
     this.onEditSearch = this.onEditSearch.bind(this);
@@ -47,19 +48,19 @@ class WorkflowDefs extends Component {
   }
 
   componentDidMount() {
-    http.get(conductorApiUrlPrefix + "/metadata/workflow").then(res => {
+    http.get(conductorApiUrlPrefix + '/metadata/workflow').then(res => {
       if (res.result) {
         let size = ~~(res.result.length / this.state.defaultPages);
-        let dataset =
+        const dataset =
           res.result.sort((a, b) =>
-            a.name > b.name ? 1 : b.name > a.name ? -1 : 0
+            a.name > b.name ? 1 : b.name > a.name ? -1 : 0,
           ) || [];
-        let allLabels = this.getLabels(dataset);
+        const allLabels = this.getLabels(dataset);
         this.setState({
           data: dataset,
           pagesCount:
             res.result.length % this.state.defaultPages ? ++size : size,
-          allLabels: allLabels
+          allLabels: allLabels,
         });
       }
     });
@@ -67,21 +68,21 @@ class WorkflowDefs extends Component {
 
   getLabels(dataset) {
     let labelsArr = [];
-    dataset.map(({ description }) => {
+    dataset.map(({description}) => {
       let str =
         description && description.match(/-(,|) [A-Z].*/g)
-          ? description.substring(description.indexOf("-") + 1)
-          : "";
-      if (str !== "") {
-        str = str.replace(/\s/g, "");
-        labelsArr = labelsArr.concat(str.split(","));
+          ? description.substring(description.indexOf('-') + 1)
+          : '';
+      if (str !== '') {
+        str = str.replace(/\s/g, '');
+        labelsArr = labelsArr.concat(str.split(','));
       }
       return null;
     });
-    let allLabels = [...new Set([].concat(...labelsArr))];
+    const allLabels = [...new Set([].concat(...labelsArr))];
     return allLabels
       .filter(e => {
-        return e !== "";
+        return e !== '';
       })
       .sort((a, b) => (a > b ? 1 : b > a ? -1 : 0));
   }
@@ -91,11 +92,11 @@ class WorkflowDefs extends Component {
       {
         keywords: event.target.value,
         activeWf: null,
-        activeRow: null
+        activeRow: null,
       },
       () => {
         this.search();
-      }
+      },
     );
   }
 
@@ -104,11 +105,11 @@ class WorkflowDefs extends Component {
       {
         labels: event,
         activeWf: null,
-        activeRow: null
+        activeRow: null,
       },
       () => {
         this.searchLabel();
-      }
+      },
     );
   }
 
@@ -116,14 +117,14 @@ class WorkflowDefs extends Component {
     let toBeRendered = [];
     if (this.state.labels.length) {
       const rows =
-        this.state.keywords !== "" ? this.state.table : this.state.data;
+        this.state.keywords !== '' ? this.state.table : this.state.data;
       for (let i = 0; i < rows.length; i++) {
-        if (rows[i]["description"]) {
-          let tags = rows[i]["description"]
-            .split("-")
+        if (rows[i]['description']) {
+          const tags = rows[i]['description']
+            .split('-')
             .pop()
-            .replace(/\s/g, "")
-            .split(",");
+            .replace(/\s/g, '')
+            .split(',');
           if (this.state.labels.every(elem => tags.indexOf(elem) > -1)) {
             toBeRendered.push(rows[i]);
           }
@@ -136,40 +137,40 @@ class WorkflowDefs extends Component {
     this.setState({
       table: toBeRendered,
       pagesCount: toBeRendered.length % this.state.defaultPages ? ++size : size,
-      viewedPage: 1
+      viewedPage: 1,
     });
     return null;
   }
 
   searchFavourites() {
-    let labels = this.state.labels;
-    let index = labels.findIndex(label => label === "FAVOURITE");
-    index > -1 ? labels.splice(index, 1) : labels.push("FAVOURITE");
+    const labels = this.state.labels;
+    const index = labels.findIndex(label => label === 'FAVOURITE');
+    index > -1 ? labels.splice(index, 1) : labels.push('FAVOURITE');
     this.setState(
       {
         labels: labels,
         activeWf: null,
-        activeRow: null
+        activeRow: null,
       },
       () => {
         this.searchLabel();
-      }
+      },
     );
   }
 
   search() {
     let toBeRendered = [];
 
-    let query = this.state.keywords.toUpperCase();
-    if (query !== "") {
+    const query = this.state.keywords.toUpperCase();
+    if (query !== '') {
       let rows =
         this.state.table.length > 0 ? this.state.table : this.state.data;
-      let queryWords = query.split(" ");
+      const queryWords = query.split(' ');
       for (let i = 0; i < queryWords.length; i++) {
         for (let j = 0; j < rows.length; j++)
           if (
-            rows[j]["name"] &&
-            rows[j]["name"]
+            rows[j]['name'] &&
+            rows[j]['name']
               .toString()
               .toUpperCase()
               .indexOf(queryWords[i]) !== -1
@@ -187,50 +188,50 @@ class WorkflowDefs extends Component {
     this.setState({
       table: toBeRendered,
       pagesCount: toBeRendered.length % this.state.defaultPages ? ++size : size,
-      viewedPage: 1
+      viewedPage: 1,
     });
   }
 
   changeActiveRow(i) {
-    let dataset =
-      this.state.keywords === "" && this.state.labels.length < 1
+    const dataset =
+      this.state.keywords === '' && this.state.labels.length < 1
         ? this.state.data
         : this.state.table;
     this.setState({
       activeRow: this.state.activeRow === i ? null : i,
-      activeWf: dataset[i]["name"] + " / " + dataset[i]["version"]
+      activeWf: dataset[i]['name'] + ' / ' + dataset[i]['version'],
     });
   }
 
   updateFavourite(data) {
     if (data.description) {
-      if (!data.description.match(/-(| )[A-Z]*/g)) data.description += " -";
-      if (data.description.includes("FAVOURITE")) {
-        let labelIndex = data.description.indexOf("FAVOURITE");
-        data.description = data.description.replace("FAVOURITE", "");
-        if (data.description[labelIndex - 1] === ",")
+      if (!data.description.match(/-(| )[A-Z]*/g)) data.description += ' -';
+      if (data.description.includes('FAVOURITE')) {
+        const labelIndex = data.description.indexOf('FAVOURITE');
+        data.description = data.description.replace('FAVOURITE', '');
+        if (data.description[labelIndex - 1] === ',')
           data.description =
             data.description.substring(0, labelIndex - 1) +
             data.description.substring(labelIndex, data.description.length);
         if (data.description.match(/^(| )-(| )$/g)) delete data.description;
       } else {
         data.description.match(/.*[A-Za-z0-9]$/g)
-          ? (data.description += ",FAVOURITE")
-          : (data.description += "FAVOURITE");
+          ? (data.description += ',FAVOURITE')
+          : (data.description += 'FAVOURITE');
       }
     } else {
-      data.description = "- FAVOURITE";
+      data.description = '- FAVOURITE';
     }
-    http.put(conductorApiUrlPrefix + "/metadata/", [data]).then(() => {
-      http.get(conductorApiUrlPrefix + "/metadata/workflow").then(res => {
-        let dataset =
+    http.put(conductorApiUrlPrefix + '/metadata/', [data]).then(() => {
+      http.get(conductorApiUrlPrefix + '/metadata/workflow').then(res => {
+        const dataset =
           res.result.sort((a, b) =>
-            a.name > b.name ? 1 : b.name > a.name ? -1 : 0
+            a.name > b.name ? 1 : b.name > a.name ? -1 : 0,
           ) || [];
-        let allLabels = this.getLabels(dataset);
+        const allLabels = this.getLabels(dataset);
         this.setState({
           data: dataset,
-          allLabels: allLabels
+          allLabels: allLabels,
         });
       });
     });
@@ -240,27 +241,27 @@ class WorkflowDefs extends Component {
     this.setState({
       defaultPages: defaultPages,
       pagesCount: pagesCount,
-      viewedPage: 1
+      viewedPage: 1,
     });
   }
 
   setViewPage(page) {
     this.setState({
-      viewedPage: page
+      viewedPage: page,
     });
   }
 
-  createLabels = ({ name, description }) => {
-    let labels = [];
-    let str =
+  createLabels = ({name, description}) => {
+    const labels = [];
+    const str =
       description && description.match(/-(,|) [A-Z].*/g)
-        ? description.substring(description.indexOf("-") + 1)
-        : "";
-    let wfLabels = str.replace(/\s/g, "").split(",");
+        ? description.substring(description.indexOf('-') + 1)
+        : '';
+    const wfLabels = str.replace(/\s/g, '').split(',');
     wfLabels.forEach((label, i) => {
-      if (label !== "") {
-        let index = this.state.allLabels.findIndex(lab => lab === label);
-        let newLabels =
+      if (label !== '') {
+        const index = this.state.allLabels.findIndex(lab => lab === label);
+        const newLabels =
           this.state.labels.findIndex(lbl => lbl === label) < 0
             ? [...this.state.labels, label]
             : this.state.labels;
@@ -270,7 +271,7 @@ class WorkflowDefs extends Component {
             label={label}
             index={index}
             search={this.onLabelSearch.bind(this, newLabels)}
-          />
+          />,
         );
       }
     });
@@ -278,35 +279,40 @@ class WorkflowDefs extends Component {
   };
 
   editWorkflow() {
-    const name = this.state.activeWf.split(" / ")[0];
-    const version = this.state.activeWf.split(" / ")[1];
+    const name = this.state.activeWf.split(' / ')[0];
+    const version = this.state.activeWf.split(' / ')[1];
     this.props.history.push(`${frontendUrlPrefix}/builder/${name}/${version}`);
   }
 
   deleteWorkflow() {
-    const name = this.state.activeWf.split(" / ")[0];
-    const version = this.state.activeWf.split(" / ")[1];
+    const name = this.state.activeWf.split(' / ')[0];
+    const version = this.state.activeWf.split(' / ')[1];
     http
-      .delete(conductorApiUrlPrefix + "/metadata/workflow/" + name + "/" + version)
+      .delete(
+        conductorApiUrlPrefix + '/metadata/workflow/' + name + '/' + version,
+      )
       .then(() => {
         this.componentDidMount();
-        let table = this.state.table;
+        const table = this.state.table;
         if (table.length) {
-          table.splice(table.findIndex(wf => wf.name === name), 1);
+          table.splice(
+            table.findIndex(wf => wf.name === name),
+            1,
+          );
         }
         this.setState({
           activeRow: null,
-          table: table
+          table: table,
         });
       });
   }
 
   repeat() {
-    let output = [];
-    let defaultPages = this.state.defaultPages;
-    let viewedPage = this.state.viewedPage;
-    let dataset =
-      this.state.keywords === "" && this.state.labels.length < 1
+    const output = [];
+    const defaultPages = this.state.defaultPages;
+    const viewedPage = this.state.viewedPage;
+    const dataset =
+      this.state.keywords === '' && this.state.labels.length < 1
         ? this.state.data
         : this.state.table;
     for (let i = 0; i < dataset.length; i++) {
@@ -322,71 +328,63 @@ class WorkflowDefs extends Component {
               className="clickable wfDef"
               as={Card.Header}
               variant="link"
-              eventKey={i}
-            >
-              <b>{dataset[i]["name"]}</b>
+              eventKey={i}>
+              <b>{dataset[i]['name']}</b>
               <br />
               <div className="description">
-                {"version " + dataset[i]["version"] + ": "}
-                {dataset[i]["description"]
-                  ? dataset[i]["description"].split("-")[0]
+                {'version ' + dataset[i]['version'] + ': '}
+                {dataset[i]['description']
+                  ? dataset[i]['description'].split('-')[0]
                   : null}
                 {this.createLabels(dataset[i])}
               </div>
             </Accordion.Toggle>
             <Accordion.Collapse eventKey={i}>
-              <Card.Body style={{ padding: "0px" }}>
+              <Card.Body style={{padding: '0px'}}>
                 <div
                   style={{
                     background:
-                      "linear-gradient(-120deg, rgb(0, 147, 255) 0%, rgb(0, 118, 203) 100%)",
-                    padding: "15px",
-                    marginBottom: "10px"
-                  }}
-                >
+                      'linear-gradient(-120deg, rgb(0, 147, 255) 0%, rgb(0, 118, 203) 100%)',
+                    padding: '15px',
+                    marginBottom: '10px',
+                  }}>
                   <Button
                     variant="outline-light noshadow"
-                    onClick={this.showInputModal.bind(this)}
-                  >
+                    onClick={this.showInputModal.bind(this)}>
                     Execute
                   </Button>
                   <Button
                     variant="outline-light noshadow"
-                    onClick={this.showDefinitionModal.bind(this)}
-                  >
+                    onClick={this.showDefinitionModal.bind(this)}>
                     Definition
                   </Button>
                   <Button
                     variant="outline-light noshadow"
-                    onClick={this.editWorkflow.bind(this)}
-                  >
+                    onClick={this.editWorkflow.bind(this)}>
                     Edit
                   </Button>
                   <Button
                     variant="outline-light noshadow"
-                    onClick={this.showDiagramModal.bind(this)}
-                  >
+                    onClick={this.showDiagramModal.bind(this)}>
                     Diagram
                   </Button>
                   <Button
                     variant="outline-light noshadow"
-                    onClick={this.updateFavourite.bind(this, dataset[i])}
-                  >
+                    onClick={this.updateFavourite.bind(this, dataset[i])}>
                     <i
                       className={
-                        dataset[i]["description"] &&
-                        dataset[i]["description"].includes("FAVOURITE")
-                          ? "fa fa-star"
-                          : "far fa-star"
+                        dataset[i]['description'] &&
+                        dataset[i]['description'].includes('FAVOURITE')
+                          ? 'fa fa-star'
+                          : 'far fa-star'
                       }
-                      style={{ cursor: "pointer" }}
+                      style={{cursor: 'pointer'}}
                     />
                   </Button>
                   <Button
                     variant="outline-danger noshadow"
-                    style={{ float: "right" }}
-                    onClick={this.deleteWorkflow.bind(this)}
-                  >
+                    style={{float: 'right'}}
+                    onClick={this.deleteWorkflow.bind(this)}>
                     <i className="fas fa-trash-alt" />
                   </Button>
                 </div>
@@ -395,15 +393,15 @@ class WorkflowDefs extends Component {
                   <br />
                   <p>
                     {JSON.stringify(
-                      dataset[i]["tasks"].map(task => {
+                      dataset[i]['tasks'].map(task => {
                         return task.name;
-                      })
+                      }),
                     )}
                   </p>
                 </div>
               </Card.Body>
             </Accordion.Collapse>
-          </div>
+          </div>,
         );
       }
     }
@@ -412,24 +410,24 @@ class WorkflowDefs extends Component {
 
   showDefinitionModal() {
     this.setState({
-      defModal: !this.state.defModal
+      defModal: !this.state.defModal,
     });
   }
 
   showInputModal() {
     this.setState({
-      inputModal: !this.state.inputModal
+      inputModal: !this.state.inputModal,
     });
   }
 
   showDiagramModal() {
     this.setState({
-      diagramModal: !this.state.diagramModal
+      diagramModal: !this.state.diagramModal,
     });
   }
 
   render() {
-    let definitionModal = this.state.defModal ? (
+    const definitionModal = this.state.defModal ? (
       <DefinitionModal
         wf={this.state.activeWf}
         modalHandler={this.showDefinitionModal.bind(this)}
@@ -437,7 +435,7 @@ class WorkflowDefs extends Component {
       />
     ) : null;
 
-    let inputModal = this.state.inputModal ? (
+    const inputModal = this.state.inputModal ? (
       <InputModal
         wf={this.state.activeWf}
         modalHandler={this.showInputModal.bind(this)}
@@ -445,7 +443,7 @@ class WorkflowDefs extends Component {
       />
     ) : null;
 
-    let diagramModal = this.state.diagramModal ? (
+    const diagramModal = this.state.diagramModal ? (
       <DiagramModal
         wf={this.state.activeWf}
         modalHandler={this.showDiagramModal.bind(this)}
@@ -460,19 +458,18 @@ class WorkflowDefs extends Component {
         {diagramModal}
         <Row>
           <Button
-            style={{ marginBottom: "15px", marginLeft: "15px" }}
+            style={{marginBottom: '15px', marginLeft: '15px'}}
             onClick={this.searchFavourites.bind(this)}
-            title="Favourites"
-          >
+            title="Favourites">
             <i
               className={
                 this.state.labels.length
-                  ? this.state.labels.includes("FAVOURITE")
-                    ? "fa fa-star"
-                    : "far fa-star"
-                  : "far fa-star"
+                  ? this.state.labels.includes('FAVOURITE')
+                    ? 'fa fa-star'
+                    : 'far fa-star'
+                  : 'far fa-star'
               }
-              style={{ cursor: "pointer" }}
+              style={{cursor: 'pointer'}}
             />
           </Button>
           <Col>
@@ -497,7 +494,7 @@ class WorkflowDefs extends Component {
             </Form.Group>
           </Col>
         </Row>
-        <div className="scrollWrapper" style={{ maxHeight: "650px" }}>
+        <div className="scrollWrapper" style={{maxHeight: '650px'}}>
           <Table ref={this.table}>
             <thead>
               <tr>
@@ -511,12 +508,12 @@ class WorkflowDefs extends Component {
             </tbody>
           </Table>
         </div>
-        <Container style={{ marginTop: "5px" }}>
+        <Container style={{marginTop: '5px'}}>
           <Row>
             <Col sm={2}>
               <PageCount
                 dataSize={
-                  this.state.keywords === "" || this.state.table.length > 0
+                  this.state.keywords === '' || this.state.table.length > 0
                     ? this.state.table.length
                     : this.state.data.length
                 }

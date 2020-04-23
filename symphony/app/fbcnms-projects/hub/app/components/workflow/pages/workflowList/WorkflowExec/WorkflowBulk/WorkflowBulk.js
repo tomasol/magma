@@ -1,5 +1,7 @@
-import _ from "lodash";
-import React, { Component } from "react";
+// @flow
+import * as bulkActions from '../../../../store/actions/bulk';
+import React, {Component} from 'react';
+import _ from 'lodash';
 import {
   Accordion,
   Button,
@@ -7,34 +9,33 @@ import {
   Col,
   ProgressBar,
   Row,
-  Spinner
-} from "react-bootstrap";
-import { connect } from "react-redux";
-import * as bulkActions from "../../../../store/actions/bulk";
+  Spinner,
+} from 'react-bootstrap';
+import {connect} from 'react-redux';
 
 class WorkflowBulk extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      showBulk: null
+      showBulk: null,
     };
   }
 
   performOperation(e) {
-    const { performBulkOperation, selectedWfs } = this.props;
+    const {performBulkOperation, selectedWfs} = this.props;
 
     if (_.isEmpty(selectedWfs)) {
       return;
     }
 
-    let operation = e.target.value;
+    const operation = e.target.value;
     performBulkOperation(operation, selectedWfs, this.props.pageCount);
     this.props.bulkOperation();
     this.props.selectAllWfs();
   }
 
   render() {
-    let { selectedWfs, bulkReducer, wfsCount } = this.props;
+    const {selectedWfs, bulkReducer, wfsCount} = this.props;
 
     const progressInstance = (
       <ProgressBar
@@ -45,30 +46,26 @@ class WorkflowBulk extends Component {
     );
 
     return (
-      <Accordion
-        activeKey={this.state.showBulk}
-        style={{ marginBottom: "20px" }}
-      >
+      <Accordion activeKey={this.state.showBulk} style={{marginBottom: '20px'}}>
         <Card>
           <Accordion.Toggle
             onClick={() =>
               this.setState({
-                showBulk: this.state.showBulk === "0" ? null : "0"
+                showBulk: this.state.showBulk === '0' ? null : '0',
               })
             }
             className="clickable"
             as={Card.Header}
-            eventKey="0"
-          >
+            eventKey="0">
             Bulk Processing (click to expand)&nbsp;&nbsp;
             <i className="fas fa-ellipsis-h" />
             &nbsp;&nbsp; Displaying <b>{wfsCount}</b> workflows
             <i
-              style={{ float: "right", marginTop: "5px" }}
+              style={{float: 'right', marginTop: '5px'}}
               className={
                 this.state.showBulk
-                  ? "fas fa-chevron-up"
-                  : "fas fa-chevron-down"
+                  ? 'fas fa-chevron-up'
+                  : 'fas fa-chevron-down'
               }
             />
           </Accordion.Toggle>
@@ -80,17 +77,17 @@ class WorkflowBulk extends Component {
                     Workflows selected: {selectedWfs.length}
                     <Spinner
                       variant="primary"
-                      style={{ float: "right", marginRight: "40px" }}
-                      animation={bulkReducer.isFetching ? "border" : false}
+                      style={{float: 'right', marginRight: '40px'}}
+                      animation={bulkReducer.isFetching ? 'border' : false}
                     />
                     {!bulkReducer.isFetching ? (
                       bulkReducer.successfulResults.length > 0 &&
                       Object.entries(bulkReducer.errorResults).length === 0 ? (
                         <i
                           style={{
-                            float: "right",
-                            marginRight: "40px",
-                            color: "green"
+                            float: 'right',
+                            marginRight: '40px',
+                            color: 'green',
                           }}
                           className="fas fa-check-circle fa-2x"
                         />
@@ -98,9 +95,9 @@ class WorkflowBulk extends Component {
                         0 ? (
                         <i
                           style={{
-                            float: "right",
-                            marginRight: "40px",
-                            color: "#dc3545"
+                            float: 'right',
+                            marginRight: '40px',
+                            color: '#dc3545',
                           }}
                           className="fas fa-times-circle fa-2x"
                         />
@@ -112,9 +109,8 @@ class WorkflowBulk extends Component {
                       size="sm"
                       onClick={this.props.selectAllWfs}
                       variant="outline-secondary"
-                      style={{ marginRight: "10px" }}
-                    >
-                      {selectedWfs.length > 0 ? "Uncheck all" : "Check all"}
+                      style={{marginRight: '10px'}}>
+                      {selectedWfs.length > 0 ? 'Uncheck all' : 'Check all'}
                     </Button>
                     Select workflows from table below
                   </p>
@@ -123,48 +119,42 @@ class WorkflowBulk extends Component {
                   <Button
                     variant="outline-primary"
                     value="pause"
-                    onClick={e => this.performOperation(e)}
-                  >
+                    onClick={e => this.performOperation(e)}>
                     Pause
                   </Button>
                   <Button
                     variant="outline-primary"
                     value="resume"
                     onClick={e => this.performOperation(e)}
-                    style={{ marginLeft: "5px" }}
-                  >
+                    style={{marginLeft: '5px'}}>
                     Resume
                   </Button>
                   <Button
                     variant="outline-primary"
                     value="retry"
                     onClick={e => this.performOperation(e)}
-                    style={{ marginLeft: "5px" }}
-                  >
+                    style={{marginLeft: '5px'}}>
                     Retry
                   </Button>
                   <Button
                     variant="outline-primary"
                     value="restart"
                     onClick={e => this.performOperation(e)}
-                    style={{ marginLeft: "5px" }}
-                  >
+                    style={{marginLeft: '5px'}}>
                     Restart
                   </Button>
                   <Button
                     variant="outline-danger"
                     value="terminate"
                     onClick={e => this.performOperation(e)}
-                    style={{ marginLeft: "5px" }}
-                  >
+                    style={{marginLeft: '5px'}}>
                     Terminate
                   </Button>
                   <Button
                     variant="outline-secondary"
                     value="delete"
                     onClick={e => this.performOperation(e)}
-                    style={{ marginLeft: "5px" }}
-                  >
+                    style={{marginLeft: '5px'}}>
                     Delete
                   </Button>
                 </Col>
@@ -182,7 +172,7 @@ class WorkflowBulk extends Component {
 
 const mapStateToProps = state => {
   return {
-    bulkReducer: state.bulkReducer
+    bulkReducer: state.bulkReducer,
   };
 };
 
@@ -190,11 +180,8 @@ const mapDispatchToProps = dispatch => {
   return {
     performBulkOperation: (operation, wfs, defaultPages) =>
       dispatch(bulkActions.performBulkOperation(operation, wfs, defaultPages)),
-    setView: value => dispatch(bulkActions.setView(value))
+    setView: value => dispatch(bulkActions.setView(value)),
   };
 };
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(WorkflowBulk);
+export default connect(mapStateToProps, mapDispatchToProps)(WorkflowBulk);
