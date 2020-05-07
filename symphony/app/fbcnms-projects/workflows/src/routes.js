@@ -316,21 +316,6 @@ router.get('/id/:workflowId', async (req, res, next) => {
       })(result.tasks || []),
     );
 
-    (result.tasks || []).forEach(task => {
-      if (task.taskType === 'SUB_WORKFLOW') {
-        const subWorkflowId = task.inputData && task.inputData.subWorkflowId;
-
-        if (subWorkflowId != null) {
-          subs.push({
-            name: task.inputData.subWorkflowName,
-            version: task.inputData.subWorkflowVersion,
-            referenceTaskName: task.referenceTaskName,
-            subWorkflowId: subWorkflowId,
-          });
-        }
-      }
-    });
-
     // TODO not implemented on proxy
     const logs = map(task =>
       Promise.all([task, http.get(baseURLTask + task.taskId + '/log', req)]),
