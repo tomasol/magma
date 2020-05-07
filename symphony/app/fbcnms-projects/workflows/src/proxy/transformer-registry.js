@@ -19,6 +19,7 @@ export default async function(registrationCtx) {
     './transformers/metadata-workflowdef',
     './transformers/workflow',
     './transformers/event',
+    './transformers/task',
   ];
   logger.debug(
     `Registering transformer modules: [${transformerModules}] using context ${JSON.stringify(
